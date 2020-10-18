@@ -5,6 +5,11 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import Login from "./component/Login";
 import Home from "./component/Home";
 import { getBackend } from './utils/backend'
+import {
+  BrowserRouter as Router,
+  Switch,
+  Route
+} from "react-router-dom";
 
 export default class App extends React.Component {
   constructor(props) {
@@ -13,7 +18,7 @@ export default class App extends React.Component {
     this.setAuthenticationStatus = this.setAuthenticationStatus.bind(this);
 
     this.state = {
-      authenticated: false,
+      isAuthenticated: false,
       username: ''
     };
   }
@@ -24,26 +29,35 @@ export default class App extends React.Component {
     }
   }
 
-  setAuthenticationStatus(authenticated) {
-    this.setState({authenticated: authenticated});
+  setAuthenticationStatus(isAuthenticated) {
+    this.setState({isAuthenticated: isAuthenticated});
   }
 
   render() {
-    let homePage = <Home />;
-    if (!this.state.authenticated) {
-        // If user is not authenticated, show Login page
-        homePage = <Login />;
-    }
+    const authProps= {
+        isAuthenticated: this.state.isAuthenticated,
+        setAuthenticationStatus: this.setAuthenticationStatus
+    };
 
     return (
-        <div className="App">
-            <Navbar bg="dark" variant="dark">
-                <Navbar.Brand href="#home">
-                Brino
-            </Navbar.Brand>
-          </Navbar>
-          {homePage}
-        </div>
+        <Router>
+            <div className="App">
+                <Navbar bg="dark" variant="dark">
+                    <Navbar.Brand href="#home">
+                    Brino
+                </Navbar.Brand>
+                </Navbar>
+
+                <Switch>
+                    <Route exact path="/">
+                        <Home auth={ authProps } />
+                    </Route>
+                    <Route path="/login">
+                        <Login auth={ authProps } />
+                    </Route>
+                </Switch>
+            </div>
+       </Router>
       );
     }
 }

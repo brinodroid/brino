@@ -25,6 +25,11 @@ class Backend {
                 return response.json();
             })
             .then(json => {
+                if (httpStatus !== 200) {
+                    console.error("authenticate: json=%o", json);
+                    callback(httpStatus, );
+                    return;
+                }
                 localStorage.setItem('token', json.token);
                 callback(httpStatus);
             })
@@ -35,7 +40,11 @@ class Backend {
     }
 
     isAuthenticated() {
-        return localStorage.getItem('token') !== null;
+        let token = localStorage.getItem('token');
+        if (!token || 0 === token.length) {
+            return false;
+        }
+        return true;
     }
 }
 
