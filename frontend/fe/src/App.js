@@ -4,24 +4,33 @@ import Navbar from 'react-bootstrap/Navbar';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import Login from "./component/Login";
 import Home from "./component/Home";
+import { getBackend } from './utils/backend'
 
 export default class App extends React.Component {
   constructor(props) {
     super(props);
+
+    this.setAuthenticationStatus = this.setAuthenticationStatus.bind(this);
+
     this.state = {
-      authenticated: localStorage.getItem('token') ? true : false,
+      authenticated: false,
       username: ''
     };
   }
 
   componentDidMount() {
-    if (this.state.authenticated) {
+    if ( getBackend().isAuthenticated()) {
+        this.setAuthenticationStatus(true);
     }
+  }
+
+  setAuthenticationStatus(authenticated) {
+    this.setState({authenticated: authenticated});
   }
 
   render() {
     let homePage = <Home />;
-    if (this.state.authenticated) {
+    if (!this.state.authenticated) {
         // If user is not authenticated, show Login page
         homePage = <Login />;
     }

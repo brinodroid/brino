@@ -4,6 +4,7 @@ let backendSingleton = null;
 class Backend {
     constructor() {
         this.authenticate = this.authenticate.bind(this);
+        this.isAuthenticated = this.isAuthenticated.bind(this);
     }
 
     authenticate(username, password, callback) {
@@ -31,6 +32,10 @@ class Backend {
                 console.error("authenticate: error %o", error);
                 callback(httpStatus);
             });
+    }
+
+    isAuthenticated() {
+        return localStorage.getItem('token') !== null;
     }
 }
 
