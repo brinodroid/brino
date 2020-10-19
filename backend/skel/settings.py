@@ -39,7 +39,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'corsheaders',
-    'brAuth.apps.BrauthConfig'
+    'brAuth.apps.BrauthConfig',
+    'brSetting.apps.BrsettingConfig',
 ]
 
 MIDDLEWARE = [
