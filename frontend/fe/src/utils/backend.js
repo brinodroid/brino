@@ -5,6 +5,7 @@ class Backend {
     constructor() {
         this.authenticate = this.authenticate.bind(this);
         this.isAuthenticated = this.isAuthenticated.bind(this);
+        this.getLoggedInUser = this.getLoggedInUser.bind(this);
     }
 
     authenticate(username, password, callback) {
@@ -27,7 +28,7 @@ class Backend {
             .then(json => {
                 if (httpStatus !== 200) {
                     console.error("authenticate: json=%o", json);
-                    callback(httpStatus, );
+                    callback(httpStatus);
                     return;
                 }
                 localStorage.setItem('token', json.token);
@@ -45,6 +46,32 @@ class Backend {
             return false;
         }
         return true;
+    }
+
+    getLoggedInUser(callback) {
+        let httpStatus;
+
+        fetch('http://localhost:8000/brAuth/user', {
+            headers: {
+                Authorization: `JWT ${localStorage.getItem('token')}`
+            }
+            })
+            .then(response => {
+                httpStatus = response.status;
+                return response.json();
+            })
+            .then(json => {
+                if (httpStatus !== 200) {
+                    console.error("getLoggedInUser: json=%o", json);
+                    callback(httpStatus, undefined);
+                    return;
+                }
+                callback(httpStatus, json.username);
+            })
+            .catch (error => {
+                console.error("getLoggedInUser: error=%o", error);
+                callback(httpStatus, undefined);
+            });
     }
 }
 

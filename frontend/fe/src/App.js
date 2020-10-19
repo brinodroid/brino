@@ -16,10 +16,11 @@ export default class App extends React.Component {
     super(props);
 
     this.setAuthenticationStatus = this.setAuthenticationStatus.bind(this);
+    this.setLoggedInUser = this.setLoggedInUser.bind(this);
 
     this.state = {
       isAuthenticated: false,
-      username: ''
+      loggedInUser: ''
     };
   }
 
@@ -33,10 +34,16 @@ export default class App extends React.Component {
     this.setState({isAuthenticated: isAuthenticated});
   }
 
+  setLoggedInUser(loggedInUser) {
+    this.setState({loggedInUser: loggedInUser});
+  }
+
   render() {
     const authProps= {
         isAuthenticated: this.state.isAuthenticated,
-        setAuthenticationStatus: this.setAuthenticationStatus
+        loggedInUser: this.state.loggedInUser,
+        setAuthenticationStatus: this.setAuthenticationStatus,
+        setLoggedInUser: this.setLoggedInUser
     };
 
     return (
