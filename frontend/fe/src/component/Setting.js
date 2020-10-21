@@ -15,29 +15,49 @@ export default class Setting extends React.Component {
     this.showErrorMsg = this.showErrorMsg.bind(this);
 
     this.state = {
-        username: "",
-        password: "",
-        errorMsg: "",
-        authenticated: false
+        creationTimestamp: null,
+        updateTimestamp: null,
+        profitTargetPercent: 0,
+        stopLossPercent: 0,
+        isConfigurationLoaded: false
+    }
+  }
+
+  componentDidMount() {
+    if (!this.state.isConfigurationLoaded) {
+        console.info('Loading data...')
+        let configurationCallback = function (httpStatus, json) {
+            if ( httpStatus === 401) {
+                this.props.auth.setAuthenticationStatus(false);
+                console.error("configurationCallback: authentication expired?");
+                return;
+            }
+
+            if ( httpStatus !== 200) {
+                console.error("configurationCallback: authentication failure: http:%o", httpStatus);
+                this.setState({
+                    errorMsg: "Failed to load configuration"
+                })
+                return;
+            }
+
+            console.error("configurationCallback: json: %o", json);
+            this.setState({
+                isConfigurationLoaded: true,
+                creationTimestamp: json.creationTimestamp,
+                updateTimestamp: json.updateTimestamp,
+                profitTargetPercent: json.profitTargetPercent,
+                stopLossPercent: json.stopLossPercent
+            });
+       }
+
+       getBackend().getConfiguration(configurationCallback.bind(this));
     }
   }
 
   handleSubmit(event) {
     event.preventDefault();
-    let authenticateCallback = function (httpStatus) {
-        if ( httpStatus !== 200) {
-            console.error("Setting: authentication failure: http:", httpStatus);
-            this.setState({
-                errorMsg: "Setting credentials invalid"
-            })
-            return;
-        }
-
-        console.info("Setting: redirecting to home");
-        this.setState({authenticated:true})
-    }
-
-    getBackend().authenticate(this.state.username, this.state.password, authenticateCallback.bind(this));
+    console.error("Handle update");
   }
 
   handleChange(event) {
@@ -56,15 +76,35 @@ export default class Setting extends React.Component {
         return <Redirect to= '/login' />;
     }
 
+    if ( !this.state.isConfigurationLoaded ) {
+        return <Alert variant="primary"> Loading settings.. </Alert>;
+    }
+
     return (
       <div className="setting">
       <Form>
-          <Form.Group as={Row} controlId="formPlaintextPassword">
+          <Form.Group as={Row} controlId="profitTargetPercent">
             <Form.Label column sm="2">
-              Password
+              Profit Target Percent
             </Form.Label>
             <Col sm="2">
-              <Form.Control placeholder="Password" />
+              <Form.Control value={this.state.profitTargetPercent} onChange={this.handleChange}/>
+            </Col>
+          </Form.Group>
+
+          <Form.Group as={Row} controlId="stopLossPercent">
+            <Form.Label column sm="2">
+              Stop Loss Percent
+            </Form.Label>
+            <Col sm="2">
+              <Form.Control value={this.state.stopLossPercent} onChange={this.handleChange}/>
+            </Col>
+          </Form.Group>
+          <Form.Group as={Row}>
+            <Col sm={{ span: 2, offset: 2 }}>
+                <Button variant="primary" type="submit">
+                   Update
+                </Button>
             </Col>
           </Form.Group>
         </Form>

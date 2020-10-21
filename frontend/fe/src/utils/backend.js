@@ -7,6 +7,7 @@ class Backend {
         this.isAuthenticated = this.isAuthenticated.bind(this);
         this.clearAuthentication = this.clearAuthentication.bind(this);
         this.getLoggedInUser = this.getLoggedInUser.bind(this);
+        this.getConfiguration = this.getConfiguration.bind(this);
     }
 
     authenticate(username, password, callback) {
@@ -78,6 +79,33 @@ class Backend {
                 callback(httpStatus, undefined);
             });
     }
+
+    getConfiguration(callback) {
+        let httpStatus;
+
+        fetch('http://localhost:8000/brSetting/config', {
+            headers: {
+                Authorization: `JWT ${localStorage.getItem('token')}`
+            }
+            })
+            .then(response => {
+                httpStatus = response.status;
+                return response.json();
+            })
+            .then(json => {
+                if (httpStatus !== 200) {
+                    console.error("getConfiguration: json=%o", json);
+                    callback(httpStatus, undefined);
+                    return;
+                }
+                callback(httpStatus, json);
+            })
+            .catch (error => {
+                console.error("getConfiguration: error=%o", error);
+                callback(httpStatus, undefined);
+            });
+    }
+
 }
 
 export function getBackend() {
