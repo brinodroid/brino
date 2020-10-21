@@ -33,10 +33,7 @@ export default class Login extends React.Component {
         }
 
         // Login successful
-        // Mark it as authenticated
         this.props.auth.setAuthenticationStatus(true);
-        console.info("Login: redirecting to home");
-        return <Redirect to= '/' />;
     }
 
     getBackend().authenticate(this.state.username, this.state.password, authenticateCallback.bind(this));
@@ -53,9 +50,9 @@ export default class Login extends React.Component {
   }
 
   render() {
-      if ( this.props.auth.isAuthenticated ) {
+    if ( this.props.auth.isAuthenticated ) {
         console.info('Login: authenticated, redirecting to home page');
-        return <Redirect to= '/' />;
+        return <Redirect to= '/home' />;
     }
 
     return (

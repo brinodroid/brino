@@ -5,6 +5,7 @@ class Backend {
     constructor() {
         this.authenticate = this.authenticate.bind(this);
         this.isAuthenticated = this.isAuthenticated.bind(this);
+        this.clearAuthentication = this.clearAuthentication.bind(this);
         this.getLoggedInUser = this.getLoggedInUser.bind(this);
     }
 
@@ -46,6 +47,10 @@ class Backend {
             return false;
         }
         return true;
+    }
+
+    clearAuthentication() {
+        localStorage.removeItem('token');
     }
 
     getLoggedInUser(callback) {

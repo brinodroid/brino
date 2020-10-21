@@ -12,8 +12,9 @@ export default class Home extends React.Component {
         // Logged in user not set
         let getLoggedInUserCallback = function (httpStatus, username) {
             if ( httpStatus !== 200) {
-                this.props.auth.setAuthenticationStatus(false);
                 console.error("getLoggedInUserCallback: failure: http:%d", httpStatus);
+                getBackend().clearAuthentication();
+                this.props.auth.setLoggedInUser('');
                 return;
             }
 
