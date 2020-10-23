@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'brAuth.apps.BrauthConfig',
     'brSetting.apps.BrsettingConfig',
+    'brPortFolio.apps.BrportfolioConfig',
 ]
 
 MIDDLEWARE = [
