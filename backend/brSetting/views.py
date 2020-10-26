@@ -42,7 +42,7 @@ def __update_configuration(request):
 
 
 @api_view(['GET', 'POST', 'PUT'])
-def get_configuration(request):
+def configuration_rest(request):
     if request.method == 'GET':
         return __get_configuration()
     elif request.method == 'POST':

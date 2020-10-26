@@ -1,7 +1,7 @@
 from django.urls import include, path
-from .views import get_configuration
+from .views import configuration_rest
 
 urlpatterns = [
-    path('config/', get_configuration)
+    path('config/', configuration_rest)
 ]
 
