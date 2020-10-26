@@ -21,5 +21,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('token-auth/', obtain_jwt_token),
     path('brAuth/', include('brAuth.urls')),
-    path('brSetting/', include('brSetting.urls'))
+    path('brSetting/', include('brSetting.urls')),
+    path('brCore/', include('brCore.urls'))
 ]
