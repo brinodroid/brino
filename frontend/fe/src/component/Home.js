@@ -2,6 +2,8 @@ import React from 'react';
 import { Redirect } from 'react-router-dom';
 import Alert from 'react-bootstrap/Alert';
 import Button from 'react-bootstrap/Button';
+import ButtonGroup from 'react-bootstrap/ButtonGroup';
+import ButtonToolbar from 'react-bootstrap/ButtonToolbar'
 
 import { getBackend } from '../utils/Backend';
 import Table from '../utils/Table';
@@ -10,11 +12,17 @@ export default class Home extends React.Component {
   constructor(props) {
     super(props);
 
+    this.onEditButtonClick = this.onEditButtonClick.bind(this);
+
     this.state = {
       isWatchListLoaded: false,
       errorMsg : '',
-      watchList : null
+      watchList : null,
     }
+  }
+
+  onEditButtonClick () {
+    //TODO
   }
 
   componentDidMount() {
@@ -79,7 +87,7 @@ export default class Home extends React.Component {
     // 2. Refresh button
 
     const columns = [
-      { Header: 'ID',  accessor: 'id'},
+      { Header: 'ID',  accessor: 'id',  Cell: ({value}) => (<Button onClick={this.onEditButtonClick(value)}>Edit</Button>)},
       { Header: 'Asset Type', accessor: 'assetType'},
       { Header: 'Ticker', accessor: 'ticker'},
       { Header: 'Strike', accessor: 'optionStrike'},
@@ -91,9 +99,18 @@ export default class Home extends React.Component {
 
     return (
       <div className="home">
+
+        <ButtonToolbar aria-label="Toolbar with button groups">
+          <ButtonGroup className="mr-2" aria-label="First group">
+            <Button> Add </Button>
+          </ButtonGroup>
+          <ButtonGroup className="mr-2" aria-label="Second group">
+            <Button> Refresh </Button>
+          </ButtonGroup>
+        </ButtonToolbar>
+
         Welcome home {this.props.auth.loggedInUser}
         <Table columns={columns} data={this.state.watchList} />
-        <Button variant="primary"> Update </Button>
       </div>
     );
   }
