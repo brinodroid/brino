@@ -20,7 +20,7 @@ export default class Home extends React.Component {
   componentDidMount() {
     if ( this.props.auth.loggedInUser === '') {
       // Logged in user not set
-      let getLoggedInUserCallback = function (httpStatus, username) {
+      let getLoggedInUserCallback = function (httpStatus, json) {
         if ( httpStatus !== 200) {
           console.error("getLoggedInUserCallback: failure: http:%d", httpStatus);
           getBackend().clearAuthentication();
@@ -28,8 +28,8 @@ export default class Home extends React.Component {
           return;
         }
 
-        console.info("getLoggedInUserCallback: success: http:%d username:%s", httpStatus, username);
-        this.props.auth.setLoggedInUser(username);
+        console.info("getLoggedInUserCallback: success: http:%d json:%o", httpStatus, json);
+        this.props.auth.setLoggedInUser(json.username);
       }
 
       getBackend().getLoggedInUser(getLoggedInUserCallback.bind(this));

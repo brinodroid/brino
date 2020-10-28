@@ -10,6 +10,7 @@ class Backend {
     this.getLoggedInUser = this.getLoggedInUser.bind(this);
     this.getConfiguration = this.getConfiguration.bind(this);
     this.getWatchList = this.getWatchList.bind(this);
+    this.getWithToken = this.getWithToken.bind(this);
   }
 
   authenticate(username, password, callback) {
@@ -55,57 +56,21 @@ class Backend {
   }
 
   getLoggedInUser(callback) {
-    let httpStatus;
-
-    fetch('http://localhost:8000/brAuth/user', {
-      headers: {Authorization: `JWT ${localStorage.getItem('token')}`}
-    })
-    .then(response => {
-      httpStatus = response.status;
-      return response.json();
-    })
-    .then(json => {
-      if (httpStatus !== 200) {
-        console.error("getLoggedInUser: json=%o", json);
-        callback(httpStatus, undefined);
-        return;
-      }
-      callback(httpStatus, json.username);
-    })
-    .catch (error => {
-      console.error("getLoggedInUser: error=%o", error);
-      callback(httpStatus, undefined);
-    });
+    this.getWithToken('http://localhost:8000/brAuth/user', callback);
   }
 
   getConfiguration(callback) {
-    let httpStatus;
-
-    fetch('http://localhost:8000/brSetting/config', {
-      headers: {Authorization: `JWT ${localStorage.getItem('token')}`}
-    })
-    .then(response => {
-      httpStatus = response.status;
-      return response.json();
-    })
-    .then(json => {
-      if (httpStatus !== 200) {
-        console.error("getConfiguration: json=%o", json);
-        callback(httpStatus, undefined);
-        return;
-      }
-      callback(httpStatus, json);
-    })
-    .catch (error => {
-      console.error("getConfiguration: error=%o", error);
-      callback(httpStatus, undefined);
-    });
+    this.getWithToken('http://localhost:8000/brSetting/config', callback);
   }
 
   getWatchList(callback) {
+    this.getWithToken('http://localhost:8000/brCore/watchlist', callback);
+  }
+
+  getWithToken(url, callback) {
     let httpStatus;
 
-    fetch('http://localhost:8000/brCore/watchlist', {
+    fetch(url, {
       headers: {Authorization: `JWT ${localStorage.getItem('token')}`}
     })
     .then(response => {
@@ -114,14 +79,14 @@ class Backend {
     })
     .then(json => {
       if (httpStatus !== 200) {
-        console.error("getWatchList: json=%o", json);
+        console.error("getWithToken: url=%o json=%o", url, json);
         callback(httpStatus, undefined);
         return;
       }
       callback(httpStatus, json);
     })
     .catch (error => {
-      console.error("getWatchList: error=%o", error);
+      console.error("getWithToken: url=%o error=%o", url, error);
       callback(httpStatus, undefined);
     });
   }
