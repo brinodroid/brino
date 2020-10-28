@@ -14,26 +14,26 @@ export default class Login extends React.Component {
     this.showErrorMsg = this.showErrorMsg.bind(this);
 
     this.state = {
-        username: "",
-        password: "",
-        errorMsg: ""
+      username: "",
+      password: "",
+      errorMsg: ""
     }
   }
 
   handleSubmit(event) {
     event.preventDefault();
     let authenticateCallback = function (httpStatus) {
-        if ( httpStatus !== 200) {
-            this.props.auth.setAuthenticationStatus(false);
-            console.error("Login: authentication failure: http:", httpStatus);
-            this.setState({
-                errorMsg: "Login credentials invalid"
-            })
-            return;
-        }
+      if ( httpStatus !== 200) {
+        this.props.auth.setAuthenticationStatus(false);
+        console.error("Login: authentication failure: http:", httpStatus);
+        this.setState({
+          errorMsg: "Login credentials invalid"
+        })
+        return;
+      }
 
-        // Login successful
-        this.props.auth.setAuthenticationStatus(true);
+      // Login successful
+      this.props.auth.setAuthenticationStatus(true);
     }
 
     getBackend().authenticate(this.state.username, this.state.password, authenticateCallback.bind(this));
@@ -45,7 +45,7 @@ export default class Login extends React.Component {
 
   showErrorMsg() {
     if (this.state.errorMsg !== "") {
-        return <Alert variant={'danger'} > {this.state.errorMsg} </Alert>
+      return <Alert variant={'danger'} > {this.state.errorMsg} </Alert>
     }
   }
 
@@ -60,24 +60,23 @@ export default class Login extends React.Component {
         { this.showErrorMsg() }
         <Form onSubmit={this.handleSubmit} >
 
-            <Form.Group controlId="username">
-                <Form.Label>User Name</Form.Label>
-                <Form.Control type="username"
-                    value={this.state.username}
-                    onChange={this.handleChange}
-                    placeholder="User Name" />
-            </Form.Group>
+          <Form.Group controlId="username">
+            <Form.Label>User Name</Form.Label>
+            <Form.Control type="username"
+              value={this.state.username}
+              onChange={this.handleChange}
+              placeholder="User Name" />
+          </Form.Group>
 
-            <Form.Group controlId="password">
-                <Form.Label>Password</Form.Label>
-                <Form.Control type="password"
-                    value={this.state.password}
-                    onChange={this.handleChange}
-                    placeholder="Password" />
-            </Form.Group>
-            <Button variant="primary" type="submit">
-                Submit
-           </Button>
+          <Form.Group controlId="password">
+            <Form.Label>Password</Form.Label>
+            <Form.Control type="password"
+              value={this.state.password}
+              onChange={this.handleChange}
+              placeholder="Password" />
+          </Form.Group>
+
+          <Button variant="primary" type="submit"> Submit </Button>
         </Form>
       </div>
     );

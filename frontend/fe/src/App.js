@@ -39,44 +39,37 @@ export default class App extends React.Component {
 
   render() {
     const authProps= {
-        isAuthenticated: this.state.isAuthenticated,
-        loggedInUser: this.state.loggedInUser,
-        setAuthenticationStatus: this.setAuthenticationStatus,
-        setLoggedInUser: this.setLoggedInUser,
+      isAuthenticated: this.state.isAuthenticated,
+      loggedInUser: this.state.loggedInUser,
+      setAuthenticationStatus: this.setAuthenticationStatus,
+      setLoggedInUser: this.setLoggedInUser,
     };
 
     console.info('App::render(): authProps: %o', authProps)
     return (
-        <Router>
-            <div className="App">
-                <Navbar style={{marginBottom: "20px"}} bg="dark" variant="dark">
-                    <Navbar.Brand href="/home">
-                        Brino
-                    </Navbar.Brand>
-                    <Navbar.Collapse className="justify-content-end">
-                        <Navbar.Text>
-                            <Nav.Link href="/setting">Setting</Nav.Link>
-                        </Navbar.Text>
-                        <Navbar.Text>
-                            <Nav.Link href="/login" onClick={this.onLogoutLinkClick}>Logout</Nav.Link>
-                        </Navbar.Text>
-                    </Navbar.Collapse>
-                </Navbar>
+      <Router>
+        <div className="App">
+          <Navbar style={{marginBottom: "20px"}} bg="dark" variant="dark">
+            <Navbar.Brand href="/home">
+              Brino
+            </Navbar.Brand>
+            <Navbar.Collapse className="justify-content-end">
+              <Navbar.Text>
+                <Nav.Link href="/setting">Setting</Nav.Link>
+              </Navbar.Text>
+              <Navbar.Text>
+                <Nav.Link href="/login" onClick={this.onLogoutLinkClick}>Logout</Nav.Link>
+              </Navbar.Text>
+            </Navbar.Collapse>
+          </Navbar>
 
-                <Switch>
-                    <Route exact path="/home">
-                        <Home auth={ authProps } />
-                    </Route>
-                    <Route path="/login">
-                        <Login auth={ authProps } />
-                    </Route>
-                    <Route path="/setting">
-                        <Setting auth={ authProps } />
-                    </Route>
-                </Switch>
-            </div>
-       </Router>
-      );
-    }
+          <Switch>
+            <Route exact path="/home"> <Home auth={ authProps } /> </Route>
+            <Route path="/login"> <Login auth={ authProps } /> </Route>
+            <Route path="/setting"> <Setting auth={ authProps } /> </Route>
+          </Switch>
+        </div>
+      </Router>
+    );
+  }
 }
-

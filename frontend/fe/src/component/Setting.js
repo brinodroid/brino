@@ -15,40 +15,42 @@ export default class Setting extends React.Component {
     this.showErrorMsg = this.showErrorMsg.bind(this);
 
     this.state = {
-        creationTimestamp: null,
-        updateTimestamp: null,
-        profitTargetPercent: 0,
-        stopLossPercent: 0,
-        isConfigurationLoaded: false
+      creationTimestamp: null,
+      updateTimestamp: null,
+      profitTargetPercent: 0,
+      stopLossPercent: 0,
+      isConfigurationLoaded: false,
+      errorMsg: ""
     }
   }
 
   componentDidMount() {
     if (!this.state.isConfigurationLoaded) {
-        console.info('Loading data...')
-        let configurationCallback = function (httpStatus, json) {
-            if ( httpStatus === 401) {
-                this.props.auth.setAuthenticationStatus(false);
-                console.error("configurationCallback: authentication expired?");
-                return;
-            }
+      console.info('Loading data...')
+      let configurationCallback = function (httpStatus, json) {
+        if ( httpStatus === 401) {
+          this.props.auth.setAuthenticationStatus(false);
+          console.error("configurationCallback: authentication expired?");
+          return;
+        }
 
-            if ( httpStatus !== 200) {
-                console.error("configurationCallback: authentication failure: http:%o", httpStatus);
-                this.setState({
-                    errorMsg: "Failed to load configuration"
-                })
-                return;
-            }
+        if ( httpStatus !== 200) {
+          console.error("configurationCallback: authentication failure: http:%o", httpStatus);
+          this.setState({
+            errorMsg: "Failed to load configuration"
+          })
+          return;
+        }
 
-            console.error("configurationCallback: json: %o", json);
-            this.setState({
-                isConfigurationLoaded: true,
-                creationTimestamp: json.creationTimestamp,
-                updateTimestamp: json.updateTimestamp,
-                profitTargetPercent: json.profitTargetPercent,
-                stopLossPercent: json.stopLossPercent
-            });
+        console.error("configurationCallback: json: %o", json);
+        this.setState({
+          isConfigurationLoaded: true,
+          creationTimestamp: json.creationTimestamp,
+          updateTimestamp: json.updateTimestamp,
+          profitTargetPercent: json.profitTargetPercent,
+          stopLossPercent: json.stopLossPercent,
+          errorMsg: ""
+        });
        }
 
        getBackend().getConfiguration(configurationCallback.bind(this));
@@ -57,7 +59,6 @@ export default class Setting extends React.Component {
 
   handleSubmit(event) {
     event.preventDefault();
-    console.error("Handle update");
   }
 
   handleChange(event) {
@@ -66,23 +67,23 @@ export default class Setting extends React.Component {
 
   showErrorMsg() {
     if (this.state.errorMsg !== "") {
-        return <Alert variant={'danger'} > {this.state.errorMsg} </Alert>
+      return <Alert variant={'danger'} > {this.state.errorMsg} </Alert>
     }
   }
 
   render() {
     if ( !this.props.auth.isAuthenticated ) {
-        console.info('Setting: authenticated, redirecting to home page');
-        return <Redirect to= '/login' />;
+      console.info('Setting: authenticated, redirecting to home page');
+      return <Redirect to= '/login' />;
     }
 
     if ( !this.state.isConfigurationLoaded ) {
-        return <Alert variant="primary"> Loading settings.. </Alert>;
+      return <Alert variant="primary"> Loading settings.. </Alert>;
     }
 
     return (
       <div className="setting">
-      <Form>
+        <Form>
           <Form.Group as={Row} controlId="profitTargetPercent">
             <Form.Label column sm="2">
               Profit Target Percent
