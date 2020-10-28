@@ -6,12 +6,8 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import Login from "./component/Login";
 import Setting from "./component/Setting";
 import Home from "./component/Home";
-import { getBackend } from './utils/backend'
-import {
-  BrowserRouter as Router,
-  Switch,
-  Route
-} from "react-router-dom";
+import { getBackend } from './utils/Backend'
+import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
 
 export default class App extends React.Component {
   constructor(props) {
@@ -83,3 +79,4 @@ export default class App extends React.Component {
       );
     }
 }
+

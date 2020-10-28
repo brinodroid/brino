@@ -3,7 +3,7 @@ import { Redirect } from 'react-router-dom';
 import Alert from 'react-bootstrap/Alert';
 import Button from 'react-bootstrap/Button';
 
-import { getBackend } from '../utils/backend';
+import { getBackend } from '../utils/Backend';
 import Table from '../utils/Table';
 
 export default class Home extends React.Component {

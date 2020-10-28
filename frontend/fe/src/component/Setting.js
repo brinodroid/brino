@@ -5,7 +5,7 @@ import Button from 'react-bootstrap/Button';
 import Alert from 'react-bootstrap/Alert';
 import Col from 'react-bootstrap/Col';
 import Row from 'react-bootstrap/Row';
-import { getBackend } from '../utils/backend'
+import { getBackend } from '../utils/Backend'
 
 export default class Setting extends React.Component {
   constructor(props) {
