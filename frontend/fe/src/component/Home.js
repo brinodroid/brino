@@ -13,6 +13,8 @@ export default class Home extends React.Component {
     super(props);
 
     this.onEditButtonClick = this.onEditButtonClick.bind(this);
+    this.loadWatchList = this.loadWatchList.bind(this);
+
 
     this.state = {
       isWatchListLoaded: false,
@@ -23,9 +25,39 @@ export default class Home extends React.Component {
 
   onEditButtonClick () {
     //TODO
+    console.info('onEditButtonClick: Loading watchlist...')
+  }
+
+  loadWatchList() {
+    console.info('loadWatchList: Loading watchlist...')
+    let watchListCallback = function (httpStatus, json) {
+      if ( httpStatus === 401) {
+        this.props.auth.setAuthenticationStatus(false);
+        console.error("watchListCallback: authentication expired?");
+        return;
+      }
+
+      if ( httpStatus !== 200) {
+        console.error("watchListCallback: failure: http:%o", httpStatus);
+        this.setState({
+          errorMsg: "Failed to load watchlist"
+        })
+        return;
+      }
+
+      console.error("watchListCallback: json: %o", json);
+      this.setState({
+        isWatchListLoaded: true,
+        watchList: json,
+        errorMsg: ""
+      });
+    }
+
+    getBackend().getWatchList(watchListCallback.bind(this));
   }
 
   componentDidMount() {
+    console.info('componentDidMount..');
     if ( this.props.auth.loggedInUser === '') {
       // Logged in user not set
       let getLoggedInUserCallback = function (httpStatus, json) {
@@ -44,31 +76,7 @@ export default class Home extends React.Component {
     }
 
     if (!this.state.isWatchListLoaded) {
-      console.info('Loading watchlist...')
-      let watchListCallback = function (httpStatus, json) {
-        if ( httpStatus === 401) {
-          this.props.auth.setAuthenticationStatus(false);
-          console.error("watchListCallback: authentication expired?");
-          return;
-        }
-
-        if ( httpStatus !== 200) {
-          console.error("watchListCallback: failure: http:%o", httpStatus);
-          this.setState({
-            errorMsg: "Failed to load watchlist"
-          })
-          return;
-        }
-
-        console.error("watchListCallback: json: %o", json);
-        this.setState({
-          isWatchListLoaded: true,
-          watchList: json,
-          errorMsg: ""
-        });
-      }
-
-      getBackend().getWatchList(watchListCallback.bind(this));
+      this.loadWatchList();
     }
   }
 
@@ -87,7 +95,7 @@ export default class Home extends React.Component {
     // 2. Refresh button
 
     const columns = [
-      { Header: 'ID',  accessor: 'id',  Cell: ({value}) => (<Button onClick={this.onEditButtonClick(value)}>Edit</Button>)},
+      { Header: 'ID',  accessor: 'id',  Cell: ({value}) => (<Button onClick={this.onEditButtonClick}>Edit</Button>)},
       { Header: 'Asset Type', accessor: 'assetType'},
       { Header: 'Ticker', accessor: 'ticker'},
       { Header: 'Strike', accessor: 'optionStrike'},
@@ -105,7 +113,7 @@ export default class Home extends React.Component {
             <Button> Add </Button>
           </ButtonGroup>
           <ButtonGroup className="mr-2" aria-label="Second group">
-            <Button> Refresh </Button>
+            <Button onClick={this.loadWatchList}> Refresh </Button>
           </ButtonGroup>
         </ButtonToolbar>
 
