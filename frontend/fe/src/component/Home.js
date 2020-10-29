@@ -5,6 +5,9 @@ import Button from 'react-bootstrap/Button';
 import ButtonGroup from 'react-bootstrap/ButtonGroup';
 import ButtonToolbar from 'react-bootstrap/ButtonToolbar';
 import Modal from 'react-bootstrap/Modal';
+import Form from 'react-bootstrap/Form';
+import Row from 'react-bootstrap/Row';
+import Col from 'react-bootstrap/Col';
 
 import { getBackend } from '../utils/Backend';
 import Table from '../utils/Table';
@@ -18,7 +21,13 @@ export default class Home extends React.Component {
     this.onAddButtonClick = this.onAddButtonClick.bind(this);
     this.loadWatchList = this.loadWatchList.bind(this);
     this.onCloseDetailedViewModal = this.onCloseDetailedViewModal.bind(this);
+    this.onModalActionButtonClick = this.onModalActionButtonClick.bind(this);
+    this.showModalActionButton = this.showModalActionButton.bind(this);
     this.showErrorMsg = this.showErrorMsg.bind(this);
+    this.showModal = this.showModal.bind(this);
+    this.showModalForm = this.showModalForm.bind(this);
+    this.showModalFormGroup = this.showModalFormGroup.bind(this);
+    this.onFormValuesChange = this.onFormValuesChange.bind(this);
 
     this.state = {
       isWatchListLoaded: false,
@@ -27,29 +36,43 @@ export default class Home extends React.Component {
       showDetailedViewModal: false,
       addToWatchList: false,
       deleteToWatchList: false,
+      formValues : {id: "", assetType: "", ticker: "", optionStrike: "", optionExpiry: "", comment: ""}
     }
   }
 
   onCloseDetailedViewModal() {
     console.info('onCloseDetailedViewModal: ...')
     this.setState({
-      showDetailedViewModal: false
+      showDetailedViewModal: false,
+      deleteToWatchList: false,
+      addToWatchList: false,
+      formValues : {id: "", assetType: "", ticker: "", optionStrike: "", optionExpiry: "", comment: ""}
     });
   }
 
-  onEditButtonClick () {
-    console.info('onEditButtonClick: state=%o', this.state)
+  onEditButtonClick (rowData) {
+    console.info('onEditButtonClick: rowData=%o', rowData);
     this.setState({
-      showDetailedViewModal: true
+      showDetailedViewModal: true,
+      formValues: rowData
     });
   }
 
   onAddButtonClick() {
     console.info('onAddButtonClick: ...')
+    this.setState({
+      showDetailedViewModal: true,
+      addToWatchList: true
+    });
   }
 
-  onDeleteButtonClick() {
-    console.info('onDeleteButtonClick: ...')
+  onDeleteButtonClick(rowData) {
+    console.info('onDeleteButtonClick: rowData=%o', rowData);
+    this.setState({
+      showDetailedViewModal: true,
+      deleteToWatchList: true,
+      formValues: rowData
+    });
   }
 
   showErrorMsg() {
@@ -75,7 +98,7 @@ export default class Home extends React.Component {
         return;
       }
 
-      console.error("watchListCallback: json: %o", json);
+      console.info("watchListCallback: json: %o", json);
       this.setState({
         isWatchListLoaded: true,
         watchList: json,
@@ -110,6 +133,105 @@ export default class Home extends React.Component {
     }
   }
 
+  onFormValuesChange(event) {
+    let updatedFormValues = {...this.state.formValues, [event.target.id]: event.target.value};
+    console.info('onFormValuesChange: updatedFormValues=%o ', updatedFormValues);
+    this.setState({formValues: updatedFormValues});
+  }
+
+  showModalFormGroup(readOnly, controlId, label, value) {
+    return (
+      <Form.Group as={Row} controlId={controlId}>
+        <Form.Label column sm="4"> {label} </Form.Label>
+        <Col sm="8">
+          <Form.Control readOnly={readOnly} value={value} onChange={this.onFormValuesChange} />
+        </Col>
+      </Form.Group>
+    );
+  }
+
+  showModalForm() {
+    /*if (!this.state.formValues) {
+      return <Alert variant={'danger'} > No row selected? </Alert>
+    }*/
+    let readOnly = false;
+    if (this.state.deleteToWatchList) readOnly = true;
+    console.info('showModalForm: formValues=%o', this.state.formValues);
+
+    return (
+      <Form onSubmit={this.handleSubmit} >
+
+        { this.showModalFormGroup(true, "creationTimestamp", "Create Timestamp", this.state.formValues.creationTimestamp) }
+        { this.showModalFormGroup(true, "updateTimestamp", "Update Timestamp", this.state.formValues.updateTimestamp) }
+        { this.showModalFormGroup(true, "id", "ID", this.state.formValues.id) }
+        { this.showModalFormGroup(readOnly, "assetType", "Asset Type", this.state.formValues.assetType) }
+        { this.showModalFormGroup(readOnly, "ticker", "Ticker", this.state.formValues.ticker) }
+        { this.showModalFormGroup(readOnly, "optionStrike", "Strike", this.state.formValues.optionStrike? this.state.formValues.optionStrike: "") }
+        { this.showModalFormGroup(readOnly, "optionExpiry", "Expiry", this.state.formValues.optionExpiry? this.state.formValues.optionExpiry:"" ) }
+        { this.showModalFormGroup(readOnly, "comment", "Comment", this.state.formValues.comment) }
+
+      </Form>
+    );
+  }
+
+  onModalActionButtonClick() {
+    console.info('onModalActionButtonClick: formValues=%o', this.state.formValues);
+    if (this.state.addToWatchList) {
+      console.info('onModalActionButtonClick: call add');
+      return;
+    }
+
+    if (this.state.deleteToWatchList) {
+      console.info('onModalActionButtonClick: call delete');
+      return;
+    }
+
+    console.info('onModalActionButtonClick: call update');
+  }
+
+  showModalActionButton() {
+    if (this.state.addToWatchList)
+      return (
+        <Button variant="primary" onClick={this.onModalActionButtonClick}>
+          Add
+        </Button>
+      );
+
+    if (this.state.deleteToWatchList) {
+      return (
+        <Button variant="primary" onClick={this.onModalActionButtonClick}>
+          Delete
+        </Button>
+      );
+    }
+
+    return (
+      <Button variant="primary" onClick={this.onModalActionButtonClick}>
+        Edit
+      </Button>
+    );
+  }
+
+  showModal() {
+      {/* animation=false added due to warning in console: https://github.com/react-bootstrap/react-bootstrap/issues/5075 */ }
+    return (
+        <Modal show={this.state.showDetailedViewModal} onHide={this.onCloseDetailedViewModal} animation={false}>
+        <Modal.Header closeButton>
+          <Modal.Title>Watch List Details</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {this.showModalForm()}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={this.onCloseDetailedViewModal}>
+            Close
+          </Button>
+          {this.showModalActionButton()}
+        </Modal.Footer>
+      </Modal>
+    );
+  }
+
   render() {
     if ( !this.props.auth.isAuthenticated ) {
       console.info('Home:  not authenticated, redirecting to login page');
@@ -124,10 +246,10 @@ export default class Home extends React.Component {
 
     const columns = [
       { Header: 'ID',  accessor: 'id',
-          Cell: ({value}) => (
+          Cell: ({row}) => (
               <ButtonGroup className="mr-2" aria-label="First group">
-                <Button onClick={this.onEditButtonClick}>Edit</Button>
-                <Button onClick={this.onDeleteButtonClick}>Delete</Button>
+                <Button onClick={ (e) => this.onEditButtonClick(row.original) }>Edit</Button>
+                <Button onClick={ (e) => this.onDeleteButtonClick(row.original) }>Delete</Button>
               </ButtonGroup>
             )},
       { Header: 'Asset Type', accessor: 'assetType'},
@@ -138,6 +260,18 @@ export default class Home extends React.Component {
       { Header: 'Update Time', accessor: 'updateTimestamp'},
       { Header: 'Create Time', accessor: 'creationTimestamp'},
     ];
+
+    const onRowClick = (state, rowInfo, column, instance) => {
+    return {
+        onClick: e => {
+            console.log('A Td Element was clicked!')
+            console.log('it produced this event:', e)
+            console.log('It was in this column:', column)
+            console.log('It was in this row:', rowInfo)
+            console.log('It was in this table instance:', instance)
+        }
+    }
+    }
 
     return (
       <div className="home">
@@ -153,23 +287,10 @@ export default class Home extends React.Component {
         Welcome home {this.props.auth.loggedInUser}
         { this.showErrorMsg() }
 
-        <Table columns={columns} data={this.state.watchList} />
+        <Table columns={columns} data={this.state.watchList} getTrProps={onRowClick} />
 
-        {/* animation=false added due to warning in console: https://github.com/react-bootstrap/react-bootstrap/issues/5075 */ }
-        <Modal show={this.state.showDetailedViewModal} onHide={this.onCloseDetailedViewModal} animation={false}>
-        <Modal.Header closeButton>
-          <Modal.Title>Modal heading</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>Woohoo, you're reading this text in a modal!</Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={this.onCloseDetailedViewModal}>
-            Close
-          </Button>
-          <Button variant="primary" onClick={this.onCloseDetailedViewModal}>
-            Save Changes
-          </Button>
-        </Modal.Footer>
-      </Modal>
+        { this.showModal() }
+
       </div>
     );
   }
