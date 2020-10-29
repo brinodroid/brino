@@ -12,9 +12,11 @@ class Backend {
 
     this.getWatchList = this.getWatchList.bind(this);
     this.addToWatchList = this.addToWatchList.bind(this);
+    this.deleteFromWatchList = this.deleteFromWatchList.bind(this);
 
     this.getWithToken = this.getWithToken.bind(this);
     this.postWithToken = this.postWithToken.bind(this);
+    this.deleteWithToken = this.deleteWithToken.bind(this);
   }
 
   authenticate(username, password, callback) {
@@ -67,12 +69,32 @@ class Backend {
     this.getWithToken('http://localhost:8000/brSetting/config', callback);
   }
 
+  getWatchList(callback) {
+    this.getWithToken('http://localhost:8000/brCore/watchlist', callback);
+  }
+
   addToWatchList(watchListEntry, callback) {
     this.postWithToken('http://localhost:8000/brCore/watchlist/', watchListEntry, callback);
   }
 
-  getWatchList(callback) {
-    this.getWithToken('http://localhost:8000/brCore/watchlist', callback);
+  deleteFromWatchList(watchListEntry, callback) {
+    this.deleteWithToken('http://localhost:8000/brCore/watchlist/'+watchListEntry.id, callback);
+  }
+
+  deleteWithToken(url, callback) {
+    let httpStatus;
+    fetch(url, {
+      method: 'DELETE',
+      headers: {'Content-Type': 'application/json', Authorization: `JWT ${localStorage.getItem('token')}`},
+    })
+    .then(response => {
+      httpStatus = response.status;
+      callback(httpStatus, undefined);
+    })
+    .catch (error => {
+      console.error("deleteWithToken: url=%o error=%o", url, error);
+      callback(httpStatus, undefined);
+    });
   }
 
   postWithToken(url, data, callback) {

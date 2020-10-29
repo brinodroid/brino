@@ -48,6 +48,6 @@ def watchlist_detail(request, pk):
 
     elif request.method == 'DELETE':
         watchlist.delete()
-        return Response({'detail': 'Deleted'}, status=status.HHTTP_204_NO_CONTENT)
+        return Response({'detail': 'Deleted'}, status=status.HTTP_204_NO_CONTENT)
 
     return Response({'detail': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)

@@ -19,8 +19,11 @@ export default class Home extends React.Component {
     this.onEditButtonClick = this.onEditButtonClick.bind(this);
     this.onDeleteButtonClick = this.onDeleteButtonClick.bind(this);
     this.onAddButtonClick = this.onAddButtonClick.bind(this);
+
     this.loadWatchList = this.loadWatchList.bind(this);
     this.addToWatchList = this.addToWatchList.bind(this);
+    this.deleteFromWatchList = this.deleteFromWatchList.bind(this);
+
     this.onCloseDetailedViewModal = this.onCloseDetailedViewModal.bind(this);
     this.onModalActionButtonClick = this.onModalActionButtonClick.bind(this);
     this.showModalActionButton = this.showModalActionButton.bind(this);
@@ -36,7 +39,7 @@ export default class Home extends React.Component {
       watchList : null,
       showDetailedViewModal: false,
       addToWatchList: false,
-      deleteToWatchList: false,
+      deleteFromWatchList: false,
       formValues : {id: "", assetType: "", ticker: "", optionStrike: "", optionExpiry: "", comment: ""}
     }
   }
@@ -45,7 +48,7 @@ export default class Home extends React.Component {
     console.info('onCloseDetailedViewModal: ...')
     this.setState({
       showDetailedViewModal: false,
-      deleteToWatchList: false,
+      deleteFromWatchList: false,
       addToWatchList: false,
       formValues : {id: "", assetType: "", ticker: "", optionStrike: "", optionExpiry: "", comment: ""}
     });
@@ -71,7 +74,7 @@ export default class Home extends React.Component {
     console.info('onDeleteButtonClick: rowData=%o', rowData);
     this.setState({
       showDetailedViewModal: true,
-      deleteToWatchList: true,
+      deleteFromWatchList: true,
       formValues: rowData
     });
   }
@@ -136,6 +139,32 @@ export default class Home extends React.Component {
     getBackend().addToWatchList(watchListEntry, addToWatchListCallback.bind(this));
   }
 
+  deleteFromWatchList(watchListEntry) {
+    console.info('deleteFromWatchList: adding entry=%o', watchListEntry)
+    let deleteFromWatchListCallback = function (httpStatus, json) {
+      if ( httpStatus === 401) {
+        this.props.auth.setAuthenticationStatus(false);
+        console.error("deleteFromWatchListCallback: authentication expired?");
+        return;
+      }
+
+      if ( httpStatus !== 204) {
+        console.error("deleteFromWatchListCallback: failure: http:%o", httpStatus);
+        this.setState({
+          errorMsg: "Failed to delete to watchlist"
+        })
+        return;
+      }
+
+      console.info("deleteFromWatchListCallback: json: %o", json);
+
+      //Reloading the watchlist
+      this.loadWatchList();
+    }
+
+    getBackend().deleteFromWatchList(watchListEntry, deleteFromWatchListCallback.bind(this));
+  }
+
   componentDidMount() {
     console.info('componentDidMount..');
     if ( this.props.auth.loggedInUser === '') {
@@ -182,7 +211,7 @@ export default class Home extends React.Component {
       return <Alert variant={'danger'} > No row selected? </Alert>
     }*/
     let readOnly = false;
-    if (this.state.deleteToWatchList) readOnly = true;
+    if (this.state.deleteFromWatchList) readOnly = true;
     console.info('showModalForm: formValues=%o', this.state.formValues);
 
     return (
@@ -204,17 +233,19 @@ export default class Home extends React.Component {
   onModalActionButtonClick() {
     console.info('onModalActionButtonClick: formValues=%o', this.state.formValues);
     let formValues = this.state.formValues;
-    // TODO: Validate data
+    // TODO: Validate data. Temporarily setting it to null, needed for add to succeed
     formValues.optionExpiry = null;
     formValues.optionStrike = null;
+
     if (this.state.addToWatchList) {
       console.info('onModalActionButtonClick: call add');
       this.addToWatchList(this.state.formValues);
       return;
     }
 
-    if (this.state.deleteToWatchList) {
+    if (this.state.deleteFromWatchList) {
       console.info('onModalActionButtonClick: call delete');
+      this.deleteFromWatchList(this.state.formValues);
       return;
     }
 
@@ -229,7 +260,7 @@ export default class Home extends React.Component {
         </Button>
       );
 
-    if (this.state.deleteToWatchList) {
+    if (this.state.deleteFromWatchList) {
       return (
         <Button variant="primary" onClick={this.onModalActionButtonClick}>
           Delete
