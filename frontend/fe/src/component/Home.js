@@ -3,7 +3,8 @@ import { Redirect } from 'react-router-dom';
 import Alert from 'react-bootstrap/Alert';
 import Button from 'react-bootstrap/Button';
 import ButtonGroup from 'react-bootstrap/ButtonGroup';
-import ButtonToolbar from 'react-bootstrap/ButtonToolbar'
+import ButtonToolbar from 'react-bootstrap/ButtonToolbar';
+import Modal from 'react-bootstrap/Modal';
 
 import { getBackend } from '../utils/Backend';
 import Table from '../utils/Table';
@@ -13,19 +14,48 @@ export default class Home extends React.Component {
     super(props);
 
     this.onEditButtonClick = this.onEditButtonClick.bind(this);
+    this.onDeleteButtonClick = this.onDeleteButtonClick.bind(this);
+    this.onAddButtonClick = this.onAddButtonClick.bind(this);
     this.loadWatchList = this.loadWatchList.bind(this);
-
+    this.onCloseDetailedViewModal = this.onCloseDetailedViewModal.bind(this);
+    this.showErrorMsg = this.showErrorMsg.bind(this);
 
     this.state = {
       isWatchListLoaded: false,
       errorMsg : '',
       watchList : null,
+      showDetailedViewModal: false,
+      addToWatchList: false,
+      deleteToWatchList: false,
     }
   }
 
+  onCloseDetailedViewModal() {
+    console.info('onCloseDetailedViewModal: ...')
+    this.setState({
+      showDetailedViewModal: false
+    });
+  }
+
   onEditButtonClick () {
-    //TODO
-    console.info('onEditButtonClick: Loading watchlist...')
+    console.info('onEditButtonClick: state=%o', this.state)
+    this.setState({
+      showDetailedViewModal: true
+    });
+  }
+
+  onAddButtonClick() {
+    console.info('onAddButtonClick: ...')
+  }
+
+  onDeleteButtonClick() {
+    console.info('onDeleteButtonClick: ...')
+  }
+
+  showErrorMsg() {
+    if (this.state.errorMsg !== "") {
+      return <Alert variant={'danger'} > {this.state.errorMsg} </Alert>
+    }
   }
 
   loadWatchList() {
@@ -90,12 +120,16 @@ export default class Home extends React.Component {
       return <Alert variant="primary"> Loading watchlist... </Alert>;
     }
 
-    // TODO: 
-    // 1. Show error
-    // 2. Refresh button
+    console.info('render: this.showDetailedViewModal=%o...', this.state.showDetailedViewModal)
 
     const columns = [
-      { Header: 'ID',  accessor: 'id',  Cell: ({value}) => (<Button onClick={this.onEditButtonClick}>Edit</Button>)},
+      { Header: 'ID',  accessor: 'id',
+          Cell: ({value}) => (
+              <ButtonGroup className="mr-2" aria-label="First group">
+                <Button onClick={this.onEditButtonClick}>Edit</Button>
+                <Button onClick={this.onDeleteButtonClick}>Delete</Button>
+              </ButtonGroup>
+            )},
       { Header: 'Asset Type', accessor: 'assetType'},
       { Header: 'Ticker', accessor: 'ticker'},
       { Header: 'Strike', accessor: 'optionStrike'},
@@ -110,15 +144,32 @@ export default class Home extends React.Component {
 
         <ButtonToolbar aria-label="Toolbar with button groups">
           <ButtonGroup className="mr-2" aria-label="First group">
-            <Button> Add </Button>
+            <Button onClick={this.onAddButtonClick}> Add </Button>
           </ButtonGroup>
           <ButtonGroup className="mr-2" aria-label="Second group">
             <Button onClick={this.loadWatchList}> Refresh </Button>
           </ButtonGroup>
         </ButtonToolbar>
-
         Welcome home {this.props.auth.loggedInUser}
+        { this.showErrorMsg() }
+
         <Table columns={columns} data={this.state.watchList} />
+
+        {/* animation=false added due to warning in console: https://github.com/react-bootstrap/react-bootstrap/issues/5075 */ }
+        <Modal show={this.state.showDetailedViewModal} onHide={this.onCloseDetailedViewModal} animation={false}>
+        <Modal.Header closeButton>
+          <Modal.Title>Modal heading</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>Woohoo, you're reading this text in a modal!</Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={this.onCloseDetailedViewModal}>
+            Close
+          </Button>
+          <Button variant="primary" onClick={this.onCloseDetailedViewModal}>
+            Save Changes
+          </Button>
+        </Modal.Footer>
+      </Modal>
       </div>
     );
   }
