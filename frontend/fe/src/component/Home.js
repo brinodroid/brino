@@ -23,6 +23,7 @@ export default class Home extends React.Component {
     this.loadWatchList = this.loadWatchList.bind(this);
     this.addToWatchList = this.addToWatchList.bind(this);
     this.deleteFromWatchList = this.deleteFromWatchList.bind(this);
+    this.updateWatchList = this.updateWatchList.bind(this);
 
     this.onCloseDetailedViewModal = this.onCloseDetailedViewModal.bind(this);
     this.onModalActionButtonClick = this.onModalActionButtonClick.bind(this);
@@ -137,6 +138,34 @@ export default class Home extends React.Component {
     }
 
     getBackend().addToWatchList(watchListEntry, addToWatchListCallback.bind(this));
+    this.onCloseDetailedViewModal();
+  }
+
+  updateWatchList(watchListEntry) {
+    console.info('updateWatchList: adding entry=%o', watchListEntry)
+    let updateWatchListCallback= function (httpStatus, json) {
+      if ( httpStatus === 401) {
+        this.props.auth.setAuthenticationStatus(false);
+        console.error("updateWatchListCallback: authentication expired?");
+        return;
+      }
+
+      if ( httpStatus !== 200) {
+        console.error("updateWatchListCallback: failure: http:%o", httpStatus);
+        this.setState({
+          errorMsg: "Failed to update watchlist"
+        })
+        return;
+      }
+
+      console.info("updateWatchListCallback: json: %o", json);
+
+      //Reloading the watchlist
+      this.loadWatchList();
+    }
+
+    getBackend().updateWatchList(watchListEntry, updateWatchListCallback.bind(this));
+    this.onCloseDetailedViewModal();
   }
 
   deleteFromWatchList(watchListEntry) {
@@ -163,6 +192,7 @@ export default class Home extends React.Component {
     }
 
     getBackend().deleteFromWatchList(watchListEntry, deleteFromWatchListCallback.bind(this));
+    this.onCloseDetailedViewModal();
   }
 
   componentDidMount() {
@@ -250,6 +280,7 @@ export default class Home extends React.Component {
     }
 
     console.info('onModalActionButtonClick: call update');
+    this.updateWatchList(this.state.formValues);
   }
 
   showModalActionButton() {
@@ -270,7 +301,7 @@ export default class Home extends React.Component {
 
     return (
       <Button variant="primary" onClick={this.onModalActionButtonClick}>
-        Edit
+        Update
       </Button>
     );
   }
