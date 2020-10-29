@@ -9,8 +9,12 @@ class Backend {
 
     this.getLoggedInUser = this.getLoggedInUser.bind(this);
     this.getConfiguration = this.getConfiguration.bind(this);
+
     this.getWatchList = this.getWatchList.bind(this);
+    this.addToWatchList = this.addToWatchList.bind(this);
+
     this.getWithToken = this.getWithToken.bind(this);
+    this.postWithToken = this.postWithToken.bind(this);
   }
 
   authenticate(username, password, callback) {
@@ -63,8 +67,37 @@ class Backend {
     this.getWithToken('http://localhost:8000/brSetting/config', callback);
   }
 
+  addToWatchList(watchListEntry, callback) {
+    this.postWithToken('http://localhost:8000/brCore/watchlist/', watchListEntry, callback);
+  }
+
   getWatchList(callback) {
     this.getWithToken('http://localhost:8000/brCore/watchlist', callback);
+  }
+
+  postWithToken(url, data, callback) {
+    let httpStatus;
+    fetch(url, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', Authorization: `JWT ${localStorage.getItem('token')}`},
+      body: JSON.stringify(data)
+    })
+    .then(response => {
+      httpStatus = response.status;
+      return response.json();
+    })
+    .then(json => {
+      if (httpStatus !== 200) {
+        console.error("postWithToken: url=%o json=%o", url, json);
+        callback(httpStatus, json);
+        return;
+      }
+      callback(httpStatus);
+    })
+    .catch (error => {
+      console.error("postWithToken: url=%o error=%o", url, error);
+      callback(httpStatus, undefined);
+    });
   }
 
   getWithToken(url, callback) {

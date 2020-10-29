@@ -20,6 +20,7 @@ export default class Home extends React.Component {
     this.onDeleteButtonClick = this.onDeleteButtonClick.bind(this);
     this.onAddButtonClick = this.onAddButtonClick.bind(this);
     this.loadWatchList = this.loadWatchList.bind(this);
+    this.addToWatchList = this.addToWatchList.bind(this);
     this.onCloseDetailedViewModal = this.onCloseDetailedViewModal.bind(this);
     this.onModalActionButtonClick = this.onModalActionButtonClick.bind(this);
     this.showModalActionButton = this.showModalActionButton.bind(this);
@@ -83,22 +84,22 @@ export default class Home extends React.Component {
 
   loadWatchList() {
     console.info('loadWatchList: Loading watchlist...')
-    let watchListCallback = function (httpStatus, json) {
+    let loadWatchListCallback = function (httpStatus, json) {
       if ( httpStatus === 401) {
         this.props.auth.setAuthenticationStatus(false);
-        console.error("watchListCallback: authentication expired?");
+        console.error("loadWatchListCallback: authentication expired?");
         return;
       }
 
       if ( httpStatus !== 200) {
-        console.error("watchListCallback: failure: http:%o", httpStatus);
+        console.error("loadWatchListCallback: failure: http:%o", httpStatus);
         this.setState({
           errorMsg: "Failed to load watchlist"
         })
         return;
       }
 
-      console.info("watchListCallback: json: %o", json);
+      console.info("loadWatchListCallback: json: %o", json);
       this.setState({
         isWatchListLoaded: true,
         watchList: json,
@@ -106,7 +107,33 @@ export default class Home extends React.Component {
       });
     }
 
-    getBackend().getWatchList(watchListCallback.bind(this));
+    getBackend().getWatchList(loadWatchListCallback.bind(this));
+  }
+
+  addToWatchList(watchListEntry) {
+    console.info('addToWatchList: adding entry=%o', watchListEntry)
+    let addToWatchListCallback = function (httpStatus, json) {
+      if ( httpStatus === 401) {
+        this.props.auth.setAuthenticationStatus(false);
+        console.error("addToWatchListCallback: authentication expired?");
+        return;
+      }
+
+      if ( httpStatus !== 200) {
+        console.error("addToWatchListCallback: failure: http:%o", httpStatus);
+        this.setState({
+          errorMsg: "Failed to add to watchlist"
+        })
+        return;
+      }
+
+      console.info("addToWatchListCallback: json: %o", json);
+
+      //Reloading the watchlist
+      this.loadWatchList();
+    }
+
+    getBackend().addToWatchList(watchListEntry, addToWatchListCallback.bind(this));
   }
 
   componentDidMount() {
@@ -176,8 +203,13 @@ export default class Home extends React.Component {
 
   onModalActionButtonClick() {
     console.info('onModalActionButtonClick: formValues=%o', this.state.formValues);
+    let formValues = this.state.formValues;
+    // TODO: Validate data
+    formValues.optionExpiry = null;
+    formValues.optionStrike = null;
     if (this.state.addToWatchList) {
       console.info('onModalActionButtonClick: call add');
+      this.addToWatchList(this.state.formValues);
       return;
     }
 
@@ -213,7 +245,7 @@ export default class Home extends React.Component {
   }
 
   showModal() {
-      {/* animation=false added due to warning in console: https://github.com/react-bootstrap/react-bootstrap/issues/5075 */ }
+    /* animation=false added due to warning in console: https://github.com/react-bootstrap/react-bootstrap/issues/5075 */
     return (
         <Modal show={this.state.showDetailedViewModal} onHide={this.onCloseDetailedViewModal} animation={false}>
         <Modal.Header closeButton>
