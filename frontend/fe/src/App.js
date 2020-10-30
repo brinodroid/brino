@@ -5,6 +5,7 @@ import Nav from 'react-bootstrap/Nav';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import Login from "./component/Login";
 import Setting from "./component/Setting";
+import NotFound from "./component/NotFound";
 import Home from "./component/Home";
 import { getBackend } from './utils/Backend'
 import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
@@ -64,9 +65,11 @@ export default class App extends React.Component {
           </Navbar>
 
           <Switch>
+            <Route exact path="/"> <Home auth={ authProps } /> </Route>
             <Route exact path="/home"> <Home auth={ authProps } /> </Route>
             <Route path="/login"> <Login auth={ authProps } /> </Route>
             <Route path="/setting"> <Setting auth={ authProps } /> </Route>
+            <Route> <NotFound auth={ authProps } /> </Route>
           </Switch>
         </div>
       </Router>
