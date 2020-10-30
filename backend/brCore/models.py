@@ -1,6 +1,9 @@
 from django.db import models
 from django.utils import timezone
 from .utils.asset_types import AssetTypes
+from .utils.bgtask_status import BGTaskStatus
+from .utils.bgtask_action import BGTaskAction
+
 
 # WatchList: This is the list of assets actively tracked
 class WatchList(models.Model):
@@ -20,3 +23,14 @@ class WatchList(models.Model):
             self.creationTimestamp = timezone.now()
         self.updateTimestamp = timezone.now()
         return super(WatchList, self).save(*args, **kwargs)
+
+
+class BGTask(models.Model):
+    updateTimestamp = models.DateTimeField(default=timezone.now)
+    watchListId = models.IntegerField()
+    status = models.CharField(max_length=16, choices=BGTaskStatus.choices(), default=BGTaskStatus.NOT_STARTED, null=True)
+    action = models.CharField(max_length=64, choices=BGTaskAction.choices(), default=BGTaskAction.NO_ACTION)
+
+    def save(self, *args, **kwargs):
+        self.updateTimestamp = timezone.now()
+        return super(BGTask, self).save(*args, **kwargs)

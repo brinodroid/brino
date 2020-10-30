@@ -3,16 +3,18 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 
-from .models import WatchList
+from .models import WatchList, BGTask
 from .serializers.watchlist import WatchListSerializer
+from .serializers.bgtask import BGTaskSerializer
+from .bgtask_lib import start_bgtask
 
 
 @api_view(['GET', 'POST'])
 def watchlist_list(request):
     if request.method == 'GET':
         #Get the list of watchlists
-        port_folios = WatchList.objects.all()
-        serializer = WatchListSerializer(port_folios, many=True)
+        watchlist = WatchList.objects.all()
+        serializer = WatchListSerializer(watchlist, many=True)
         return Response(serializer.data)
     elif request.method == 'POST':
         #Create a new watchlist
@@ -25,7 +27,6 @@ def watchlist_list(request):
         return Response(serializer.data)
 
     return Response({'detail': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
 
 @api_view(['GET', 'PUT', 'DELETE'])
 def watchlist_detail(request, pk):
@@ -48,6 +49,48 @@ def watchlist_detail(request, pk):
 
     elif request.method == 'DELETE':
         watchlist.delete()
+        return Response({'detail': 'Deleted'}, status=status.HTTP_204_NO_CONTENT)
+
+    return Response({'detail': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+@api_view(['GET', 'POST'])
+def bgtask_list(request):
+    if request.method == 'GET':
+        #Get the list of watchlists
+        bgtask = BGTask.objects.all()
+        serializer = BGTaskSerializer(bgtask, many=True)
+        return Response(serializer.data)
+    elif request.method == 'POST':
+        #Create a new watchlist
+        print("request data: %s", request.data)
+        serializer = BGTaskSerializer(data=request.data)
+        if serializer.is_valid() == False:
+            print(serializer.errors)
+            return Response({'detail': 'Data validation failed'}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer.save()
+        return Response(serializer.data)
+
+    return Response({'detail': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+@api_view(['GET', 'PUT', 'DELETE'])
+def bgtask_detail(request, pk):
+    try:
+        bgtask = BGTask.objects.get(pk=pk)
+    except BGTask.DoesNotExist:
+        return Response({'detail': 'Resource does not exist'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    if request.method == 'GET':
+        serializer = BGTaskSerializer(bgtask)
+        return Response(serializer.data)
+
+    elif request.method == 'PUT':
+        bgtask = start_bgtask(bgtask)
+        serializer = BGTaskSerializer(bgtask)
+        return Response(serializer.data)
+
+    elif request.method == 'DELETE':
+        bgtask.delete()
         return Response({'detail': 'Deleted'}, status=status.HTTP_204_NO_CONTENT)
 
     return Response({'detail': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
