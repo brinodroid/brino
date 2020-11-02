@@ -8,3 +8,13 @@ class BGTaskAction(Enum):
     @classmethod
     def choices(cls):
         return [(key.value, key.name) for key in cls]
+
+
+class BGTaskActionStatus(Enum):
+    NONE = "NONE"
+    GOOD = "GOOD"
+    BAD = "BAD"
+
+    @classmethod
+    def choices(cls):
+        return [(key.value, key.name) for key in cls]

@@ -85,8 +85,12 @@ def bgtask_detail(request, pk):
         return Response(serializer.data)
 
     elif request.method == 'PUT':
-        bgtask = start_bgtask(bgtask)
-        serializer = BGTaskSerializer(bgtask)
+        serializer = BGTaskSerializer(bgtask, data=request.data)
+        if serializer.is_valid() == False:
+            return Response({'detail': 'Data validation failed'}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer.save()
+        start_bgtask(bgtask)
         return Response(serializer.data)
 
     elif request.method == 'DELETE':
