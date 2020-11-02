@@ -1,5 +1,4 @@
 
-
 let backendSingleton = null;
 class Backend {
   constructor() {
@@ -19,6 +18,7 @@ class Backend {
     this.postWithToken = this.postWithToken.bind(this);
     this.deleteWithToken = this.deleteWithToken.bind(this);
     this.putWithToken = this.putWithToken.bind(this);
+    this.getURL = this.getURL.bind(this);
   }
 
   authenticate(username, password, callback) {
@@ -27,7 +27,8 @@ class Backend {
     authenticateRequest.username = username;
     authenticateRequest.password = password;
 
-    fetch('http://localhost:8000/token-auth/', {
+    console.info('url'+ this.getURL() + 'token-auth/');
+    fetch( this.getURL() + 'token-auth/', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify(authenticateRequest)
@@ -175,6 +176,11 @@ class Backend {
       console.error("getWithToken: url=%o error=%o", url, error);
       callback(httpStatus, undefined);
     });
+  }
+
+  getURL() {
+    console.info('robin: %o', window.location);
+    return window.location.protocol + '//' + window.location.hostname + ':8000/';
   }
 }
 
