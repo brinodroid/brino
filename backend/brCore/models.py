@@ -27,16 +27,37 @@ class WatchList(models.Model):
     def __str__(self):
         return "creationTimestamp: %s, updateTimestamp:%s, assetType:%s, ticker:%s," \
                " optionStrike:%s, optionExpiry:%s, comment:%s " \
-              % (self.creationTimestamp, self.updateTimestamp, self.assetType, self.ticker,
-                 self.optionStrike, self.optionExpiry, self.comment)
+               % (self.creationTimestamp, self.updateTimestamp, self.assetType, self.ticker,
+                  self.optionStrike, self.optionExpiry, self.comment)
+
 
 class BGTask(models.Model):
     updateTimestamp = models.DateTimeField(default=timezone.now)
     watchListId = models.IntegerField()
-    status = models.CharField(max_length=16, choices=BGTaskStatus.choices(), default=BGTaskStatus.NOT_STARTED, null=True)
+    status = models.CharField(max_length=16, choices=BGTaskStatus.choices(), default=BGTaskStatus.NOT_STARTED,
+                              null=True)
     action = models.CharField(max_length=64, choices=BGTaskAction.choices(), default=BGTaskAction.NO_ACTION)
-    actionStatus = models.CharField(max_length=16, choices=BGTaskActionStatus.choices(), default=BGTaskActionStatus.NONE)
+    actionStatus = models.CharField(max_length=16, choices=BGTaskActionStatus.choices(),
+                                    default=BGTaskActionStatus.NONE)
 
     def save(self, *args, **kwargs):
         self.updateTimestamp = timezone.now()
         return super(BGTask, self).save(*args, **kwargs)
+
+
+class PortFolio(models.Model):
+    updateTimestamp = models.DateTimeField(default=timezone.now)
+    watchListId = models.IntegerField()
+    entryDate = models.DateField()
+    entryPrice = models.FloatField()
+    units = models.FloatField()
+    exitPrice = models.FloatField(null=True, blank=True)
+    exitDate = models.DateField(null=True, blank=True)
+    profitTarget = models.FloatField()
+    stopLoss = models.FloatField()
+    chainedPortFolioId = models.IntegerField(null=True, blank=True)
+
+    def save(self, *args, **kwargs):
+        self.updateTimestamp = timezone.now()
+        return super(PortFolio, self).save(*args, **kwargs)
+
