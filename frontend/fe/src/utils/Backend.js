@@ -27,7 +27,6 @@ class Backend {
     authenticateRequest.username = username;
     authenticateRequest.password = password;
 
-    console.info('url'+ this.getURL() + 'token-auth/');
     fetch( this.getURL() + 'token-auth/', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
@@ -65,31 +64,33 @@ class Backend {
   }
 
   getLoggedInUser(callback) {
-    this.getWithToken('http://localhost:8000/brAuth/user', callback);
+    this.getWithToken('brAuth/user', callback);
   }
 
   getConfiguration(callback) {
-    this.getWithToken('http://localhost:8000/brSetting/config', callback);
+    this.getWithToken('brSetting/config', callback);
   }
 
   getWatchList(callback) {
-    this.getWithToken('http://localhost:8000/brCore/watchlist', callback);
+    this.getWithToken('brCore/watchlist', callback);
   }
 
   addToWatchList(watchListEntry, callback) {
-    this.postWithToken('http://localhost:8000/brCore/watchlist/', watchListEntry, callback);
+    this.postWithToken('brCore/watchlist/', watchListEntry, callback);
   }
 
   deleteFromWatchList(watchListEntry, callback) {
-    this.deleteWithToken('http://localhost:8000/brCore/watchlist/'+watchListEntry.id, callback);
+    this.deleteWithToken('brCore/watchlist/'+watchListEntry.id, callback);
   }
 
   updateWatchList(watchListEntry, callback) {
-    this.putWithToken('http://localhost:8000/brCore/watchlist/'+watchListEntry.id, watchListEntry, callback);
+    this.putWithToken('brCore/watchlist/'+watchListEntry.id, watchListEntry, callback);
   }
 
-  deleteWithToken(url, callback) {
+  deleteWithToken(api, callback) {
     let httpStatus;
+    let url = this.getURL() + api;
+
     fetch(url, {
       method: 'DELETE',
       headers: {'Content-Type': 'application/json', Authorization: `JWT ${localStorage.getItem('token')}`},
@@ -104,8 +105,10 @@ class Backend {
     });
   }
 
-  putWithToken(url, data, callback) {
+  putWithToken(api, data, callback) {
     let httpStatus;
+    let url = this.getURL() + api;
+
     fetch(url, {
       method: 'PUT',
       headers: {'Content-Type': 'application/json', Authorization: `JWT ${localStorage.getItem('token')}`},
@@ -129,8 +132,10 @@ class Backend {
     });
   }
 
-  postWithToken(url, data, callback) {
+  postWithToken(api, data, callback) {
     let httpStatus;
+    let url = this.getURL() + api;
+
     fetch(url, {
       method: 'POST',
       headers: {'Content-Type': 'application/json', Authorization: `JWT ${localStorage.getItem('token')}`},
@@ -154,8 +159,9 @@ class Backend {
     });
   }
 
-  getWithToken(url, callback) {
+  getWithToken(api, callback) {
     let httpStatus;
+    let url = this.getURL() + api;
 
     fetch(url, {
       headers: {Authorization: `JWT ${localStorage.getItem('token')}`}
@@ -179,7 +185,6 @@ class Backend {
   }
 
   getURL() {
-    console.info('robin: %o', window.location);
     return window.location.protocol + '//' + window.location.hostname + ':8000/';
   }
 }
