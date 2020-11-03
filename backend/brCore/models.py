@@ -1,15 +1,14 @@
 from django.db import models
 from django.utils import timezone
 from .utils.asset_types import AssetTypes
-from .utils.bgtask_status import BGTaskStatus
-from .utils.bgtask_action import BGTaskAction, BGTaskActionStatus
+from .utils.bgtask_types import BGTaskAction, BGTaskActionStatus, BGTaskStatus, BGTaskDataIdType
 
 
 # WatchList: This is the list of assets actively tracked
 class WatchList(models.Model):
     creationTimestamp = models.DateTimeField(editable=False, default=timezone.now)
     updateTimestamp = models.DateTimeField(default=timezone.now)
-    assetType = models.CharField(max_length=16, choices=AssetTypes.choices(), default=AssetTypes.STOCK)
+    assetType = models.CharField(max_length=16, choices=AssetTypes.choices(), default=AssetTypes.STOCK.value)
     ticker = models.CharField(max_length=20)
     # Going with float as sqlite doesnt have decimal support
     optionStrike = models.FloatField(null=True)
@@ -33,12 +32,15 @@ class WatchList(models.Model):
 
 class BGTask(models.Model):
     updateTimestamp = models.DateTimeField(default=timezone.now)
-    watchListId = models.IntegerField()
-    status = models.CharField(max_length=16, choices=BGTaskStatus.choices(), default=BGTaskStatus.NOT_STARTED,
-                              null=True)
-    action = models.CharField(max_length=64, choices=BGTaskAction.choices(), default=BGTaskAction.NO_ACTION)
+    dataId = models.IntegerField()
+    dataIdType = models.CharField(max_length=16, choices=BGTaskDataIdType.choices(),
+                                  default=BGTaskDataIdType.WATCHLIST.value)
+    status = models.CharField(max_length=16, choices=BGTaskStatus.choices(),
+                              default=BGTaskStatus.NOT_STARTED.value, null=True)
+    action = models.CharField(max_length=64, choices=BGTaskAction.choices(),
+                              default=BGTaskAction.NO_ACTION.value, null=True)
     actionStatus = models.CharField(max_length=16, choices=BGTaskActionStatus.choices(),
-                                    default=BGTaskActionStatus.NONE)
+                                    default=BGTaskActionStatus.NONE.value)
 
     def save(self, *args, **kwargs):
         self.updateTimestamp = timezone.now()

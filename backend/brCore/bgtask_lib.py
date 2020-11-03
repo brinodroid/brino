@@ -1,7 +1,6 @@
 import threading
 from .models import BGTask, WatchList
-from .utils.bgtask_status import BGTaskStatus
-from .utils.bgtask_action import BGTaskAction
+from .utils.bgtask_types import BGTaskAction, BGTaskStatus
 import time
 
 def __bgtask_stoploss_cc_tracker(bgtask, watchlist):
