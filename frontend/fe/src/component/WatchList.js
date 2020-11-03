@@ -12,7 +12,7 @@ import Col from 'react-bootstrap/Col';
 import { getBackend } from '../utils/Backend';
 import Table from '../utils/Table';
 
-export default class Home extends React.Component {
+export default class WatchList extends React.Component {
   constructor(props) {
     super(props);
 
@@ -20,10 +20,10 @@ export default class Home extends React.Component {
     this.onDeleteButtonClick = this.onDeleteButtonClick.bind(this);
     this.onAddButtonClick = this.onAddButtonClick.bind(this);
 
-    this.loadBgtask = this.loadBgtask.bind(this);
-    this.createBgtask = this.createBgtask.bind(this);
-    this.deleteBgtask = this.deleteBgtask.bind(this);
-    this.updateBgtask = this.updateBgtask.bind(this);
+    this.loadWatchList = this.loadWatchList.bind(this);
+    this.addToWatchList = this.addToWatchList.bind(this);
+    this.deleteFromWatchList = this.deleteFromWatchList.bind(this);
+    this.updateWatchList = this.updateWatchList.bind(this);
 
     this.onCloseDetailedViewModal = this.onCloseDetailedViewModal.bind(this);
     this.onModalActionButtonClick = this.onModalActionButtonClick.bind(this);
@@ -35,12 +35,12 @@ export default class Home extends React.Component {
     this.onFormValuesChange = this.onFormValuesChange.bind(this);
 
     this.state = {
-      isBgtaskLoaded: false,
-      bgtaskList : null,
+      isWatchListLoaded: false,
       errorMsg : '',
+      watchList : null,
       showDetailedViewModal: false,
-      createBgtask: false,
-      deleteBgtask: false,
+      addToWatchList: false,
+      deleteFromWatchList: false,
       formValues : {id: "", assetType: "", ticker: "", optionStrike: "", optionExpiry: "", comment: ""}
     }
   }
@@ -49,8 +49,8 @@ export default class Home extends React.Component {
     console.info('onCloseDetailedViewModal: ...')
     this.setState({
       showDetailedViewModal: false,
-      deleteBgtask: false,
-      createBgtask: false,
+      deleteFromWatchList: false,
+      addToWatchList: false,
       formValues : {id: "", assetType: "", ticker: "", optionStrike: "", optionExpiry: "", comment: ""}
     });
   }
@@ -67,7 +67,7 @@ export default class Home extends React.Component {
     console.info('onAddButtonClick: ...')
     this.setState({
       showDetailedViewModal: true,
-      createBgtask: true
+      addToWatchList: true
     });
   }
 
@@ -75,7 +75,7 @@ export default class Home extends React.Component {
     console.info('onDeleteButtonClick: rowData=%o', rowData);
     this.setState({
       showDetailedViewModal: true,
-      deleteBgtask: true,
+      deleteFromWatchList: true,
       formValues: rowData
     });
   }
@@ -86,136 +86,120 @@ export default class Home extends React.Component {
     }
   }
 
-  loadBgtask() {
-    console.info('loadBgtask: Loading bgtask...')
-    let loadBgtaskCallback = function (httpStatus, json) {
+  loadWatchList() {
+    console.info('loadWatchList: Loading watchlist...')
+    let loadWatchListCallback = function (httpStatus, json) {
       if ( httpStatus === 401) {
         this.props.auth.setAuthenticationStatus(false);
-        console.error("loadBgtaskCallback: authentication expired?");
+        console.error("loadWatchListCallback: authentication expired?");
         return;
       }
 
       if ( httpStatus !== 200) {
-        console.error("loadBgtaskCallback: failure: http:%o", httpStatus);
+        console.error("loadWatchListCallback: failure: http:%o", httpStatus);
         this.setState({
-          errorMsg: "Failed to load bgtask"
+          errorMsg: "Failed to load watchlist"
         })
         return;
       }
 
-      console.info("loadBgtaskCallback: json: %o", json);
+      console.info("loadWatchListCallback: json: %o", json);
       this.setState({
-        isBgtaskLoaded: true,
-        bgtaskList : json,
+        isWatchListLoaded: true,
+        watchList: json,
         errorMsg: ""
       });
     }
 
-    getBackend().getBgtask(loadBgtaskCallback.bind(this));
+    getBackend().getWatchList(loadWatchListCallback.bind(this));
   }
 
-  createBgtask(bgtask) {
-    console.info('createBgtask: adding entry=%o', bgtask)
-    let createBgtaskCallback = function (httpStatus, json) {
+  addToWatchList(watchListEntry) {
+    console.info('addToWatchList: adding entry=%o', watchListEntry)
+    let addToWatchListCallback = function (httpStatus, json) {
       if ( httpStatus === 401) {
         this.props.auth.setAuthenticationStatus(false);
-        console.error("createBgtaskCallback: authentication expired?");
+        console.error("addToWatchListCallback: authentication expired?");
         return;
       }
 
       if ( httpStatus !== 200) {
-        console.error("createBgtaskCallback: failure: http:%o", httpStatus);
+        console.error("addToWatchListCallback: failure: http:%o", httpStatus);
         this.setState({
-          errorMsg: "Failed to create bgtask"
+          errorMsg: "Failed to add to watchlist"
         })
         return;
       }
 
-      console.info("createBgtaskCallback: json: %o", json);
+      console.info("addToWatchListCallback: json: %o", json);
 
-      //Reloading the bgtaskList
-      this.loadBgtask();
+      //Reloading the watchlist
+      this.loadWatchList();
     }
 
-    getBackend().createBgtask(bgtask, createBgtaskCallback.bind(this));
+    getBackend().addToWatchList(watchListEntry, addToWatchListCallback.bind(this));
     this.onCloseDetailedViewModal();
   }
 
-  updateBgtask(bgtask) {
-    console.info('updateBgtask: adding entry=%o', bgtask)
-    let updateBgtaskCallback= function (httpStatus, json) {
+  updateWatchList(watchListEntry) {
+    console.info('updateWatchList: adding entry=%o', watchListEntry)
+    let updateWatchListCallback= function (httpStatus, json) {
       if ( httpStatus === 401) {
         this.props.auth.setAuthenticationStatus(false);
-        console.error("updateBgtaskCallback: authentication expired?");
+        console.error("updateWatchListCallback: authentication expired?");
         return;
       }
 
       if ( httpStatus !== 200) {
-        console.error("updateBgtaskCallback: failure: http:%o", httpStatus);
+        console.error("updateWatchListCallback: failure: http:%o", httpStatus);
         this.setState({
-          errorMsg: "Failed to update bgtask"
+          errorMsg: "Failed to update watchlist"
         })
         return;
       }
 
-      console.info("updateBgtaskCallback: json: %o", json);
+      console.info("updateWatchListCallback: json: %o", json);
 
-      //Reloading the bgtaskList
-      this.loadBgtask();
+      //Reloading the watchlist
+      this.loadWatchList();
     }
 
-    getBackend().updateBgtask(bgtask, updateBgtaskCallback.bind(this));
+    getBackend().updateWatchList(watchListEntry, updateWatchListCallback.bind(this));
     this.onCloseDetailedViewModal();
   }
 
-  deleteBgtask(bgtask) {
-    console.info('deleteBgtask: adding entry=%o', bgtask)
-    let deleteBgtaskCallback = function (httpStatus, json) {
+  deleteFromWatchList(watchListEntry) {
+    console.info('deleteFromWatchList: adding entry=%o', watchListEntry)
+    let deleteFromWatchListCallback = function (httpStatus, json) {
       if ( httpStatus === 401) {
         this.props.auth.setAuthenticationStatus(false);
-        console.error("deleteBgtaskCallback: authentication expired?");
+        console.error("deleteFromWatchListCallback: authentication expired?");
         return;
       }
 
       if ( httpStatus !== 204) {
-        console.error("deleteBgtaskCallback: failure: http:%o", httpStatus);
+        console.error("deleteFromWatchListCallback: failure: http:%o", httpStatus);
         this.setState({
-          errorMsg: "Failed to delete to bgtask"
+          errorMsg: "Failed to delete to watchlist"
         })
         return;
       }
 
-      console.info("deleteBgtaskCallback: json: %o", json);
+      console.info("deleteFromWatchListCallback: json: %o", json);
 
-      //Reloading the bgtaskList
-      this.loadBgtask();
+      //Reloading the watchlist
+      this.loadWatchList();
     }
 
-    getBackend().deleteBgtask(bgtask, deleteBgtaskCallback.bind(this));
+    getBackend().deleteFromWatchList(watchListEntry, deleteFromWatchListCallback.bind(this));
     this.onCloseDetailedViewModal();
   }
 
   componentDidMount() {
     console.info('componentDidMount..');
-    if ( this.props.auth.loggedInUser === '') {
-      // Logged in user not set
-      let getLoggedInUserCallback = function (httpStatus, json) {
-        if ( httpStatus !== 200) {
-          console.error("getLoggedInUserCallback: failure: http:%d", httpStatus);
-          getBackend().clearAuthentication();
-          this.props.auth.setLoggedInUser('');
-          return;
-        }
 
-        console.info("getLoggedInUserCallback: success: http:%d json:%o", httpStatus, json);
-        this.props.auth.setLoggedInUser(json.username);
-      }
-
-      getBackend().getLoggedInUser(getLoggedInUserCallback.bind(this));
-    }
-
-    if (!this.state.isBgtaskLoaded) {
-      this.loadBgtask();
+    if (!this.state.isWatchListLoaded) {
+      this.loadWatchList();
     }
   }
 
@@ -241,7 +225,7 @@ export default class Home extends React.Component {
       return <Alert variant={'danger'} > No row selected? </Alert>
     }*/
     let readOnly = false;
-    if (this.state.deleteBgtask) readOnly = true;
+    if (this.state.deleteFromWatchList) readOnly = true;
     console.info('showModalForm: formValues=%o', this.state.formValues);
 
     return (
@@ -267,31 +251,31 @@ export default class Home extends React.Component {
     formValues.optionExpiry = null;
     formValues.optionStrike = null;
 
-    if (this.state.createBgtask) {
+    if (this.state.addToWatchList) {
       console.info('onModalActionButtonClick: call add');
-      this.createBgtask(this.state.formValues);
+      this.addToWatchList(this.state.formValues);
       return;
     }
 
-    if (this.state.deleteBgtask) {
+    if (this.state.deleteFromWatchList) {
       console.info('onModalActionButtonClick: call delete');
-      this.deleteBgtask(this.state.formValues);
+      this.deleteFromWatchList(this.state.formValues);
       return;
     }
 
     console.info('onModalActionButtonClick: call update');
-    this.updateBgtask(this.state.formValues);
+    this.updateWatchList(this.state.formValues);
   }
 
   showModalActionButton() {
-    if (this.state.createBgtask)
+    if (this.state.addToWatchList)
       return (
         <Button variant="primary" onClick={this.onModalActionButtonClick}>
           Add
         </Button>
       );
 
-    if (this.state.deleteBgtask) {
+    if (this.state.deleteFromWatchList) {
       return (
         <Button variant="primary" onClick={this.onModalActionButtonClick}>
           Delete
@@ -328,30 +312,32 @@ export default class Home extends React.Component {
 
   render() {
     if ( !this.props.auth.isAuthenticated ) {
-      console.info('Home:  not authenticated, redirecting to login page');
+      console.info('WatchList:  not authenticated, redirecting to login page');
       return <Redirect to= '/login' />;
     }
 
-    if ( !this.state.isBgtaskLoaded) {
-      return <Alert variant="primary"> Loading bgtask... </Alert>;
+    if ( !this.state.isWatchListLoaded) {
+      return <Alert variant="primary"> Loading watchlist... </Alert>;
     }
 
     console.info('render: this.showDetailedViewModal=%o...', this.state.showDetailedViewModal)
 
     const columns = [
-      { Header: 'ID',  accessor: 'id',
+      { Action: 'action',  accessor: 'dummy',
           Cell: ({row}) => (
               <ButtonGroup className="mr-2" aria-label="First group">
                 <Button onClick={ (e) => this.onEditButtonClick(row.original) }>Edit</Button>
                 <Button onClick={ (e) => this.onDeleteButtonClick(row.original) }>Delete</Button>
               </ButtonGroup>
             )},
-      { Header: 'Type', accessor: 'dataIdType'},
-      { Header: 'dataId', accessor: 'dataId'},
-      { Header: 'status', accessor: 'status'},
-      { Header: 'action', accessor: 'action'},
-      { Header: 'actionStatus', accessor: 'actionStatus'},
+      { Header: 'ID',  accessor: 'id'},
+      { Header: 'Asset Type', accessor: 'assetType'},
+      { Header: 'Ticker', accessor: 'ticker'},
+      { Header: 'Strike', accessor: 'optionStrike'},
+      { Header: 'Expiry', accessor: 'optionExpiry'},
+      { Header: 'Comment', accessor: 'comment'},
       { Header: 'Update Time', accessor: 'updateTimestamp'},
+      { Header: 'Create Time', accessor: 'creationTimestamp'},
     ];
 
     const onRowClick = (state, rowInfo, column, instance) => {
@@ -367,20 +353,20 @@ export default class Home extends React.Component {
     }
 
     return (
-      <div className="home">
+      <div className="WatchList">
 
         <ButtonToolbar aria-label="Toolbar with button groups">
           <ButtonGroup className="mr-2" aria-label="First group">
             <Button onClick={this.onAddButtonClick}> Add </Button>
           </ButtonGroup>
           <ButtonGroup className="mr-2" aria-label="Second group">
-            <Button onClick={this.loadBgtask}> Refresh </Button>
+            <Button onClick={this.loadWatchList}> Refresh </Button>
           </ButtonGroup>
         </ButtonToolbar>
-        Welcome home {this.props.auth.loggedInUser}
+        Welcome WatchList {this.props.auth.loggedInUser}
         { this.showErrorMsg() }
 
-        <Table columns={columns} data={this.state.bgtaskList} getTrProps={onRowClick} />
+        <Table columns={columns} data={this.state.watchList} getTrProps={onRowClick} />
 
         { this.showModal() }
 

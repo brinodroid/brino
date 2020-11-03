@@ -8,6 +8,7 @@ import Setting from "./component/Setting";
 import NotFound from "./component/NotFound";
 import Home from "./component/Home";
 import WatchList from "./component/WatchList";
+import PortFolio from "./component/PortFolio";
 import { getBackend } from './utils/Backend'
 import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
 
@@ -56,6 +57,9 @@ export default class App extends React.Component {
               Brino
             </Navbar.Brand>
             <Navbar.Text>
+              <Nav.Link href="/portfolio">Portfolio</Nav.Link>
+            </Navbar.Text>
+            <Navbar.Text>
               <Nav.Link href="/watchlist">Watch List</Nav.Link>
             </Navbar.Text>
             <Navbar.Collapse className="justify-content-end">
@@ -72,6 +76,7 @@ export default class App extends React.Component {
             <Route exact path="/"> <Home auth={ authProps } /> </Route>
             <Route exact path="/home"> <Home auth={ authProps } /> </Route>
             <Route path="/login"> <Login auth={ authProps } /> </Route>
+            <Route path="/portfolio"> <PortFolio auth={ authProps } /> </Route>
             <Route path="/watchlist"> <WatchList auth={ authProps } /> </Route>
             <Route path="/setting"> <Setting auth={ authProps } /> </Route>
             <Route> <NotFound auth={ authProps } /> </Route>

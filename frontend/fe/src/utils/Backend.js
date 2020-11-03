@@ -14,6 +14,16 @@ class Backend {
     this.deleteFromWatchList = this.deleteFromWatchList.bind(this);
     this.updateWatchList = this.updateWatchList.bind(this);
 
+    this.getBgtask = this.getBgtask.bind(this);
+    this.createBgtask = this.createBgtask.bind(this);
+    this.deleteBgtask = this.deleteBgtask.bind(this);
+    this.updateBgtask = this.updateBgtask.bind(this);
+
+    this.getPortFolio = this.getPortFolio.bind(this);
+    this.createPortFolio = this.createPortFolio.bind(this);
+    this.deletePortFolio = this.deletePortFolio.bind(this);
+    this.updatePortFolio = this.updatePortFolio.bind(this);
+
     this.getWithToken = this.getWithToken.bind(this);
     this.postWithToken = this.postWithToken.bind(this);
     this.deleteWithToken = this.deleteWithToken.bind(this);
@@ -85,6 +95,38 @@ class Backend {
 
   updateWatchList(watchListEntry, callback) {
     this.putWithToken('brCore/watchlist/'+watchListEntry.id, watchListEntry, callback);
+  }
+
+  getBgtask(callback) {
+    this.getWithToken('brCore/bgtask', callback);
+  }
+
+  createBgtask(bgtask, callback) {
+    this.postWithToken('brCore/bgtask/', bgtask, callback);
+  }
+
+  deleteBgtask(bgtask, callback) {
+    this.deleteWithToken('brCore/bgtask/'+bgtask.id, callback);
+  }
+
+  updateBgtask(bgtask, callback) {
+    this.putWithToken('brCore/bgtask/'+bgtask.id, bgtask, callback);
+  }
+
+  getPortFolio(callback) {
+    this.getWithToken('brCore/portfolio', callback);
+  }
+
+  createPortFolio(portfolio, callback) {
+    this.postWithToken('brCore/portfolio/', portfolio, callback);
+  }
+
+  deletePortFolio(portfolio, callback) {
+    this.deleteWithToken('brCore/portfolio/'+portfolio.id, callback);
+  }
+
+  updatePortFolio(portfolio, callback) {
+    this.putWithToken('brCore/portfolio/'+portfolio.id, portfolio, callback);
   }
 
   deleteWithToken(api, callback) {

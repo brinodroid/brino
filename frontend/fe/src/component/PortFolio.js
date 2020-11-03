@@ -12,7 +12,7 @@ import Col from 'react-bootstrap/Col';
 import { getBackend } from '../utils/Backend';
 import Table from '../utils/Table';
 
-export default class Home extends React.Component {
+export default class PortFolio extends React.Component {
   constructor(props) {
     super(props);
 
@@ -20,10 +20,10 @@ export default class Home extends React.Component {
     this.onDeleteButtonClick = this.onDeleteButtonClick.bind(this);
     this.onAddButtonClick = this.onAddButtonClick.bind(this);
 
-    this.loadBgtask = this.loadBgtask.bind(this);
-    this.createBgtask = this.createBgtask.bind(this);
-    this.deleteBgtask = this.deleteBgtask.bind(this);
-    this.updateBgtask = this.updateBgtask.bind(this);
+    this.loadPortFolio = this.loadPortFolio.bind(this);
+    this.addToPortFolio = this.addToPortFolio.bind(this);
+    this.deleteFromPortFolio = this.deleteFromPortFolio.bind(this);
+    this.updatePortFolio = this.updatePortFolio.bind(this);
 
     this.onCloseDetailedViewModal = this.onCloseDetailedViewModal.bind(this);
     this.onModalActionButtonClick = this.onModalActionButtonClick.bind(this);
@@ -35,12 +35,12 @@ export default class Home extends React.Component {
     this.onFormValuesChange = this.onFormValuesChange.bind(this);
 
     this.state = {
-      isBgtaskLoaded: false,
-      bgtaskList : null,
+      isPortFolioLoaded: false,
       errorMsg : '',
+      PortFolio : null,
       showDetailedViewModal: false,
-      createBgtask: false,
-      deleteBgtask: false,
+      addToPortFolio: false,
+      deleteFromPortFolio: false,
       formValues : {id: "", assetType: "", ticker: "", optionStrike: "", optionExpiry: "", comment: ""}
     }
   }
@@ -49,8 +49,8 @@ export default class Home extends React.Component {
     console.info('onCloseDetailedViewModal: ...')
     this.setState({
       showDetailedViewModal: false,
-      deleteBgtask: false,
-      createBgtask: false,
+      deleteFromPortFolio: false,
+      addToPortFolio: false,
       formValues : {id: "", assetType: "", ticker: "", optionStrike: "", optionExpiry: "", comment: ""}
     });
   }
@@ -67,7 +67,7 @@ export default class Home extends React.Component {
     console.info('onAddButtonClick: ...')
     this.setState({
       showDetailedViewModal: true,
-      createBgtask: true
+      addToPortFolio: true
     });
   }
 
@@ -75,7 +75,7 @@ export default class Home extends React.Component {
     console.info('onDeleteButtonClick: rowData=%o', rowData);
     this.setState({
       showDetailedViewModal: true,
-      deleteBgtask: true,
+      deleteFromPortFolio: true,
       formValues: rowData
     });
   }
@@ -86,136 +86,120 @@ export default class Home extends React.Component {
     }
   }
 
-  loadBgtask() {
-    console.info('loadBgtask: Loading bgtask...')
-    let loadBgtaskCallback = function (httpStatus, json) {
+  loadPortFolio() {
+    console.info('loadPortFolio: Loading PortFolio...')
+    let loadPortFolioCallback = function (httpStatus, json) {
       if ( httpStatus === 401) {
         this.props.auth.setAuthenticationStatus(false);
-        console.error("loadBgtaskCallback: authentication expired?");
+        console.error("loadPortFolioCallback: authentication expired?");
         return;
       }
 
       if ( httpStatus !== 200) {
-        console.error("loadBgtaskCallback: failure: http:%o", httpStatus);
+        console.error("loadPortFolioCallback: failure: http:%o", httpStatus);
         this.setState({
-          errorMsg: "Failed to load bgtask"
+          errorMsg: "Failed to load PortFolio"
         })
         return;
       }
 
-      console.info("loadBgtaskCallback: json: %o", json);
+      console.info("loadPortFolioCallback: json: %o", json);
       this.setState({
-        isBgtaskLoaded: true,
-        bgtaskList : json,
+        isPortFolioLoaded: true,
+        PortFolio: json,
         errorMsg: ""
       });
     }
 
-    getBackend().getBgtask(loadBgtaskCallback.bind(this));
+    getBackend().getPortFolio(loadPortFolioCallback.bind(this));
   }
 
-  createBgtask(bgtask) {
-    console.info('createBgtask: adding entry=%o', bgtask)
-    let createBgtaskCallback = function (httpStatus, json) {
+  addToPortFolio(PortFolioEntry) {
+    console.info('addToPortFolio: adding entry=%o', PortFolioEntry)
+    let addToPortFolioCallback = function (httpStatus, json) {
       if ( httpStatus === 401) {
         this.props.auth.setAuthenticationStatus(false);
-        console.error("createBgtaskCallback: authentication expired?");
+        console.error("addToPortFolioCallback: authentication expired?");
         return;
       }
 
       if ( httpStatus !== 200) {
-        console.error("createBgtaskCallback: failure: http:%o", httpStatus);
+        console.error("addToPortFolioCallback: failure: http:%o", httpStatus);
         this.setState({
-          errorMsg: "Failed to create bgtask"
+          errorMsg: "Failed to add to PortFolio"
         })
         return;
       }
 
-      console.info("createBgtaskCallback: json: %o", json);
+      console.info("addToPortFolioCallback: json: %o", json);
 
-      //Reloading the bgtaskList
-      this.loadBgtask();
+      //Reloading the PortFolio
+      this.loadPortFolio();
     }
 
-    getBackend().createBgtask(bgtask, createBgtaskCallback.bind(this));
+    getBackend().addToPortFolio(PortFolioEntry, addToPortFolioCallback.bind(this));
     this.onCloseDetailedViewModal();
   }
 
-  updateBgtask(bgtask) {
-    console.info('updateBgtask: adding entry=%o', bgtask)
-    let updateBgtaskCallback= function (httpStatus, json) {
+  updatePortFolio(PortFolioEntry) {
+    console.info('updatePortFolio: adding entry=%o', PortFolioEntry)
+    let updatePortFolioCallback= function (httpStatus, json) {
       if ( httpStatus === 401) {
         this.props.auth.setAuthenticationStatus(false);
-        console.error("updateBgtaskCallback: authentication expired?");
+        console.error("updatePortFolioCallback: authentication expired?");
         return;
       }
 
       if ( httpStatus !== 200) {
-        console.error("updateBgtaskCallback: failure: http:%o", httpStatus);
+        console.error("updatePortFolioCallback: failure: http:%o", httpStatus);
         this.setState({
-          errorMsg: "Failed to update bgtask"
+          errorMsg: "Failed to update PortFolio"
         })
         return;
       }
 
-      console.info("updateBgtaskCallback: json: %o", json);
+      console.info("updatePortFolioCallback: json: %o", json);
 
-      //Reloading the bgtaskList
-      this.loadBgtask();
+      //Reloading the PortFolio
+      this.loadPortFolio();
     }
 
-    getBackend().updateBgtask(bgtask, updateBgtaskCallback.bind(this));
+    getBackend().updatePortFolio(PortFolioEntry, updatePortFolioCallback.bind(this));
     this.onCloseDetailedViewModal();
   }
 
-  deleteBgtask(bgtask) {
-    console.info('deleteBgtask: adding entry=%o', bgtask)
-    let deleteBgtaskCallback = function (httpStatus, json) {
+  deleteFromPortFolio(PortFolioEntry) {
+    console.info('deleteFromPortFolio: adding entry=%o', PortFolioEntry)
+    let deleteFromPortFolioCallback = function (httpStatus, json) {
       if ( httpStatus === 401) {
         this.props.auth.setAuthenticationStatus(false);
-        console.error("deleteBgtaskCallback: authentication expired?");
+        console.error("deleteFromPortFolioCallback: authentication expired?");
         return;
       }
 
       if ( httpStatus !== 204) {
-        console.error("deleteBgtaskCallback: failure: http:%o", httpStatus);
+        console.error("deleteFromPortFolioCallback: failure: http:%o", httpStatus);
         this.setState({
-          errorMsg: "Failed to delete to bgtask"
+          errorMsg: "Failed to delete to PortFolio"
         })
         return;
       }
 
-      console.info("deleteBgtaskCallback: json: %o", json);
+      console.info("deleteFromPortFolioCallback: json: %o", json);
 
-      //Reloading the bgtaskList
-      this.loadBgtask();
+      //Reloading the PortFolio
+      this.loadPortFolio();
     }
 
-    getBackend().deleteBgtask(bgtask, deleteBgtaskCallback.bind(this));
+    getBackend().deleteFromPortFolio(PortFolioEntry, deleteFromPortFolioCallback.bind(this));
     this.onCloseDetailedViewModal();
   }
 
   componentDidMount() {
     console.info('componentDidMount..');
-    if ( this.props.auth.loggedInUser === '') {
-      // Logged in user not set
-      let getLoggedInUserCallback = function (httpStatus, json) {
-        if ( httpStatus !== 200) {
-          console.error("getLoggedInUserCallback: failure: http:%d", httpStatus);
-          getBackend().clearAuthentication();
-          this.props.auth.setLoggedInUser('');
-          return;
-        }
 
-        console.info("getLoggedInUserCallback: success: http:%d json:%o", httpStatus, json);
-        this.props.auth.setLoggedInUser(json.username);
-      }
-
-      getBackend().getLoggedInUser(getLoggedInUserCallback.bind(this));
-    }
-
-    if (!this.state.isBgtaskLoaded) {
-      this.loadBgtask();
+    if (!this.state.isPortFolioLoaded) {
+      this.loadPortFolio();
     }
   }
 
@@ -241,7 +225,7 @@ export default class Home extends React.Component {
       return <Alert variant={'danger'} > No row selected? </Alert>
     }*/
     let readOnly = false;
-    if (this.state.deleteBgtask) readOnly = true;
+    if (this.state.deleteFromPortFolio) readOnly = true;
     console.info('showModalForm: formValues=%o', this.state.formValues);
 
     return (
@@ -267,31 +251,31 @@ export default class Home extends React.Component {
     formValues.optionExpiry = null;
     formValues.optionStrike = null;
 
-    if (this.state.createBgtask) {
+    if (this.state.addToPortFolio) {
       console.info('onModalActionButtonClick: call add');
-      this.createBgtask(this.state.formValues);
+      this.addToPortFolio(this.state.formValues);
       return;
     }
 
-    if (this.state.deleteBgtask) {
+    if (this.state.deleteFromPortFolio) {
       console.info('onModalActionButtonClick: call delete');
-      this.deleteBgtask(this.state.formValues);
+      this.deleteFromPortFolio(this.state.formValues);
       return;
     }
 
     console.info('onModalActionButtonClick: call update');
-    this.updateBgtask(this.state.formValues);
+    this.updatePortFolio(this.state.formValues);
   }
 
   showModalActionButton() {
-    if (this.state.createBgtask)
+    if (this.state.addToPortFolio)
       return (
         <Button variant="primary" onClick={this.onModalActionButtonClick}>
           Add
         </Button>
       );
 
-    if (this.state.deleteBgtask) {
+    if (this.state.deleteFromPortFolio) {
       return (
         <Button variant="primary" onClick={this.onModalActionButtonClick}>
           Delete
@@ -328,29 +312,34 @@ export default class Home extends React.Component {
 
   render() {
     if ( !this.props.auth.isAuthenticated ) {
-      console.info('Home:  not authenticated, redirecting to login page');
+      console.info('PortFolio:  not authenticated, redirecting to login page');
       return <Redirect to= '/login' />;
     }
 
-    if ( !this.state.isBgtaskLoaded) {
-      return <Alert variant="primary"> Loading bgtask... </Alert>;
+    if ( !this.state.isPortFolioLoaded) {
+      return <Alert variant="primary"> Loading PortFolio... </Alert>;
     }
 
     console.info('render: this.showDetailedViewModal=%o...', this.state.showDetailedViewModal)
 
     const columns = [
-      { Header: 'ID',  accessor: 'id',
+      { Action: 'action',  accessor: 'dummy',
           Cell: ({row}) => (
               <ButtonGroup className="mr-2" aria-label="First group">
                 <Button onClick={ (e) => this.onEditButtonClick(row.original) }>Edit</Button>
                 <Button onClick={ (e) => this.onDeleteButtonClick(row.original) }>Delete</Button>
               </ButtonGroup>
             )},
-      { Header: 'Type', accessor: 'dataIdType'},
-      { Header: 'dataId', accessor: 'dataId'},
-      { Header: 'status', accessor: 'status'},
-      { Header: 'action', accessor: 'action'},
-      { Header: 'actionStatus', accessor: 'actionStatus'},
+      { Header: 'ID',  accessor: 'id'},
+      { Header: 'watchListId', accessor: 'watchListId'},
+      { Header: 'entryDate', accessor: 'entryDate'},
+      { Header: 'entryPrice', accessor: 'entryPrice'},
+      { Header: 'units', accessor: 'units'},
+      { Header: 'profitTarget', accessor: 'profitTarget'},
+      { Header: 'stopLoss', accessor: 'stopLoss'},
+      { Header: 'exitDate', accessor: 'exitDate'},
+      { Header: 'exitPrice', accessor: 'exitPrice'},
+      { Header: 'chainedPortFolioId', accessor: 'chainedPortFolioId'},
       { Header: 'Update Time', accessor: 'updateTimestamp'},
     ];
 
@@ -367,20 +356,20 @@ export default class Home extends React.Component {
     }
 
     return (
-      <div className="home">
+      <div className="PortFolio">
 
         <ButtonToolbar aria-label="Toolbar with button groups">
           <ButtonGroup className="mr-2" aria-label="First group">
             <Button onClick={this.onAddButtonClick}> Add </Button>
           </ButtonGroup>
           <ButtonGroup className="mr-2" aria-label="Second group">
-            <Button onClick={this.loadBgtask}> Refresh </Button>
+            <Button onClick={this.loadPortFolio}> Refresh </Button>
           </ButtonGroup>
         </ButtonToolbar>
-        Welcome home {this.props.auth.loggedInUser}
+        Welcome PortFolio {this.props.auth.loggedInUser}
         { this.showErrorMsg() }
 
-        <Table columns={columns} data={this.state.bgtaskList} getTrProps={onRowClick} />
+        <Table columns={columns} data={this.state.PortFolio} getTrProps={onRowClick} />
 
         { this.showModal() }
 
