@@ -24,10 +24,10 @@ class WatchList(models.Model):
         return super(WatchList, self).save(*args, **kwargs)
 
     def __str__(self):
-        return "creationTimestamp: %s, updateTimestamp:%s, assetType:%s, ticker:%s," \
-               " optionStrike:%s, optionExpiry:%s, comment:%s " \
-               % (self.creationTimestamp, self.updateTimestamp, self.assetType, self.ticker,
-                  self.optionStrike, self.optionExpiry, self.comment)
+        return "assetType:%s, ticker:%s, optionStrike:%s, optionExpiry:%s, comment:%s," \
+               "creationTimestamp: %s, updateTimestamp:%s" \
+               % (self.assetType, self.ticker, self.optionStrike, self.optionExpiry,
+               self.comment, self.creationTimestamp, self.updateTimestamp)
 
 
 class BGTask(models.Model):
@@ -46,6 +46,12 @@ class BGTask(models.Model):
         self.updateTimestamp = timezone.now()
         return super(BGTask, self).save(*args, **kwargs)
 
+    def __str__(self):
+        return "dataIdType: %s, dataId:%s, status:%s, action:%s," \
+               " actionResult:%s, updateTimestamp:%s" \
+               % (self.dataIdType, self.dataId, self.status, self.action,
+                  self.actionResult, self.updateTimestamp)
+
 
 class PortFolio(models.Model):
     updateTimestamp = models.DateTimeField(default=timezone.now)
@@ -63,3 +69,8 @@ class PortFolio(models.Model):
         self.updateTimestamp = timezone.now()
         return super(PortFolio, self).save(*args, **kwargs)
 
+    def __str__(self):
+        return "watchListId: %s, entryDate:%s, entryPrice:%s, units:%s," \
+               " profitTarget:%s, stopLoss:%s chainedPortFolioId:%s, updateTimestamp:%s" \
+               % (self.watchListId, self.entryDate, self.entryPrice, self.units,
+                  self.profitTarget, self.stopLoss, self.chainedPortFolioId, self.updateTimestamp)
