@@ -2,7 +2,7 @@ from enum import Enum
 
 
 class BGTaskAction(Enum):
-    NO_ACTION = "NO_ACTION"
+    NONE = "NONE"
     STOPLOSS_COVERED_CALL_TRACKER = "STOPLOSS_COVERED_CALL_TRACKER"
 
     @classmethod
@@ -10,7 +10,7 @@ class BGTaskAction(Enum):
         return [(key.value, key.name) for key in cls]
 
 
-class BGTaskActionStatus(Enum):
+class BGTaskActionResult(Enum):
     NONE = "NONE"
     GOOD = "GOOD"
     BAD = "BAD"
@@ -20,8 +20,8 @@ class BGTaskActionStatus(Enum):
         return [(key.value, key.name) for key in cls]
 
 class BGTaskStatus(Enum):
-    NOT_STARTED = "NOT_STARTED"
-    IN_PROGRESS = "IN_PROGRESS"
+    IDLE = "IDLE"
+    RUNNING = "RUNNING"
     PASS = "PASS"
     FAIL = "FAIL"
 
