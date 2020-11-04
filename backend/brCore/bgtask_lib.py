@@ -55,7 +55,7 @@ def __bgtask_thread_start(bgtask):
     t.start()
 
 def start_bgtask(bgtask):
-    if bgtask.status != BGTaskAction.NO_ACTION.value:
+    if bgtask.status != BGTaskAction.NONE.value:
         print('Starting bgtask:', bgtask)
         __bgtask_thread_start(bgtask)
     return bgtask
