@@ -122,6 +122,10 @@ class Backend {
   }
 
   createPortFolio(portfolio, callback) {
+    // The below fields are not relavent during creation
+    delete portfolio.updateTimestamp;
+    delete portfolio.exitDate;
+    delete portfolio.exitPrice;
     this.postWithToken('brCore/portfolio/', portfolio, callback);
   }
 

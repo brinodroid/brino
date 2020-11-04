@@ -41,7 +41,7 @@ export default class PortFolio extends React.Component {
       showDetailedViewModal: false,
       addToPortFolio: false,
       deleteFromPortFolio: false,
-      formValues : {id: "", assetType: "", ticker: "", optionStrike: "", optionExpiry: "", comment: ""}
+      formValues : {id: "", updateTimestamp: "", watchListId: "", entryDate: "", entryPrice: "", units: "", exitPrice: "", exitDate: "", profitTarget: "", stopLoss: "", chainedPortFolioId: null}
     }
   }
 
@@ -51,7 +51,7 @@ export default class PortFolio extends React.Component {
       showDetailedViewModal: false,
       deleteFromPortFolio: false,
       addToPortFolio: false,
-      formValues : {id: "", assetType: "", ticker: "", optionStrike: "", optionExpiry: "", comment: ""}
+      formValues : {id: "", updateTimestamp: "", watchListId: "", entryDate: "", entryPrice: "", units: "", exitPrice: "", exitDate: "", profitTarget: "", stopLoss: "", chainedPortFolioId: null}
     });
   }
 
@@ -116,28 +116,28 @@ export default class PortFolio extends React.Component {
 
   addToPortFolio(PortFolioEntry) {
     console.info('addToPortFolio: adding entry=%o', PortFolioEntry)
-    let addToPortFolioCallback = function (httpStatus, json) {
+    let createPortFolioCallback = function (httpStatus, json) {
       if ( httpStatus === 401) {
         this.props.auth.setAuthenticationStatus(false);
-        console.error("addToPortFolioCallback: authentication expired?");
+        console.error("createPortFolioCallback: authentication expired?");
         return;
       }
 
       if ( httpStatus !== 200) {
-        console.error("addToPortFolioCallback: failure: http:%o", httpStatus);
+        console.error("createPortFolioCallback: failure: http:%o", httpStatus);
         this.setState({
           errorMsg: "Failed to add to PortFolio"
         })
         return;
       }
 
-      console.info("addToPortFolioCallback: json: %o", json);
+      console.info("createPortFolioCallback: json: %o", json);
 
       //Reloading the PortFolio
       this.loadPortFolio();
     }
 
-    getBackend().addToPortFolio(PortFolioEntry, addToPortFolioCallback.bind(this));
+    getBackend().createPortFolio(PortFolioEntry, createPortFolioCallback.bind(this));
     this.onCloseDetailedViewModal();
   }
 
@@ -231,14 +231,16 @@ export default class PortFolio extends React.Component {
     return (
       <Form onSubmit={this.handleSubmit} >
 
-        { this.showModalFormGroup(true, "creationTimestamp", "Create Timestamp", this.state.formValues.creationTimestamp) }
         { this.showModalFormGroup(true, "updateTimestamp", "Update Timestamp", this.state.formValues.updateTimestamp) }
         { this.showModalFormGroup(true, "id", "ID", this.state.formValues.id) }
-        { this.showModalFormGroup(readOnly, "assetType", "Asset Type", this.state.formValues.assetType) }
-        { this.showModalFormGroup(readOnly, "ticker", "Ticker", this.state.formValues.ticker) }
-        { this.showModalFormGroup(readOnly, "optionStrike", "Strike", this.state.formValues.optionStrike? this.state.formValues.optionStrike: "") }
-        { this.showModalFormGroup(readOnly, "optionExpiry", "Expiry", this.state.formValues.optionExpiry? this.state.formValues.optionExpiry:"" ) }
-        { this.showModalFormGroup(readOnly, "comment", "Comment", this.state.formValues.comment) }
+        { this.showModalFormGroup(readOnly, "watchListId", "WatchList Id", this.state.formValues.watchListId) }
+        { this.showModalFormGroup(readOnly, "entryDate", "Entry Date", this.state.formValues.entryDate) }
+        { this.showModalFormGroup(readOnly, "entryPrice", "Entry Price", this.state.formValues.entryPrice)}
+        { this.showModalFormGroup(readOnly, "units", "Units", this.state.formValues.units)}
+        { this.showModalFormGroup(readOnly, "profitTarget", "Profit Target", this.state.formValues.profitTarget) }
+        { this.showModalFormGroup(readOnly, "stopLoss", "Stop Loss", this.state.formValues.stopLoss) }
+        { this.showModalFormGroup(readOnly, "exitDate", "Exit Date", this.state.formValues.exitDate) }
+        { this.showModalFormGroup(readOnly, "exitPrice", "Exit Price", this.state.formValues.exitPrice) }
 
       </Form>
     );
@@ -331,15 +333,15 @@ export default class PortFolio extends React.Component {
               </ButtonGroup>
             )},
       { Header: 'ID',  accessor: 'id'},
-      { Header: 'watchListId', accessor: 'watchListId'},
-      { Header: 'entryDate', accessor: 'entryDate'},
-      { Header: 'entryPrice', accessor: 'entryPrice'},
-      { Header: 'units', accessor: 'units'},
-      { Header: 'profitTarget', accessor: 'profitTarget'},
-      { Header: 'stopLoss', accessor: 'stopLoss'},
-      { Header: 'exitDate', accessor: 'exitDate'},
-      { Header: 'exitPrice', accessor: 'exitPrice'},
-      { Header: 'chainedPortFolioId', accessor: 'chainedPortFolioId'},
+      { Header: 'WatchList Id', accessor: 'watchListId'},
+      { Header: 'Entry Date', accessor: 'entryDate'},
+      { Header: 'Entry Price', accessor: 'entryPrice'},
+      { Header: 'Units', accessor: 'units'},
+      { Header: 'Profit Target', accessor: 'profitTarget'},
+      { Header: 'Stop Loss', accessor: 'stopLoss'},
+      { Header: 'Exit Date', accessor: 'exitDate'},
+      { Header: 'Exit Price', accessor: 'exitPrice'},
+      { Header: 'Linked PortFolio ID', accessor: 'chainedPortFolioId'},
       { Header: 'Update Time', accessor: 'updateTimestamp'},
     ];
 
