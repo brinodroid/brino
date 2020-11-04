@@ -10,7 +10,7 @@ class Backend {
     this.getConfiguration = this.getConfiguration.bind(this);
 
     this.getWatchList = this.getWatchList.bind(this);
-    this.addToWatchList = this.addToWatchList.bind(this);
+    this.createWatchListEntry = this.createWatchListEntry.bind(this);
     this.deleteFromWatchList = this.deleteFromWatchList.bind(this);
     this.updateWatchList = this.updateWatchList.bind(this);
 
@@ -85,7 +85,7 @@ class Backend {
     this.getWithToken('brCore/watchlist', callback);
   }
 
-  addToWatchList(watchListEntry, callback) {
+  createWatchListEntry(watchListEntry, callback) {
     this.postWithToken('brCore/watchlist/', watchListEntry, callback);
   }
 

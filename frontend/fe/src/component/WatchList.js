@@ -116,28 +116,28 @@ export default class WatchList extends React.Component {
 
   addToWatchList(watchListEntry) {
     console.info('addToWatchList: adding entry=%o', watchListEntry)
-    let addToWatchListCallback = function (httpStatus, json) {
+    let createWatchListEntryCallback = function (httpStatus, json) {
       if ( httpStatus === 401) {
         this.props.auth.setAuthenticationStatus(false);
-        console.error("addToWatchListCallback: authentication expired?");
+        console.error("createWatchListEntryCallback: authentication expired?");
         return;
       }
 
       if ( httpStatus !== 200) {
-        console.error("addToWatchListCallback: failure: http:%o", httpStatus);
+        console.error("createWatchListEntryCallback: failure: http:%o", httpStatus);
         this.setState({
           errorMsg: "Failed to add to watchlist"
         })
         return;
       }
 
-      console.info("addToWatchListCallback: json: %o", json);
+      console.info("createWatchListEntryCallback: json: %o", json);
 
       //Reloading the watchlist
       this.loadWatchList();
     }
 
-    getBackend().addToWatchList(watchListEntry, addToWatchListCallback.bind(this));
+    getBackend().createWatchListEntry(watchListEntry, createWatchListEntryCallback.bind(this));
     this.onCloseDetailedViewModal();
   }
 
@@ -247,9 +247,6 @@ export default class WatchList extends React.Component {
   onModalActionButtonClick() {
     console.info('onModalActionButtonClick: formValues=%o', this.state.formValues);
     let formValues = this.state.formValues;
-    // TODO: Validate data. Temporarily setting it to null, needed for add to succeed
-    formValues.optionExpiry = null;
-    formValues.optionStrike = null;
 
     if (this.state.addToWatchList) {
       console.info('onModalActionButtonClick: call add');
