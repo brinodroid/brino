@@ -102,6 +102,10 @@ class Backend {
   }
 
   createBgtask(bgtask, callback) {
+    // These are readonly fields and hence need not be passed during creation
+    delete bgtask.updateTimestamp;
+    delete bgtask.actionResult;
+    delete bgtask.status;
     this.postWithToken('brCore/bgtask/', bgtask, callback);
   }
 

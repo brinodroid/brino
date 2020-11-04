@@ -41,7 +41,7 @@ export default class Home extends React.Component {
       showDetailedViewModal: false,
       createBgtask: false,
       deleteBgtask: false,
-      formValues : {id: "", assetType: "", ticker: "", optionStrike: "", optionExpiry: "", comment: ""}
+      formValues : {id: "", dataIdType: "", dataId: "", status: "", action: "", actionResult: "", updateTimestamp: ""}
     }
   }
 
@@ -51,7 +51,7 @@ export default class Home extends React.Component {
       showDetailedViewModal: false,
       deleteBgtask: false,
       createBgtask: false,
-      formValues : {id: "", assetType: "", ticker: "", optionStrike: "", optionExpiry: "", comment: ""}
+      formValues : {id: "", dataIdType: "", dataId: "", status: "", action: "", actionResult: "", updateTimestamp: ""}
     });
   }
 
@@ -247,14 +247,13 @@ export default class Home extends React.Component {
     return (
       <Form onSubmit={this.handleSubmit} >
 
-        { this.showModalFormGroup(true, "creationTimestamp", "Create Timestamp", this.state.formValues.creationTimestamp) }
         { this.showModalFormGroup(true, "updateTimestamp", "Update Timestamp", this.state.formValues.updateTimestamp) }
         { this.showModalFormGroup(true, "id", "ID", this.state.formValues.id) }
-        { this.showModalFormGroup(readOnly, "assetType", "Asset Type", this.state.formValues.assetType) }
-        { this.showModalFormGroup(readOnly, "ticker", "Ticker", this.state.formValues.ticker) }
-        { this.showModalFormGroup(readOnly, "optionStrike", "Strike", this.state.formValues.optionStrike? this.state.formValues.optionStrike: "") }
-        { this.showModalFormGroup(readOnly, "optionExpiry", "Expiry", this.state.formValues.optionExpiry? this.state.formValues.optionExpiry:"" ) }
-        { this.showModalFormGroup(readOnly, "comment", "Comment", this.state.formValues.comment) }
+        { this.showModalFormGroup(readOnly, "dataIdType", "Type", this.state.formValues.dataIdType) }
+        { this.showModalFormGroup(readOnly, "dataId", "Data Id", this.state.formValues.dataId) }
+        { this.showModalFormGroup(readOnly, "action", "Action", this.state.formValues.action) }
+        { this.showModalFormGroup(true, "actionResult", "Action Status", this.state.formValues.actionResult) }
+        { this.showModalFormGroup(true, "status", "Status", this.state.formValues.status) }
 
       </Form>
     );
@@ -347,10 +346,10 @@ export default class Home extends React.Component {
               </ButtonGroup>
             )},
       { Header: 'Type', accessor: 'dataIdType'},
-      { Header: 'dataId', accessor: 'dataId'},
-      { Header: 'status', accessor: 'status'},
-      { Header: 'action', accessor: 'action'},
-      { Header: 'actionStatus', accessor: 'actionStatus'},
+      { Header: 'Data Id', accessor: 'dataId'},
+      { Header: 'Status', accessor: 'status'},
+      { Header: 'Action', accessor: 'action'},
+      { Header: 'Result', accessor: 'actionResult'},
       { Header: 'Update Time', accessor: 'updateTimestamp'},
     ];
 
