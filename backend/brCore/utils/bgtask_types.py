@@ -3,7 +3,7 @@ from enum import Enum
 
 class BGTaskAction(Enum):
     NONE = "NONE"
-    STOPLOSS_COVERED_CALL_TRACKER = "STOPLOSS_COVERED_CALL_TRACKER"
+    STOPLOSS_EXEC = "STOPLOSS_EXEC"
 
     @classmethod
     def choices(cls):
