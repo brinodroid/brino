@@ -41,7 +41,7 @@ export default class Home extends React.Component {
       showDetailedViewModal: false,
       createBgtask: false,
       deleteBgtask: false,
-      formValues : {id: "", dataIdType: "", dataId: "", status: "", action: "", actionResult: "", updateTimestamp: ""}
+      formValues : {id: "", dataIdType: "", dataId: "", status: "", action: "", actionResult: "", updateTimestamp: "", detials: ""}
     }
   }
 
@@ -350,6 +350,7 @@ export default class Home extends React.Component {
       { Header: 'Status', accessor: 'status'},
       { Header: 'Action', accessor: 'action'},
       { Header: 'Result', accessor: 'actionResult'},
+      { Header: 'Details', accessor: 'details'},
       { Header: 'Update Time', accessor: 'updateTimestamp'},
     ];
 
