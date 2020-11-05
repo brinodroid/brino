@@ -1,8 +1,22 @@
-from brCore.types.bgtask_types import BGTaskAction, BGTaskActionResult
+from brCore.types.bgtask_types import BGTaskAction,  BGTaskActionResult, BGTaskStatus
 import time
 import brine
 import json
 
+def __sell(watchlist, portfolio, details):
+    if portfolio.units <= 0:
+        print('__sell : No more units to sell', watchlist.ticker)
+        return False
+
+    # Saving the units in portfolio to avoid double selling
+    units = portfolio.units
+    portfolio.units = 0
+    portfolio.save()
+    details["sold"] = True
+
+    print('__sell : ticker: ', watchlist.ticker, ' units: ', units)
+    brine.order_sell_market(watchlist.ticker, units)
+    return
 
 def __do_nothing(bgtask, watchlist, portfolio):
     print('__do_nothing called')
@@ -17,6 +31,7 @@ def __do_test(bgtask, watchlist, portfolio):
 def __do_stoploss_executor(bgtask, watchlist, portfolio):
     print('__do_stoploss_executor: called')
     print(time.ctime())
+    assert(watchlist)
     print(bgtask)
     print(portfolio)
     print(watchlist)
@@ -24,12 +39,20 @@ def __do_stoploss_executor(bgtask, watchlist, portfolio):
     try:
         price = brine.get_latest_price(watchlist.ticker)
         print('price:', price)
+
+        details = {"CP": float(price[0]), "SL": portfolio.stopLoss}
         if float(price[0]) < portfolio.stopLoss:
+            # We need to sell it
             bgtask.actionResult = BGTaskActionResult.BAD.value
+            if portfolio.units > 0:
+                __sell(watchlist, portfolio, details)
         else:
             bgtask.actionResult = BGTaskActionResult.GOOD.value
 
-        details = {"CP": float(price[0]), "SL": portfolio.stopLoss}
+        if details["sold"]:
+            print('sold :', watchlist.ticker)
+            bgtask.status = BGTaskStatus.PASS.value
+
         bgtask.details = json.dumps(details)
         print('__do_stoploss_executor: Updating:', bgtask)
 
