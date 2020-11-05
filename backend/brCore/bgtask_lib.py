@@ -3,6 +3,7 @@ from .models import BGTask, WatchList, PortFolio
 from .utils.bgtask_types import BGTaskAction, BGTaskStatus, BGTaskDataIdType, BGTaskActionResult
 import time
 import brine
+import json
 
 def __bgtask_get_portfolio(portFolioId):
     try:
@@ -46,6 +47,9 @@ def __bgtask_stoploss_cc_tracker(bgtask):
           bgtask.actionResult = BGTaskActionResult.BAD.value
         else:
           bgtask.actionResult = BGTaskActionResult.GOOD.value
+
+        details = {"CP" : float(price[0]), "SL": portfolio.stopLoss}
+        bgtask.details = json.dumps(details)
         print('__bgtask_stoploss_cc_tracker: Updating:', bgtask)
         bgtask.save();
 

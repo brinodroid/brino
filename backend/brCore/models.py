@@ -41,6 +41,7 @@ class BGTask(models.Model):
                               default=BGTaskAction.NONE.value, null=True)
     actionResult = models.CharField(max_length=16, choices=BGTaskActionResult.choices(),
                                     default=BGTaskActionResult.NONE.value)
+    details = models.TextField(blank=True)
 
     def save(self, *args, **kwargs):
         self.updateTimestamp = timezone.now()
