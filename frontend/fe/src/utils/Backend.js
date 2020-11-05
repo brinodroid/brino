@@ -86,6 +86,12 @@ class Backend {
   }
 
   createWatchListEntry(watchListEntry, callback) {
+    if (watchListEntry.assetType == 'STOCK') {
+      // Remove it as its invalid for stocks. Gives validation failure in BE
+      delete watchListEntry.optionExpiry;
+      delete watchListEntry.optionStrike;
+    }
+
     this.postWithToken('brCore/watchlist/', watchListEntry, callback);
   }
 

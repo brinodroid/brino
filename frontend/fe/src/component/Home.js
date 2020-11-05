@@ -45,6 +45,9 @@ export default class Home extends React.Component {
     }
   }
 
+  // Class variable to hold the setInterval Id, used to refresh the page every 5 seconds
+  intervalID;
+
   onCloseDetailedViewModal() {
     console.info('onCloseDetailedViewModal: ...')
     this.setState({
@@ -216,7 +219,13 @@ export default class Home extends React.Component {
 
     if (!this.state.isBgtaskLoaded) {
       this.loadBgtask();
+      this.intervalID = setInterval(this.loadBgtask, 30000); // 30s
     }
+  }
+
+  componentWillUnmount() {
+    console.info("componentWillUnmount: json:%o", this.intervalID);
+    clearInterval(this.intervalID);
   }
 
   onFormValuesChange(event) {
