@@ -1,4 +1,4 @@
-from brCore.utils.bgtask_types import BGTaskAction, BGTaskActionResult
+from brCore.types.bgtask_types import BGTaskAction, BGTaskActionResult
 import time
 import brine
 import json

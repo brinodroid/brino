@@ -1,11 +1,9 @@
 import threading
 from .models import BGTask, WatchList, PortFolio
-from .utils.bgtask_types import BGTaskAction, BGTaskStatus, BGTaskDataIdType, BGTaskActionResult
+from .types.bgtask_types import BGTaskAction, BGTaskStatus, BGTaskDataIdType
 import time
 import brine
-import json
 import sys
-import traceback
 from .actions.base import base_action
 
 

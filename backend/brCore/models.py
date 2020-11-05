@@ -1,7 +1,7 @@
 from django.db import models
 from django.utils import timezone
-from .utils.asset_types import AssetTypes
-from .utils.bgtask_types import BGTaskAction, BGTaskActionResult, BGTaskStatus, BGTaskDataIdType
+from .types.asset_types import AssetTypes
+from .types.bgtask_types import BGTaskAction, BGTaskActionResult, BGTaskStatus, BGTaskDataIdType
 
 
 # WatchList: This is the list of assets actively tracked
