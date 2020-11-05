@@ -1,10 +1,10 @@
 import threading
-from .models import BGTask, WatchList, PortFolio
-from .types.bgtask_types import BGTaskAction, BGTaskStatus, BGTaskDataIdType
+from brCore.models import BGTask, WatchList, PortFolio
+from brCore.types.bgtask_types import BGTaskAction, BGTaskStatus, BGTaskDataIdType
 import time
 import brine
 import sys
-from .actions.base import base_action
+from .base import base_action
 
 
 def __bgtask_get_portfolio(bgtask):

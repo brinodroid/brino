@@ -7,7 +7,7 @@ from .models import WatchList, BGTask, PortFolio
 from .serializers.watchlist import WatchListSerializer
 from .serializers.bgtask import BGTaskSerializer
 from .serializers.portfolio import PortFolioSerializer
-from .bgtask_lib import start_bgtask
+from .actions.bgtask import start_bgtask
 
 
 @api_view(['GET', 'POST'])

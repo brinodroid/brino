@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand, CommandError
 from brCore.models import BGTask
-from brCore.utils.bgtask_types import BGTaskAction, BGTaskStatus
+from brCore.types.bgtask_types import BGTaskAction, BGTaskStatus
 
 class Command(BaseCommand):
     help = 'Stop the bgtask'
