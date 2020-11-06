@@ -4,6 +4,7 @@ from enum import Enum
 class BGTaskAction(Enum):
     NONE = "NONE"
     STOPLOSS_EXEC = "STOPLOSS_EXEC"
+    COMPUTE_STATS = "COMPUTE_STATS"
 
     @classmethod
     def choices(cls):

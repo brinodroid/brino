@@ -48,9 +48,9 @@ class BGTask(models.Model):
         return super(BGTask, self).save(*args, **kwargs)
 
     def __str__(self):
-        return "dataIdType: %s, dataId:%s, status:%s, action:%s," \
+        return "dataIdType: %s, dataId:%s, status:%s, action:%s, details:%s" \
                " actionResult:%s, updateTimestamp:%s" \
-               % (self.dataIdType, self.dataId, self.status, self.action,
+               % (self.dataIdType, self.dataId, self.status, self.action, self.details,
                   self.actionResult, self.updateTimestamp)
 
 
