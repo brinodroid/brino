@@ -1,12 +1,15 @@
 import time
 import brine
 import json
+import logging
 from brCore.types.bgtask_types import BGTaskAction,  BGTaskActionResult, BGTaskStatus
 from brCore.types.asset_types import AssetTypes
 
+logger = logging.getLogger(__name__)
+
 def __sell(watchlist, portfolio, details):
     if portfolio.units <= 0:
-        print('__sell : No more units to sell', watchlist.ticker)
+        logger.error('__sell : No more units to sell for ticker %s', watchlist.ticker)
         return False
 
     # Saving the units in portfolio to avoid double selling
@@ -15,37 +18,37 @@ def __sell(watchlist, portfolio, details):
     portfolio.save()
     details["sold"] = True
 
-    print('__sell : ticker: ', watchlist.ticker, ' units: ', units)
+    logger.info('__sell : ticker: %s units: %d', watchlist.ticker, units)
     #brine.order_sell_market(watchlist.ticker, units)
     return
 
 def __do_nothing(bgtask, watchlist, portfolio):
-    print('__do_nothing called')
+    logger.error('__do_nothing called, nothing to be done')
     return bgtask
 
 
 def __get_detail_json(bgtask):
-    print('__get_detail_json: called')
+    logger.info('__get_detail_json: called: %s', bgtask.details)
     try:
-        detail_json  = json.load(bgtask.detail)
-        return detail_json
-    except:
-      print('__get_detail_json: got exception')
+        detail_json = None
+        if bgtask.details:
+          detail_json  = json.loads(bgtask.details)
 
-    return None
+        return detail_json
+
+    except JSONDecodeError as e:
+      logger.error('__get_detail_json: got jsonexception %s', e)
+    # do whatever you want
+    except TypeError as e:
+      logger.error('__get_detail_json: got typeexception %s', e)
+    # do whatever you want in this caseturn None
 
 
 def __do_stoploss_executor(bgtask, watchlist, portfolio):
-    print('__do_stoploss_executor: called')
-    print(time.ctime())
-    assert(watchlist)
-    print(bgtask)
-    print(portfolio)
-    print(watchlist)
+    logger.info('__do_stoploss_executor: called')
 
     try:
         price = brine.get_latest_price(watchlist.ticker)
-        print('price:', price)
 
         details = {"CP": float(price[0]), "SL": portfolio.stopLoss}
         if float(price[0]) < portfolio.stopLoss:
@@ -57,19 +60,19 @@ def __do_stoploss_executor(bgtask, watchlist, portfolio):
             bgtask.actionResult = BGTaskActionResult.GOOD.value
 
         if details["sold"]:
-            print('sold :', watchlist.ticker)
+            logger.info('sold :', watchlist.ticker)
             bgtask.status = BGTaskStatus.PASS.value
 
         bgtask.details = json.dumps(details)
-        print('__do_stoploss_executor: Updating:', bgtask)
+        logger.info('__do_stoploss_executor: Updating:%s', bgtask)
 
     except:
-        print('__do_stoploss_executor: got exception:', bgtask)
+        logger.error('__do_stoploss_executor: got exception:%s', bgtask)
 
     return bgtask
 
 def __do_stats_executor(bgtask, watchlist, portfolio):
-    print('__do_stats_executor: called')
+    logger.info('__do_stats_executor: called')
     try:
         stock_price = brine.get_latest_price(watchlist.ticker)
         stock_price_f = float(stock_price[0])
@@ -77,23 +80,22 @@ def __do_stats_executor(bgtask, watchlist, portfolio):
 
         prev_detail = __get_detail_json(bgtask)
         stock_peak_f = 1 #Cannot be 0 as we are using it in division
-        if prev_detail and prev_detail['peakStock']:
-            print('__do_stats_executor: prev_detail ', prev_detail)
-            stock_peak_f = float(prev_detail['peakStock'])
+        if prev_detail != None and prev_detail['stockPeak']:
+            logger.info('__do_stats_executor: prev_detail=%s', prev_detail)
+            stock_peak_f = float(prev_detail['stockPeak'])
 
         stock_peak_f = max(stock_peak_f, stock_price_f)
         stock_drop_from_peak_percentage =  100*(1-stock_price_f/stock_peak_f)
 
         if watchlist.assetType == AssetTypes.OPTION.value:
-            print('__do_stats_executor: get option price. watchlist=', watchlist)
+            logger.info('__do_stats_executor: get option price. watchlist=%s', watchlist)
             option_data = brine.options.get_option_market_data(watchlist.ticker,
                 str(watchlist.optionExpiry), str(watchlist.optionStrike), 'call')
-            print(option_data)
             option_price_f = float(option_data[0][0]['mark_price'])
             price_f = option_price_f
             option_peak_f = 1
-            if prev_detail and prev_detail['peakOption']:
-                option_peak_f = float(prev_detail['peakOption'])
+            if prev_detail != None and prev_detail['optPeak']:
+                option_peak_f = float(prev_detail['optPeak'])
             option_peak_f = max(option_peak_f, option_price_f)
             option_drop_from_peak_percentage =  100*(1-option_price_f/option_peak_f)
 
@@ -111,19 +113,20 @@ def __do_stats_executor(bgtask, watchlist, portfolio):
           details["recommend"] = recommend
 
         if watchlist.assetType == AssetTypes.OPTION.value:
-            details['dropFromPeakOption%'] = option_drop_from_peak_percentage
-            details['CPOption'] = option_price_f
-            details['peakOption'] = option_price_f
+            details['optPeakFallPercent'] = round(option_drop_from_peak_percentage, 2)
+            details['optPrice'] = option_price_f
+            details['optPeak'] = option_price_f
 
-        details['dropFromPeakStock%'] = stock_drop_from_peak_percentage
-        details['CPStock'] = stock_price_f
-        details['peakStock'] = stock_peak_f
+        details['stockPeakFallPercent'] = round(stock_drop_from_peak_percentage, 2)
+        details['stockPrice'] = stock_price_f
+        details['stockPeak'] = stock_peak_f
 
         bgtask.details = json.dumps(details)
+        logger.info('__do_stats_executor: setting details to: %s', bgtask.details)
         bgtask.actionResult = BGTaskActionResult.GOOD.value
 
     except:
-        print('__do_stats_executor: got exception:', bgtask)
+        logger.error('__do_stats_executor: got exception: %s', bgtask)
 
     return bgtask
 

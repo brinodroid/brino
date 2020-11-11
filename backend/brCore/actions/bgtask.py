@@ -3,13 +3,15 @@ from brCore.models import BGTask, WatchList, PortFolio
 from brCore.types.bgtask_types import BGTaskAction, BGTaskStatus, BGTaskDataIdType
 import time
 import brine
+import logging
 import sys
 from .base import base_action
 
+logger = logging.getLogger(__name__)
 
 def __bgtask_get_portfolio(bgtask):
     if bgtask.dataIdType != BGTaskDataIdType.PORTFOLIO.value:
-        print('__bgtask_get_portfolio: Not portFolio dataId', bgtask)
+        logger.error('__bgtask_get_portfolio: Not portFolio dataId %s', bgtask)
         return None
 
     # May throw exceptions which will be caught at top level run thread
@@ -27,7 +29,7 @@ def __bgtask_get_watchlist(bgtask, portfolio):
         watchlist = WatchList.objects.get(pk=watchListId)
         return watchlist
     except WatchList.DoesNotExist:
-        print('__bgtask_get_watchlist: WatchList not found', watchListId)
+        logger.error('__bgtask_get_watchlist: WatchList not found %d', watchListId)
         return None;
 
 
@@ -45,41 +47,41 @@ def __bgtask_runner(bgtask_id):
         try:
             bgtask = BGTask.objects.get(pk=bgtask_id)
         except BGTask.DoesNotExist:
-            print('__bgtask_runner: stopping bgtask as task not found, id:', bgtask_id)
+            logger.error('__bgtask_runner: stopping bgtask as task not found bgtask_id: %d', bgtask_id)
             return
 
         if bgtask.action == BGTaskAction.NONE.value:
-            print('__bgtask_runner: stopping bgtask as its not RUNNING state, in %s' % str(bgtask.status))
+            logger.info('__bgtask_runner: stopping bgtask as its not RUNNING state, in %s' % str(bgtask.status))
             # Reset the status
             __bgtask_stop(bgtask, BGTaskStatus.IDLE.value)
             return
 
         if bgtask.status != BGTaskStatus.RUNNING.value:
-            print('__bgtask_runner: stopping bgtask as its not RUNNING state, in %s' % str(bgtask.status))
+            logger.info('__bgtask_runner: stopping bgtask as its not RUNNING state, in %s' % str(bgtask.status))
             __bgtask_stop(bgtask, BGTaskStatus.IDLE.value)
             return
 
         try:
             portfolio = __bgtask_get_portfolio(bgtask)
             if portfolio is None:
-                print('__bgtask_runner: Is not portfolio', bgtask)
+                logger.info('__bgtask_runner: Is not portfolio %s', bgtask)
 
             watchList = __bgtask_get_watchlist(bgtask, portfolio)
             if watchList is None:
-                print('__bgtask_runner: Cannot get watchList from', portfolio, ' bgtask ', bgtask)
+                logger.error('__bgtask_runner: Cannot get watchList portfolio=%s bgtask=%s', portfolio, bgtask)
                 __bgtask_stop(bgtask, BGTaskStatus.IDLE.value)
                 return
 
-            print(bgtask)
-            print(portfolio)
-            print(watchList)
+            logger.info(bgtask)
+            logger.info(portfolio)
+            logger.info(watchList)
             base_action(bgtask, watchList, portfolio)
 
         except BaseException as error:
             # Catch all exceptions
             __bgtask_stop(bgtask, BGTaskStatus.FAIL.value)
             e = sys.exc_info()[0]
-            print("__bgtask_runner: caught  exception", error)
+            logger.error("__bgtask_runner: caught  exception %s", error)
 
             # Stop the thread
             return;
@@ -95,7 +97,7 @@ def __bgtask_thread_start(bgtask):
                          args=[bgtask.id])
     t.setDaemon(True)
     # Mark the task as running before starting thread
-    print('Starting thread ', bgtask)
+    logger.info('Starting thread for %s', bgtask)
     bgtask.status = BGTaskStatus.RUNNING.value;
     bgtask.save()
     t.start()
@@ -103,6 +105,6 @@ def __bgtask_thread_start(bgtask):
 
 def start_bgtask(bgtask):
     if bgtask.status != BGTaskAction.NONE.value:
-        print('Starting bgtask:', bgtask)
+        logger.info('Starting bgtask: %s', bgtask)
         __bgtask_thread_start(bgtask)
     return bgtask
