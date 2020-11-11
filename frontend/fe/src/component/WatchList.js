@@ -246,7 +246,6 @@ export default class WatchList extends React.Component {
 
   onModalActionButtonClick() {
     console.info('onModalActionButtonClick: formValues=%o', this.state.formValues);
-    let formValues = this.state.formValues;
 
     if (this.state.addToWatchList) {
       console.info('onModalActionButtonClick: call add');

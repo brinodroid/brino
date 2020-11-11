@@ -334,6 +334,14 @@ export default class Home extends React.Component {
     );
   }
 
+  getActionResultVariant(rowData) {
+    if (rowData.actionResult === "BAD")
+      return "danger";
+    if (rowData.actionResult === "GOOD")
+      return "success";
+    return "info"
+  }
+
   render() {
     if ( !this.props.auth.isAuthenticated ) {
       console.info('Home:  not authenticated, redirecting to login page');
@@ -358,7 +366,10 @@ export default class Home extends React.Component {
       { Header: 'Data Id', accessor: 'dataId'},
       { Header: 'Status', accessor: 'status'},
       { Header: 'Action', accessor: 'action'},
-      { Header: 'Result', accessor: 'actionResult'},
+      { Header: 'Result', accessor: 'actionResult',
+          Cell: ({row}) => (
+            <Alert variant={this.getActionResultVariant(row.original)} > {row.original.actionResult} </Alert>
+          )},
       { Header: 'Details', accessor: 'details'},
       { Header: 'Update Time', accessor: 'updateTimestamp'},
     ];
