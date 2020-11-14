@@ -2,6 +2,7 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
+import logging
 
 from .models import WatchList, BGTask, PortFolio
 from .serializers.watchlist import WatchListSerializer
@@ -9,9 +10,12 @@ from .serializers.bgtask import BGTaskSerializer
 from .serializers.portfolio import PortFolioSerializer
 from .actions.bgtask import start_bgtask
 
+logger = logging.getLogger('django')
+
 
 @api_view(['GET', 'POST'])
 def watchlist_list(request):
+    logger.debug("request data: %s", request.data)
     if request.method == 'GET':
         #Get the list of watchlists
         watchlist = WatchList.objects.all()
@@ -19,10 +23,9 @@ def watchlist_list(request):
         return Response(serializer.data)
     elif request.method == 'POST':
         #Create a new watchlist
-        print("request data: %s", request.data)
         serializer = WatchListSerializer(data=request.data)
         if serializer.is_valid() == False:
-            print(serializer.errors)
+            logger.error(serializer.errors)
             return Response({'detail': 'Data validation failed'}, status=status.HTTP_400_BAD_REQUEST)
 
         serializer.save()
@@ -32,6 +35,7 @@ def watchlist_list(request):
 
 @api_view(['GET', 'PUT', 'DELETE'])
 def watchlist_detail(request, pk):
+    logger.debug("request data: %s, pk: %s", request.data, str(pk))
     try:
         watchlist = WatchList.objects.get(pk=pk)
     except WatchList.DoesNotExist:
@@ -44,7 +48,7 @@ def watchlist_detail(request, pk):
     elif request.method == 'PUT':
         serializer = WatchListSerializer(watchlist, data=request.data)
         if serializer.is_valid() == False:
-            print(serializer.errors)
+            logger.error(serializer.errors)
             return Response({'detail': 'Data validation failed'}, status=status.HTTP_400_BAD_REQUEST)
 
         serializer.save()
@@ -58,6 +62,7 @@ def watchlist_detail(request, pk):
 
 @api_view(['GET', 'POST'])
 def bgtask_list(request):
+    logger.debug("request data: %s", request.data)
     if request.method == 'GET':
         #Get the list of watchlists
         bgtask = BGTask.objects.all()
@@ -65,10 +70,9 @@ def bgtask_list(request):
         return Response(serializer.data)
     elif request.method == 'POST':
         #Create a new watchlist
-        print("request data: %s", request.data)
         serializer = BGTaskSerializer(data=request.data)
         if serializer.is_valid() == False:
-            print(serializer.errors)
+            logger.error(serializer.errors)
             return Response({'detail': 'Data validation failed'}, status=status.HTTP_400_BAD_REQUEST)
 
         serializer.save()
@@ -78,6 +82,7 @@ def bgtask_list(request):
 
 @api_view(['GET', 'PUT', 'DELETE'])
 def bgtask_detail(request, pk):
+    logger.debug("request data: %s, pk: %s", request.data, str(pk))
     try:
         bgtask = BGTask.objects.get(pk=pk)
     except BGTask.DoesNotExist:
@@ -90,7 +95,7 @@ def bgtask_detail(request, pk):
     elif request.method == 'PUT':
         serializer = BGTaskSerializer(bgtask, data=request.data)
         if serializer.is_valid() == False:
-            print(serializer.errors)
+            logger.error(serializer.errors)
             return Response({'detail': 'Data validation failed'}, status=status.HTTP_400_BAD_REQUEST)
 
         serializer.save()
@@ -105,7 +110,7 @@ def bgtask_detail(request, pk):
 
 @api_view(['GET', 'POST'])
 def portfolio_list(request):
-    print("list request data: %s", request.data)
+    logger.debug("request data: %s", request.data)
     if request.method == 'GET':
         #Get the list of watchlists
         portfolio_list = PortFolio.objects.all()
@@ -113,10 +118,9 @@ def portfolio_list(request):
         return Response(serializer.data)
     elif request.method == 'POST':
         #Create a new watchlist
-        print("request data: %s", request.data)
         serializer = PortFolioSerializer(data=request.data)
         if serializer.is_valid() == False:
-            print(serializer.errors)
+            logger.error(serializer.errors)
             return Response({'detail': 'Data validation failed'}, status=status.HTTP_400_BAD_REQUEST)
 
         serializer.save()
@@ -126,6 +130,7 @@ def portfolio_list(request):
 
 @api_view(['GET', 'PUT', 'DELETE'])
 def portfolio_detail(request, pk):
+    logger.debug("request data: %s, pk: %s", request.data, str(pk))
     try:
         portfolio = PortFolio.objects.get(pk=pk)
     except PortFolio.DoesNotExist:
@@ -138,7 +143,7 @@ def portfolio_detail(request, pk):
     elif request.method == 'PUT':
         serializer = PortFolioSerializer(portfolio, data=request.data)
         if serializer.is_valid() == False:
-            print(serializer.errors)
+            logger.error(serializer.errors)
             return Response({'detail': 'Data validation failed'}, status=status.HTTP_400_BAD_REQUEST)
 
         serializer.save()

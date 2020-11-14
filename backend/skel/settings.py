@@ -144,3 +144,30 @@ JWT_AUTH = {
     # TODO: Need to support refreshing of tokens. For now increasing token expiry to a day from 300s
     'JWT_EXPIRATION_DELTA': datetime.timedelta(days=1)
 }
+
+# Logging configuration from https://docs.djangoproject.com/en/3.1/topics/logging/#topic-logging-parts-loggers
+LOGGING = {
+    'version': 1,
+    'formatters': {
+        'timestamp': {
+            'format': '{asctime} {levelname} [{filename:s}:{funcName:s}:{lineno:d}] {thread:d} {message}',
+            'style': '{',
+        },
+    },
+    'disable_existing_loggers': False,
+    'handlers': {
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': '/tmp/django.prod.log',
+            'formatter': 'timestamp'
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+    },
+}

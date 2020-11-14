@@ -7,7 +7,7 @@ import logging
 import sys
 from .base import base_action
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('django')
 
 def __bgtask_get_portfolio(bgtask):
     if bgtask.dataIdType != BGTaskDataIdType.PORTFOLIO.value:
