@@ -29,6 +29,9 @@ fi
 
 echo "Launching profile ${profileFile}..."
 
+mkdir -p logs
+export backendLogFile=$PWD/logs/django.${selectedProfile}.log
+
 cd backend;
 python manage.py makemigrations
 python manage.py migrate
@@ -50,6 +53,7 @@ cd ../frontend/fe/
 echo "Launching frontend ${profileFile}..."
 # Adding BACKEND_PORT to environment file. The prefix REACT_APP_ is needed
 echo "REACT_APP_BACKEND_PORT=${BACKEND_PORT}" > .env
+yarn install
 
 if [ $PROD = 'True' ]; then
   echo "Building production profile..."
@@ -60,5 +64,5 @@ else
 fi
 
 echo "Calling cleanup..."
-clean_up(-2)
+clean_up -2
 

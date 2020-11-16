@@ -163,7 +163,7 @@ LOGGING = {
         'file': {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
-            'filename': '/tmp/django.prod.log',
+            'filename': os.environ['backendLogFile'],
             'formatter': 'timestamp'
         },
     },
