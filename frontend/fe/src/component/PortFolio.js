@@ -191,7 +191,7 @@ export default class PortFolio extends React.Component {
       this.loadPortFolio();
     }
 
-    getBackend().deleteFromPortFolio(PortFolioEntry, deleteFromPortFolioCallback.bind(this));
+    getBackend().deletePortFolio(PortFolioEntry, deleteFromPortFolioCallback.bind(this));
     this.onCloseDetailedViewModal();
   }
 
