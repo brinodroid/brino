@@ -2,10 +2,11 @@ import time
 import brine
 import json
 import logging
+import traceback
 from brCore.types.bgtask_types import BGTaskAction,  BGTaskActionResult, BGTaskStatus
 from brCore.types.asset_types import AssetTypes
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('django')
 
 def __sell(watchlist, portfolio, details):
     if portfolio.units <= 0:
@@ -127,6 +128,7 @@ def __do_stats_executor(bgtask, watchlist, portfolio):
 
     except:
         logger.error('__do_stats_executor: got exception: %s', bgtask)
+        traceback.print_stack()
 
     return bgtask
 

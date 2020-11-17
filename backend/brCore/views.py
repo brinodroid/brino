@@ -76,6 +76,7 @@ def bgtask_list(request):
             return Response({'detail': 'Data validation failed'}, status=status.HTTP_400_BAD_REQUEST)
 
         serializer.save()
+        start_bgtask(bgtask)
         return Response(serializer.data)
 
     return Response({'detail': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
