@@ -116,7 +116,7 @@ def __do_stats_executor(bgtask, watchlist, portfolio):
         if watchlist.assetType == AssetTypes.OPTION.value:
             details['optPeakFallPercent'] = round(option_drop_from_peak_percentage, 2)
             details['optPrice'] = option_price_f
-            details['optPeak'] = option_price_f
+            details['optPeak'] = option_peak_f
 
         details['stockPeakFallPercent'] = round(stock_drop_from_peak_percentage, 2)
         details['stockPrice'] = stock_price_f
