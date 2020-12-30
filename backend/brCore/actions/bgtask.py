@@ -1,11 +1,12 @@
 import threading
-from brCore.models import BGTask, WatchList, PortFolio
+from brCore.models import BGTask, WatchList, PortFolio, ScanEntry
 from brCore.types.bgtask_types import BGTaskAction, BGTaskStatus, BGTaskDataIdType
 import time
 import brine
 import logging
 import sys
 from .base import base_action
+from brCore.types.scan_types import ScanStatus
 
 logger = logging.getLogger('django')
 
@@ -91,6 +92,45 @@ def __bgtask_runner(bgtask_id):
         # Repeat the loop after 1min
         time.sleep(60)
 
+def __bgtask_scanner():
+    brine.login()
+    while True:
+        try:
+            scan_list = ScanEntry.objects.all()
+        except ScanEntry.DoesNotExist:
+            logger.info('__bgtask_scanner: No scan entries, check after 60s')
+            time.sleep(60)
+            continue
+
+        for scan_entry in scan_list:
+            logger.info('__bgtask_scanner: checking %s', scan_entry)
+            try:
+                watchlist = WatchList.objects.get(pk=scan_entry.watchListId)
+            except WatchList.DoesNotExist:
+                logger.error('__bgtask_scanner: WatchList not found %d', scan_entry.watchListId)
+                continue
+
+            stock_price = brine.get_latest_price(watchlist.ticker, includeExtendedHours=True)
+            stock_price_f = float(stock_price[0])
+            details = ""
+            if stock_price_f >= scan_entry.resistance:
+                details ='Near resistance. Sell?'
+            elif stock_price_f <= scan_entry.support:
+                details ='Near support target. Buy?'
+
+            #Update the scan entry fields
+            scan_entry.currentPrice = stock_price_f
+            scan_entry.details = details
+            if details != "":
+                scan_entry.status = ScanStatus.ATTN.value
+            else:
+                scan_entry.status = ScanStatus.NONE.value
+
+            logger.info('__bgtask_scanner: Updating %s', scan_entry)
+            scan_entry.save()
+
+        time.sleep(60)
+
 
 def __bgtask_thread_start(bgtask):
     t = threading.Thread(target=__bgtask_runner,
@@ -108,3 +148,12 @@ def start_bgtask(bgtask):
         logger.info('Starting bgtask: %s', bgtask)
         __bgtask_thread_start(bgtask)
     return bgtask
+
+def start_bgscan():
+    t = threading.Thread(target=__bgtask_scanner,
+                         args=[])
+    t.setDaemon(True)
+    # Mark the task as running before starting thread
+    logger.info('Starting scanner thread')
+    t.start()
+

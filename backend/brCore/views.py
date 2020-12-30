@@ -4,10 +4,11 @@ from rest_framework.response import Response
 from rest_framework import status
 import logging
 
-from .models import WatchList, BGTask, PortFolio
+from .models import WatchList, BGTask, PortFolio, ScanEntry
 from .serializers.watchlist import WatchListSerializer
 from .serializers.bgtask import BGTaskSerializer
 from .serializers.portfolio import PortFolioSerializer
+from .serializers.scan import ScanEntrySerializer
 from .actions.bgtask import start_bgtask
 
 logger = logging.getLogger('django')
@@ -152,6 +153,53 @@ def portfolio_detail(request, pk):
 
     elif request.method == 'DELETE':
         portfolio.delete()
+        return Response({'detail': 'Deleted'}, status=status.HTTP_204_NO_CONTENT)
+
+    return Response({'detail': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+@api_view(['GET', 'POST'])
+def scan_list(request):
+    logger.debug("request data: %s", request.data)
+    if request.method == 'GET':
+        #Get the list of watchlists
+        scan_list = ScanEntry.objects.all()
+        serializer = ScanEntrySerializer(scan_list, many=True)
+        return Response(serializer.data)
+    elif request.method == 'POST':
+        #Create a new watchlist
+        serializer = ScanEntrySerializer(data=request.data)
+        if serializer.is_valid() == False:
+            logger.error(serializer.errors)
+            return Response({'detail': 'Data validation failed'}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer.save()
+        return Response(serializer.data)
+
+    return Response({'detail': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+@api_view(['GET', 'PUT', 'DELETE'])
+def scan_detail(request, pk):
+    logger.debug("request data: %s, pk: %s", request.data, str(pk))
+    try:
+        scan = ScanEntry.objects.get(pk=pk)
+    except ScanEntry.DoesNotExist:
+        return Response({'detail': 'Resource does not exist'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    if request.method == 'GET':
+        serializer = ScanEntrySerializer(scan)
+        return Response(serializer.data)
+
+    elif request.method == 'PUT':
+        serializer = ScanEntrySerializer(scan, data=request.data)
+        if serializer.is_valid() == False:
+            logger.error(serializer.errors)
+            return Response({'detail': 'Data validation failed'}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer.save()
+        return Response(serializer.data)
+
+    elif request.method == 'DELETE':
+        scan.delete()
         return Response({'detail': 'Deleted'}, status=status.HTTP_204_NO_CONTENT)
 
     return Response({'detail': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)

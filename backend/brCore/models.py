@@ -2,6 +2,7 @@ from django.db import models
 from django.utils import timezone
 from .types.asset_types import AssetTypes
 from .types.bgtask_types import BGTaskAction, BGTaskActionResult, BGTaskStatus, BGTaskDataIdType
+from .types.scan_types import ScanStatus
 
 
 # WatchList: This is the list of assets actively tracked
@@ -27,7 +28,7 @@ class WatchList(models.Model):
         return "assetType:%s, ticker:%s, optionStrike:%s, optionExpiry:%s, comment:%s," \
                "creationTimestamp: %s, updateTimestamp:%s" \
                % (self.assetType, self.ticker, self.optionStrike, self.optionExpiry,
-               self.comment, self.creationTimestamp, self.updateTimestamp)
+                  self.comment, self.creationTimestamp, self.updateTimestamp)
 
 
 class BGTask(models.Model):
@@ -48,7 +49,7 @@ class BGTask(models.Model):
         return super(BGTask, self).save(*args, **kwargs)
 
     def __str__(self):
-        return "dataIdType: %s, dataId:%s, status:%s, action:%s, details:%s" \
+        return "dataIdType:%s, dataId:%s, status:%s, action:%s, details:%s" \
                " actionResult:%s, updateTimestamp:%s" \
                % (self.dataIdType, self.dataId, self.status, self.action, self.details,
                   self.actionResult, self.updateTimestamp)
@@ -71,7 +72,35 @@ class PortFolio(models.Model):
         return super(PortFolio, self).save(*args, **kwargs)
 
     def __str__(self):
-        return "watchListId: %s, entryDate:%s, entryPrice:%s, units:%s," \
+        return "watchListId:%s, entryDate:%s, entryPrice:%s, units:%s," \
                " profitTarget:%s, stopLoss:%s chainedPortFolioId:%s, updateTimestamp:%s" \
                % (self.watchListId, self.entryDate, self.entryPrice, self.units,
                   self.profitTarget, self.stopLoss, self.chainedPortFolioId, self.updateTimestamp)
+
+
+class ScanEntry(models.Model):
+    updateTimestamp = models.DateTimeField(default=timezone.now)
+    watchListId = models.IntegerField()
+    support = models.FloatField()
+    resistance = models.FloatField()
+    profitTarget = models.FloatField(null=True, blank=True)
+    stopLoss = models.FloatField(null=True, blank=True)
+    rationale = models.TextField(default="")
+
+    # Filled by backend
+    currentPrice = models.FloatField(null=True)
+    volatility = models.FloatField(null=True, blank=True)
+    status = models.CharField(max_length=16, choices=ScanStatus.choices(),
+                              default=ScanStatus.NONE.value, null=True)
+    details = models.TextField(blank=True)
+
+    def save(self, *args, **kwargs):
+        self.updateTimestamp = timezone.now()
+        return super(ScanEntry, self).save(*args, **kwargs)
+
+    def __str__(self):
+        return "watchListId:%s, currentPrice:%s, support:%s, resistance:%s," \
+               " profitTarget:%s, stopLoss:%s, rationale:%s, volatility:%s, status:%s, details:%s, updateTimestamp:%s" \
+               % (self.watchListId, self.currentPrice, self.support, self.resistance,
+                  self.profitTarget, self.stopLoss, self.rationale,
+                  self.volatility, self.status, self.details, self.updateTimestamp)
