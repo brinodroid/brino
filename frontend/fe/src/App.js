@@ -9,6 +9,7 @@ import NotFound from "./component/NotFound";
 import Home from "./component/Home";
 import WatchList from "./component/WatchList";
 import PortFolio from "./component/PortFolio";
+import Scan from "./component/Scan";
 import { getBackend } from './utils/Backend'
 import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
 
@@ -62,6 +63,9 @@ export default class App extends React.Component {
             <Navbar.Text>
               <Nav.Link href="/watchlist">Watch List</Nav.Link>
             </Navbar.Text>
+            <Navbar.Text>
+              <Nav.Link href="/scan">Scan</Nav.Link>
+            </Navbar.Text>
             <Navbar.Collapse className="justify-content-end">
               <Navbar.Text>
                 <Nav.Link href="/setting">Setting</Nav.Link>
@@ -78,6 +82,7 @@ export default class App extends React.Component {
             <Route path="/login"> <Login auth={ authProps } /> </Route>
             <Route path="/portfolio"> <PortFolio auth={ authProps } /> </Route>
             <Route path="/watchlist"> <WatchList auth={ authProps } /> </Route>
+            <Route path="/scan"> <Scan auth={ authProps } /> </Route>
             <Route path="/setting"> <Setting auth={ authProps } /> </Route>
             <Route> <NotFound auth={ authProps } /> </Route>
           </Switch>

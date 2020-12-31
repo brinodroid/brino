@@ -297,7 +297,7 @@ export default class PortFolio extends React.Component {
     return (
         <Modal show={this.state.showDetailedViewModal} onHide={this.onCloseDetailedViewModal} animation={false}>
         <Modal.Header closeButton>
-          <Modal.Title>Watch List Details</Modal.Title>
+          <Modal.Title>PortFolio Details</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           {this.showModalForm()}

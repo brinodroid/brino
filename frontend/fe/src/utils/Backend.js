@@ -24,6 +24,11 @@ class Backend {
     this.deletePortFolio = this.deletePortFolio.bind(this);
     this.updatePortFolio = this.updatePortFolio.bind(this);
 
+    this.getScan = this.getScan.bind(this);
+    this.createScan = this.createScan.bind(this);
+    this.deleteScan = this.deleteScan.bind(this);
+    this.updateScan = this.updateScan.bind(this);
+
     this.getWithToken = this.getWithToken.bind(this);
     this.postWithToken = this.postWithToken.bind(this);
     this.deleteWithToken = this.deleteWithToken.bind(this);
@@ -128,7 +133,7 @@ class Backend {
   }
 
   createPortFolio(portfolio, callback) {
-    // The below fields are not relavent during creation
+    // The below fields are not needed during creation
     delete portfolio.updateTimestamp;
     delete portfolio.exitDate;
     delete portfolio.exitPrice;
@@ -141,6 +146,27 @@ class Backend {
 
   updatePortFolio(portfolio, callback) {
     this.putWithToken('brCore/portfolio/'+portfolio.id, portfolio, callback);
+  }
+
+  getScan(callback) {
+    this.getWithToken('brCore/scan', callback);
+  }
+
+  createScan(scan, callback) {
+    // The below fields are not needed during creation
+    delete scan.updateTimestamp;
+    delete scan.status;
+    delete scan.currentPrice;
+    delete scan.volatility;
+    this.postWithToken('brCore/scan/', scan, callback);
+  }
+
+  deleteScan(scan, callback) {
+    this.deleteWithToken('brCore/scan/' + scan.id, callback);
+  }
+
+  updateScan(scan, callback) {
+    this.putWithToken('brCore/scan/' + scan.id, scan, callback);
   }
 
   deleteWithToken(api, callback) {
