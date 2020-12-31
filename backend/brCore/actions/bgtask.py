@@ -7,8 +7,10 @@ import logging
 import sys
 from .base import base_action
 from brCore.types.scan_types import ScanStatus
+from brCore.types.asset_types import AssetTypes
 
 logger = logging.getLogger('django')
+
 
 def __bgtask_get_portfolio(bgtask):
     if bgtask.dataIdType != BGTaskDataIdType.PORTFOLIO.value:
@@ -92,6 +94,7 @@ def __bgtask_runner(bgtask_id):
         # Repeat the loop after 1min
         time.sleep(60)
 
+
 def __bgtask_scanner():
     brine.login()
     while True:
@@ -109,16 +112,34 @@ def __bgtask_scanner():
             except WatchList.DoesNotExist:
                 logger.error('__bgtask_scanner: WatchList not found %d', scan_entry.watchListId)
                 continue
-
             stock_price = brine.get_latest_price(watchlist.ticker, includeExtendedHours=True)
             stock_price_f = float(stock_price[0])
-            details = ""
-            if stock_price_f >= scan_entry.resistance:
-                details ='Near resistance. Sell?'
-            elif stock_price_f <= scan_entry.support:
-                details ='Near support target. Buy?'
+            optionDetails = ""
+            if watchlist.assetType == AssetTypes.CALL_OPTION.value \
+                    or watchlist.assetType == AssetTypes.PUT_OPTION.value:
+                logger.info('__bgtask_scanner: get option price. watchlist=%s', watchlist)
 
-            #Update the scan entry fields
+                optionType = 'call'
+                if watchlist.assetType == AssetTypes.PUT_OPTION.value:
+                    optionType = 'put'
+
+                option_raw_data = brine.options.get_option_market_data(watchlist.ticker,
+                                                                       str(watchlist.optionExpiry),
+                                                                       str(watchlist.optionStrike), 'call')
+                option_data = option_raw_data[0][0]
+                option_price_f = float(option_data['mark_price'])
+                optionDetails = 'mark={}, high={}, low={}, volume={}'.format(option_data['mark_price'],
+                                                                             option_data['high_price'],
+                                                                             option_data['low_price'],
+                                                                             option_data['volume'])
+
+            details = optionDetails
+            if stock_price_f >= scan_entry.resistance:
+                details = 'Near resistance. Sell?'
+            elif stock_price_f <= scan_entry.support:
+                details = 'Near support target. Buy?'
+
+            # Update the scan entry fields
             scan_entry.currentPrice = stock_price_f
             scan_entry.details = details
             if details != "":
@@ -149,6 +170,7 @@ def start_bgtask(bgtask):
         __bgtask_thread_start(bgtask)
     return bgtask
 
+
 def start_bgscan():
     t = threading.Thread(target=__bgtask_scanner,
                          args=[])
@@ -156,4 +178,3 @@ def start_bgscan():
     # Mark the task as running before starting thread
     logger.info('Starting scanner thread')
     t.start()
-

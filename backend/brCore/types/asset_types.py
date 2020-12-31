@@ -3,7 +3,8 @@ from enum import Enum
 
 class AssetTypes(Enum):
     STOCK = "STOCK"
-    OPTION = "OPTION"
+    CALL_OPTION = "CALL"
+    PUT_OPTION = "PUT"
 
     @classmethod
     def choices(cls):

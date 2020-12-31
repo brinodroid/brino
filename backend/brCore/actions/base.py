@@ -88,7 +88,7 @@ def __do_stats_executor(bgtask, watchlist, portfolio):
         stock_peak_f = max(stock_peak_f, stock_price_f)
         stock_drop_from_peak_percentage =  100*(1-stock_price_f/stock_peak_f)
 
-        if watchlist.assetType == AssetTypes.OPTION.value:
+        if watchlist.assetType == AssetTypes.CALL_OPTION.value:
             logger.info('__do_stats_executor: get option price. watchlist=%s', watchlist)
             option_data = brine.options.get_option_market_data(watchlist.ticker,
                 str(watchlist.optionExpiry), str(watchlist.optionStrike), 'call')
@@ -113,7 +113,7 @@ def __do_stats_executor(bgtask, watchlist, portfolio):
         if recommend:
           details["recommend"] = recommend
 
-        if watchlist.assetType == AssetTypes.OPTION.value:
+        if watchlist.assetType == AssetTypes.CALL_OPTION.value:
             details['optPeakFallPercent'] = round(option_drop_from_peak_percentage, 2)
             details['optPrice'] = option_price_f
             details['optPeak'] = option_peak_f
