@@ -20,6 +20,7 @@ export default class Scan extends React.Component {
     this.onDeleteButtonClick = this.onDeleteButtonClick.bind(this);
     this.onAddButtonClick = this.onAddButtonClick.bind(this);
 
+    this.loadWatchList = this.loadWatchList.bind(this);
     this.loadScan = this.loadScan.bind(this);
     this.addToScan = this.addToScan.bind(this);
     this.deleteFromScan = this.deleteFromScan.bind(this);
@@ -41,10 +42,14 @@ export default class Scan extends React.Component {
       showDetailedViewModal: false,
       addToScan: false,
       deleteFromScan: false,
-      formValues : {id: "", updateTimestamp: "", watchListId: "", watchTicker: "", support: "", resistance: "",
-       profitTarget: "", stopLoss: "", rationale:"", currentPrice: "", volatility: "", status: "", details: ""}
+      formValues : {id: "", updateTimestamp: "", watchListId: "", watchListTicker: "", support: "", resistance: "",
+       profitTarget: "", stopLoss: "", evTargetPrice:"", fvTargetPrice:"", rationale:"",
+       currentPrice: "", volatility: "", status: "", details: ""}
     }
   }
+
+  // Class variable to hold the setInterval Id, used to refresh the page every 5 seconds
+  intervalID;
 
   onCloseDetailedViewModal() {
     console.info('onCloseDetailedViewModal: ...')
@@ -52,8 +57,9 @@ export default class Scan extends React.Component {
       showDetailedViewModal: false,
       deleteFromScan: false,
       addToScan: false,
-      formValues : {id: "", updateTimestamp: "", watchListId: "", watchTicker: "", support: "", resistance: "",
-       profitTarget: "", stopLoss: "", rationale:"", currentPrice: "", volatility: "", status: "", details: ""}
+      formValues : {id: "", updateTimestamp: "", watchListId: "", watchListTicker: "", support: "", resistance: "",
+       profitTarget: "", stopLoss: "", evTargetPrice:"", fvTargetPrice:"", rationale:"",
+       currentPrice: "", volatility: "", status: "", details: ""}
     });
   }
 
@@ -88,6 +94,58 @@ export default class Scan extends React.Component {
     }
   }
 
+  loadWatchList() {
+    console.info('loadWatchList: Loading watchlist...')
+    let loadWatchListCallback = function (httpStatus, json) {
+      if ( httpStatus === 401) {
+        this.props.auth.setAuthenticationStatus(false);
+        console.error("loadWatchListCallback: authentication expired?");
+        return;
+      }
+
+      if ( httpStatus !== 200) {
+        console.error("loadWatchListCallback: failure: http:%o", httpStatus);
+        this.setState({
+          errorMsg: "Failed to load watchlist"
+        })
+        return;
+      }
+
+      // Converting watchList json array to a map
+      console.info("loadWatchListCallback: json: %o", json);
+      let watchListMap = json.reduce(function(map, obj) {
+        map[obj.id] = obj;
+        return map;
+        }, {});
+
+      console.info("loadWatchListCallback: watListMap: %o", watchListMap);
+      let scanArray= this.state.scan;
+      let updateWatchListTicker = function (scanEntry) {
+        let watchListItem = watchListMap[scanEntry.watchListId];
+        let watchListTicker = '';
+        console.info("loadWatchListCallback: item: %o", watchListItem);
+        if (!watchListItem) {
+            watchListTicker = 'NOT FOUND. Stale?';
+        } else if (watchListItem.assetType === 'STOCK') {
+            watchListTicker = watchListItem.ticker;
+        } else {
+            watchListTicker = watchListItem.ticker + ' ' + watchListItem.assetType + ' ' + watchListItem.optionStrike + ' ' + watchListItem.optionExpiry;
+        }
+
+        scanEntry.watchListTicker = watchListTicker;
+      }
+      scanArray.forEach(updateWatchListTicker);
+      console.info("loadWatchListCallback: scanArray: %o", scanArray);
+
+      // This update is needed to refresh the UI
+      this.setState({
+        scan: scanArray
+      });
+    }
+
+    getBackend().getWatchList(loadWatchListCallback.bind(this));
+  }
+
   loadScan() {
     console.info('loadScan: Loading Scan...')
     let loadScanCallback = function (httpStatus, json) {
@@ -108,9 +166,12 @@ export default class Scan extends React.Component {
       console.info("loadScanCallback: json: %o", json);
       this.setState({
         isScanLoaded: true,
-        Scan: json,
+        scan: json,
         errorMsg: ""
       });
+
+      // Update the ticker
+      this.loadWatchList();
     }
 
     getBackend().getScan(loadScanCallback.bind(this));
@@ -202,7 +263,13 @@ export default class Scan extends React.Component {
 
     if (!this.state.isScanLoaded) {
       this.loadScan();
+      this.intervalID = setInterval(this.loadScan, 30000); // 30s
     }
+  }
+
+  componentWillUnmount() {
+    console.info("componentWillUnmount: json:%o", this.intervalID);
+    clearInterval(this.intervalID);
   }
 
   onFormValuesChange(event) {
@@ -236,11 +303,13 @@ export default class Scan extends React.Component {
         { this.showModalFormGroup(true, "updateTimestamp", "Update Timestamp", this.state.formValues.updateTimestamp) }
         { this.showModalFormGroup(true, "id", "ID", this.state.formValues.id) }
         { this.showModalFormGroup(readOnly, "watchListId", "WatchList Id", this.state.formValues.watchListId) }
-        { this.showModalFormGroup(readOnly, "rationale", "Rationale", this.state.formValues.rationale) }
         { this.showModalFormGroup(readOnly, "support", "Support", this.state.formValues.support)}
         { this.showModalFormGroup(readOnly, "resistance", "Resistance", this.state.formValues.resistance)}
         { this.showModalFormGroup(readOnly, "profitTarget", "Profit Target", this.state.formValues.profitTarget) }
         { this.showModalFormGroup(readOnly, "stopLoss", "Stop Loss", this.state.formValues.stopLoss) }
+        { this.showModalFormGroup(readOnly, "etTargetPrice", "ET Target", this.state.formValues.etTargetPrice) }
+        { this.showModalFormGroup(readOnly, "fvTargetPrice", "FV Target", this.state.formValues.fvTargetPrice) }
+        { this.showModalFormGroup(readOnly, "rationale", "Rationale", this.state.formValues.rationale) }
         { this.showModalFormGroup(true, "currentPrice", "Current Price", this.state.formValues.currentPrice) }
         { this.showModalFormGroup(true, "volatility", "Volatility", this.state.formValues.volatility) }
         { this.showModalFormGroup(true, "status", "Status", this.state.formValues.status) }
@@ -338,11 +407,13 @@ export default class Scan extends React.Component {
             )},
       { Header: 'ID',  accessor: 'id'},
       { Header: 'WatchList Id', accessor: 'watchListId'},
-      { Header: 'WatchList ticker', accessor: 'watchTicker'},
+      { Header: 'WatchList ticker', accessor: 'watchListTicker'},
       { Header: 'Support', accessor: 'support'},
       { Header: 'Resistance', accessor: 'resistance'},
       { Header: 'Profit Target', accessor: 'profitTarget'},
       { Header: 'Stop Loss', accessor: 'stopLoss'},
+      { Header: 'ET Target', accessor: 'etTargetPrice'},
+      { Header: 'FV Target', accessor: 'fvTargetPrice'},
       { Header: 'Rationale', accessor: 'rationale'},
       { Header: 'Current Price', accessor: 'currentPrice'},
       { Header: 'Volatility', accessor: 'volatility'},
@@ -377,7 +448,7 @@ export default class Scan extends React.Component {
         Welcome Scan {this.props.auth.loggedInUser}
         { this.showErrorMsg() }
 
-        <Table columns={columns} data={this.state.Scan} getTrProps={onRowClick} />
+        <Table columns={columns} data={this.state.scan} getTrProps={onRowClick} />
 
         { this.showModal() }
 
