@@ -12,7 +12,7 @@ import Col from 'react-bootstrap/Col';
 import { getBackend } from '../utils/Backend';
 import Table from '../utils/Table';
 
-export default class Home extends React.Component {
+export default class Scan extends React.Component {
   constructor(props) {
     super(props);
 
@@ -20,10 +20,11 @@ export default class Home extends React.Component {
     this.onDeleteButtonClick = this.onDeleteButtonClick.bind(this);
     this.onAddButtonClick = this.onAddButtonClick.bind(this);
 
-    this.loadBgtask = this.loadBgtask.bind(this);
-    this.createBgtask = this.createBgtask.bind(this);
-    this.deleteBgtask = this.deleteBgtask.bind(this);
-    this.updateBgtask = this.updateBgtask.bind(this);
+    this.loadWatchList = this.loadWatchList.bind(this);
+    this.loadScan = this.loadScan.bind(this);
+    this.addToScan = this.addToScan.bind(this);
+    this.deleteFromScan = this.deleteFromScan.bind(this);
+    this.updateScan = this.updateScan.bind(this);
 
     this.onCloseDetailedViewModal = this.onCloseDetailedViewModal.bind(this);
     this.onModalActionButtonClick = this.onModalActionButtonClick.bind(this);
@@ -35,13 +36,15 @@ export default class Home extends React.Component {
     this.onFormValuesChange = this.onFormValuesChange.bind(this);
 
     this.state = {
-      isBgtaskLoaded: false,
-      bgtaskList : null,
+      isScanLoaded: false,
       errorMsg : '',
+      Scan : null,
       showDetailedViewModal: false,
-      createBgtask: false,
-      deleteBgtask: false,
-      formValues : {id: "", dataIdType: "", dataId: "", status: "", action: "", actionResult: "", updateTimestamp: "", detials: ""}
+      addToScan: false,
+      deleteFromScan: false,
+      formValues : {id: "", updateTimestamp: "", watchListId: "", watchListTicker: "", support: "", resistance: "",
+       profitTarget: "", stopLoss: "", etTargetPrice: "", fvTargetPrice: "", rationale: "",
+       currentPrice: "", volatility: "", shortfloat: "", status: "", details: ""}
     }
   }
 
@@ -52,9 +55,11 @@ export default class Home extends React.Component {
     console.info('onCloseDetailedViewModal: ...')
     this.setState({
       showDetailedViewModal: false,
-      deleteBgtask: false,
-      createBgtask: false,
-      formValues : {id: "", dataIdType: "", dataId: "", status: "", action: "", actionResult: "", updateTimestamp: ""}
+      deleteFromScan: false,
+      addToScan: false,
+      formValues : {id: "", updateTimestamp: "", watchListId: "", watchListTicker: "", support: "", resistance: "",
+       profitTarget: "", stopLoss: "", etTargetPrice: "", fvTargetPrice: "", rationale: "",
+       currentPrice: "", volatility: "", shortfloat: "", status: "", details: ""}
     });
   }
 
@@ -70,7 +75,7 @@ export default class Home extends React.Component {
     console.info('onAddButtonClick: ...')
     this.setState({
       showDetailedViewModal: true,
-      createBgtask: true
+      addToScan: true
     });
   }
 
@@ -78,7 +83,7 @@ export default class Home extends React.Component {
     console.info('onDeleteButtonClick: rowData=%o', rowData);
     this.setState({
       showDetailedViewModal: true,
-      deleteBgtask: true,
+      deleteFromScan: true,
       formValues: rowData
     });
   }
@@ -89,137 +94,182 @@ export default class Home extends React.Component {
     }
   }
 
-  loadBgtask() {
-    console.info('loadBgtask: Loading bgtask...')
-    let loadBgtaskCallback = function (httpStatus, json) {
+  loadWatchList() {
+    console.info('loadWatchList: Loading watchlist...')
+    let loadWatchListCallback = function (httpStatus, json) {
       if ( httpStatus === 401) {
         this.props.auth.setAuthenticationStatus(false);
-        console.error("loadBgtaskCallback: authentication expired?");
+        console.error("loadWatchListCallback: authentication expired?");
         return;
       }
 
       if ( httpStatus !== 200) {
-        console.error("loadBgtaskCallback: failure: http:%o", httpStatus);
+        console.error("loadWatchListCallback: failure: http:%o", httpStatus);
         this.setState({
-          errorMsg: "Failed to load bgtask"
+          errorMsg: "Failed to load watchlist"
         })
         return;
       }
 
-      console.info("loadBgtaskCallback: json: %o", json);
+      // Converting watchList json array to a map
+      console.info("loadWatchListCallback: json: %o", json);
+      let watchListMap = json.reduce(function(map, obj) {
+        map[obj.id] = obj;
+        return map;
+        }, {});
+
+      console.info("loadWatchListCallback: watListMap: %o", watchListMap);
+      let scanArray= this.state.scan;
+      let updateWatchListTicker = function (scanEntry) {
+        let watchListItem = watchListMap[scanEntry.watchListId];
+        let watchListTicker = '';
+        console.info("loadWatchListCallback: item: %o", watchListItem);
+        if (!watchListItem) {
+            watchListTicker = 'NOT FOUND. Stale?';
+        } else if (watchListItem.assetType === 'STOCK') {
+            watchListTicker = watchListItem.ticker;
+        } else {
+            watchListTicker = watchListItem.ticker + ' ' + watchListItem.assetType + ' ' + watchListItem.optionStrike + ' ' + watchListItem.optionExpiry;
+        }
+
+        scanEntry.watchListTicker = watchListTicker;
+      }
+      scanArray.forEach(updateWatchListTicker);
+      console.info("loadWatchListCallback: scanArray: %o", scanArray);
+
+      // This update is needed to refresh the UI
       this.setState({
-        isBgtaskLoaded: true,
-        bgtaskList : json,
-        errorMsg: ""
+        scan: scanArray
       });
     }
 
-    getBackend().getBgtask(loadBgtaskCallback.bind(this));
+    getBackend().getWatchList(loadWatchListCallback.bind(this));
   }
 
-  createBgtask(bgtask) {
-    console.info('createBgtask: adding entry=%o', bgtask)
-    let createBgtaskCallback = function (httpStatus, json) {
+  loadScan() {
+    console.info('loadScan: Loading Scan...')
+    let loadScanCallback = function (httpStatus, json) {
       if ( httpStatus === 401) {
         this.props.auth.setAuthenticationStatus(false);
-        console.error("createBgtaskCallback: authentication expired?");
+        console.error("loadScanCallback: authentication expired?");
         return;
       }
 
       if ( httpStatus !== 200) {
-        console.error("createBgtaskCallback: failure: http:%o", httpStatus);
+        console.error("loadScanCallback: failure: http:%o", httpStatus);
         this.setState({
-          errorMsg: "Failed to create bgtask"
+          errorMsg: "Failed to load Scan"
         })
         return;
       }
 
-      console.info("createBgtaskCallback: json: %o", json);
+      let updateTimeFormat = function (scanEntry) {
+        scanEntry.updateTimestampLocal = new Date(scanEntry.updateTimestamp).toLocaleString();
+        console.info("updateTimeFormat: json: %o", scanEntry.updateTimestampLocal);
+      }
+      json.forEach(updateTimeFormat);
 
-      //Reloading the bgtaskList
-      this.loadBgtask();
+      console.info("loadScanCallback: json: %o", json);
+      this.setState({
+        isScanLoaded: true,
+        scan: json,
+        errorMsg: ""
+      });
+
+      // Update the ticker
+      this.loadWatchList();
     }
 
-    getBackend().createBgtask(bgtask, createBgtaskCallback.bind(this));
-    this.onCloseDetailedViewModal();
+    getBackend().getScan(loadScanCallback.bind(this));
   }
 
-  updateBgtask(bgtask) {
-    console.info('updateBgtask: adding entry=%o', bgtask)
-    let updateBgtaskCallback= function (httpStatus, json) {
+  addToScan(ScanEntry) {
+    console.info('addToScan: adding entry=%o', ScanEntry)
+    let createScanCallback = function (httpStatus, json) {
       if ( httpStatus === 401) {
         this.props.auth.setAuthenticationStatus(false);
-        console.error("updateBgtaskCallback: authentication expired?");
+        console.error("createScanCallback: authentication expired?");
         return;
       }
 
       if ( httpStatus !== 200) {
-        console.error("updateBgtaskCallback: failure: http:%o", httpStatus);
+        console.error("createScanCallback: failure: http:%o", httpStatus);
         this.setState({
-          errorMsg: "Failed to update bgtask"
+          errorMsg: "Failed to add to Scan"
         })
         return;
       }
 
-      console.info("updateBgtaskCallback: json: %o", json);
+      console.info("createScanCallback: json: %o", json);
 
-      //Reloading the bgtaskList
-      this.loadBgtask();
+      //Reloading the Scan
+      this.loadScan();
     }
 
-    getBackend().updateBgtask(bgtask, updateBgtaskCallback.bind(this));
+    getBackend().createScan(ScanEntry, createScanCallback.bind(this));
     this.onCloseDetailedViewModal();
   }
 
-  deleteBgtask(bgtask) {
-    console.info('deleteBgtask: adding entry=%o', bgtask)
-    let deleteBgtaskCallback = function (httpStatus, json) {
+  updateScan(ScanEntry) {
+    console.info('updateScan: adding entry=%o', ScanEntry)
+    let updateScanCallback= function (httpStatus, json) {
       if ( httpStatus === 401) {
         this.props.auth.setAuthenticationStatus(false);
-        console.error("deleteBgtaskCallback: authentication expired?");
+        console.error("updateScanCallback: authentication expired?");
+        return;
+      }
+
+      if ( httpStatus !== 200) {
+        console.error("updateScanCallback: failure: http:%o", httpStatus);
+        this.setState({
+          errorMsg: "Failed to update Scan"
+        })
+        return;
+      }
+
+      console.info("updateScanCallback: json: %o", json);
+
+      //Reloading the Scan
+      this.loadScan();
+    }
+
+    getBackend().updateScan(ScanEntry, updateScanCallback.bind(this));
+    this.onCloseDetailedViewModal();
+  }
+
+  deleteFromScan(ScanEntry) {
+    console.info('deleteFromScan: adding entry=%o', ScanEntry)
+    let deleteFromScanCallback = function (httpStatus, json) {
+      if ( httpStatus === 401) {
+        this.props.auth.setAuthenticationStatus(false);
+        console.error("deleteFromScanCallback: authentication expired?");
         return;
       }
 
       if ( httpStatus !== 204) {
-        console.error("deleteBgtaskCallback: failure: http:%o", httpStatus);
+        console.error("deleteFromScanCallback: failure: http:%o", httpStatus);
         this.setState({
-          errorMsg: "Failed to delete to bgtask"
+          errorMsg: "Failed to delete to Scan"
         })
         return;
       }
 
-      console.info("deleteBgtaskCallback: json: %o", json);
+      console.info("deleteFromScanCallback: json: %o", json);
 
-      //Reloading the bgtaskList
-      this.loadBgtask();
+      //Reloading the Scan
+      this.loadScan();
     }
 
-    getBackend().deleteBgtask(bgtask, deleteBgtaskCallback.bind(this));
+    getBackend().deleteScan(ScanEntry, deleteFromScanCallback.bind(this));
     this.onCloseDetailedViewModal();
   }
 
   componentDidMount() {
     console.info('componentDidMount..');
-    if ( this.props.auth.loggedInUser === '') {
-      // Logged in user not set
-      let getLoggedInUserCallback = function (httpStatus, json) {
-        if ( httpStatus !== 200) {
-          console.error("getLoggedInUserCallback: failure: http:%d", httpStatus);
-          getBackend().clearAuthentication();
-          this.props.auth.setLoggedInUser('');
-          return;
-        }
 
-        console.info("getLoggedInUserCallback: success: http:%d json:%o", httpStatus, json);
-        this.props.auth.setLoggedInUser(json.username);
-      }
-
-      getBackend().getLoggedInUser(getLoggedInUserCallback.bind(this));
-    }
-
-    if (!this.state.isBgtaskLoaded) {
-      this.loadBgtask();
-      this.intervalID = setInterval(this.loadBgtask, 30000); // 30s
+    if (!this.state.isScanLoaded) {
+      this.loadScan();
+      this.intervalID = setInterval(this.loadScan, 30000); // 30s
     }
   }
 
@@ -250,19 +300,27 @@ export default class Home extends React.Component {
       return <Alert variant={'danger'} > No row selected? </Alert>
     }*/
     let readOnly = false;
-    if (this.state.deleteBgtask) readOnly = true;
+    if (this.state.deleteFromScan) readOnly = true;
     console.info('showModalForm: formValues=%o', this.state.formValues);
 
     return (
       <Form onSubmit={this.handleSubmit} >
 
-        { this.showModalFormGroup(true, "updateTimestamp", "Update Timestamp", this.state.formValues.updateTimestamp) }
+        { this.showModalFormGroup(true, "updateTimestamp", "Update Timestamp", this.state.formValues.updateTimestampLocal) }
         { this.showModalFormGroup(true, "id", "ID", this.state.formValues.id) }
-        { this.showModalFormGroup(readOnly, "dataIdType", "Type", this.state.formValues.dataIdType) }
-        { this.showModalFormGroup(readOnly, "dataId", "Data Id", this.state.formValues.dataId) }
-        { this.showModalFormGroup(readOnly, "action", "Action", this.state.formValues.action) }
-        { this.showModalFormGroup(true, "actionResult", "Action Status", this.state.formValues.actionResult) }
+        { this.showModalFormGroup(readOnly, "watchListId", "WatchList Id", this.state.formValues.watchListId) }
+        { this.showModalFormGroup(readOnly, "support", "Support", this.state.formValues.support)}
+        { this.showModalFormGroup(readOnly, "resistance", "Resistance", this.state.formValues.resistance)}
+        { this.showModalFormGroup(readOnly, "profitTarget", "Profit Target", this.state.formValues.profitTarget) }
+        { this.showModalFormGroup(readOnly, "stopLoss", "Stop Loss", this.state.formValues.stopLoss) }
+        { this.showModalFormGroup(readOnly, "etTargetPrice", "ET Target", this.state.formValues.etTargetPrice) }
+        { this.showModalFormGroup(readOnly, "fvTargetPrice", "FV Target", this.state.formValues.fvTargetPrice) }
+        { this.showModalFormGroup(readOnly, "rationale", "Rationale", this.state.formValues.rationale) }
+        { this.showModalFormGroup(true, "currentPrice", "Current Price", this.state.formValues.currentPrice) }
+        { this.showModalFormGroup(true, "volatility", "Volatility", this.state.formValues.volatility) }
+        { this.showModalFormGroup(true, "shortfloat", "Short float", this.state.formValues.shortfloat) }
         { this.showModalFormGroup(true, "status", "Status", this.state.formValues.status) }
+        { this.showModalFormGroup(true, "details", "Details", this.state.formValues.details) }
 
       </Form>
     );
@@ -275,31 +333,31 @@ export default class Home extends React.Component {
     formValues.optionExpiry = null;
     formValues.optionStrike = null;
 
-    if (this.state.createBgtask) {
+    if (this.state.addToScan) {
       console.info('onModalActionButtonClick: call add');
-      this.createBgtask(this.state.formValues);
+      this.addToScan(this.state.formValues);
       return;
     }
 
-    if (this.state.deleteBgtask) {
+    if (this.state.deleteFromScan) {
       console.info('onModalActionButtonClick: call delete');
-      this.deleteBgtask(this.state.formValues);
+      this.deleteFromScan(this.state.formValues);
       return;
     }
 
     console.info('onModalActionButtonClick: call update');
-    this.updateBgtask(this.state.formValues);
+    this.updateScan(this.state.formValues);
   }
 
   showModalActionButton() {
-    if (this.state.createBgtask)
+    if (this.state.addToScan)
       return (
         <Button variant="primary" onClick={this.onModalActionButtonClick}>
           Add
         </Button>
       );
 
-    if (this.state.deleteBgtask) {
+    if (this.state.deleteFromScan) {
       return (
         <Button variant="primary" onClick={this.onModalActionButtonClick}>
           Delete
@@ -319,7 +377,7 @@ export default class Home extends React.Component {
     return (
         <Modal show={this.state.showDetailedViewModal} onHide={this.onCloseDetailedViewModal} animation={false}>
         <Modal.Header closeButton>
-          <Modal.Title>Watch List Details</Modal.Title>
+          <Modal.Title>Scan Details</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           {this.showModalForm()}
@@ -334,44 +392,52 @@ export default class Home extends React.Component {
     );
   }
 
-  getActionResultVariant(rowData) {
-    if (rowData.actionResult === "BAD")
+  getStatusHighlight(rowData) {
+    if (rowData.status === "ATTN")
       return "danger";
-    if (rowData.actionResult === "GOOD")
-      return "success";
+
     return "info"
   }
 
   render() {
     if ( !this.props.auth.isAuthenticated ) {
-      console.info('Home:  not authenticated, redirecting to login page');
+      console.info('Scan:  not authenticated, redirecting to login page');
       return <Redirect to= '/login' />;
     }
 
-    if ( !this.state.isBgtaskLoaded) {
-      return <Alert variant="primary"> Loading bgtask... </Alert>;
+    if ( !this.state.isScanLoaded) {
+      return <Alert variant="primary"> Loading Scan... </Alert>;
     }
 
     console.info('render: this.showDetailedViewModal=%o...', this.state.showDetailedViewModal)
 
     const columns = [
-      { Header: 'ID',  accessor: 'id',
+      { Header: 'Action',  accessor: 'dummy',
           Cell: ({row}) => (
               <ButtonGroup className="mr-2" aria-label="First group">
                 <Button onClick={ (e) => this.onEditButtonClick(row.original) }>Edit</Button>
                 <Button onClick={ (e) => this.onDeleteButtonClick(row.original) }>Delete</Button>
               </ButtonGroup>
             )},
-      { Header: 'Type', accessor: 'dataIdType'},
-      { Header: 'Data Id', accessor: 'dataId'},
-      { Header: 'Status', accessor: 'status'},
-      { Header: 'Action', accessor: 'action'},
-      { Header: 'Result', accessor: 'actionResult',
+      { Header: 'ID',  accessor: 'id'},
+      { Header: 'WL Id', accessor: 'watchListId'},
+      { Header: 'WL ticker', accessor: 'watchListTicker'},
+      { Header: 'Support', accessor: 'support'},
+      { Header: 'Resistance', accessor: 'resistance'},
+      { Header: 'Profit Target', accessor: 'profitTarget'},
+      { Header: 'Stop Loss', accessor: 'stopLoss'},
+      { Header: 'ET Target', accessor: 'etTargetPrice'},
+      { Header: 'FV Target', accessor: 'fvTargetPrice'},
+      { Header: 'Rationale', accessor: 'rationale'},
+      { Header: 'Current Price', accessor: 'currentPrice'},
+      { Header: 'Volatility', accessor: 'volatility'},
+      { Header: 'Short float', accessor: 'shortfloat'},
+      { Header: 'Status', accessor: 'status',
           Cell: ({row}) => (
-            <Alert variant={this.getActionResultVariant(row.original)} > {row.original.actionResult} </Alert>
+            <Alert variant={this.getStatusHighlight(row.original)} > {row.original.status} </Alert>
           )},
       { Header: 'Details', accessor: 'details'},
-      { Header: 'Update Time', accessor: 'updateTimestamp'},
+      { Header: 'Update Time', accessor: 'updateTimestampLocal'},
     ];
 
     const onRowClick = (state, rowInfo, column, instance) => {
@@ -387,20 +453,20 @@ export default class Home extends React.Component {
     }
 
     return (
-      <div className="home">
+      <div className="Scan">
 
         <ButtonToolbar aria-label="Toolbar with button groups">
           <ButtonGroup className="mr-2" aria-label="First group">
             <Button onClick={this.onAddButtonClick}> Add </Button>
           </ButtonGroup>
           <ButtonGroup className="mr-2" aria-label="Second group">
-            <Button onClick={this.loadBgtask}> Refresh </Button>
+            <Button onClick={this.loadScan}> Refresh </Button>
           </ButtonGroup>
         </ButtonToolbar>
-        Welcome home {this.props.auth.loggedInUser}
+        Welcome Scan {this.props.auth.loggedInUser}
         { this.showErrorMsg() }
 
-        <Table columns={columns} data={this.state.bgtaskList} getTrProps={onRowClick} />
+        <Table columns={columns} data={this.state.scan} getTrProps={onRowClick} />
 
         { this.showModal() }
 
