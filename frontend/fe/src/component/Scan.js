@@ -43,7 +43,7 @@ export default class Scan extends React.Component {
       addToScan: false,
       deleteFromScan: false,
       formValues : {id: "", updateTimestamp: "", watchListId: "", watchListTicker: "", support: "", resistance: "",
-       profitTarget: "", stopLoss: "", evTargetPrice: "", fvTargetPrice: "", rationale: "",
+       profitTarget: "", stopLoss: "", etTargetPrice: "", fvTargetPrice: "", rationale: "",
        currentPrice: "", volatility: "", shortfloat: "", status: "", details: ""}
     }
   }
@@ -58,7 +58,7 @@ export default class Scan extends React.Component {
       deleteFromScan: false,
       addToScan: false,
       formValues : {id: "", updateTimestamp: "", watchListId: "", watchListTicker: "", support: "", resistance: "",
-       profitTarget: "", stopLoss: "", evTargetPrice: "", fvTargetPrice: "", rationale: "",
+       profitTarget: "", stopLoss: "", etTargetPrice: "", fvTargetPrice: "", rationale: "",
        currentPrice: "", volatility: "", shortfloat: "", status: "", details: ""}
     });
   }

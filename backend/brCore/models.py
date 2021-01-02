@@ -91,8 +91,8 @@ class ScanEntry(models.Model):
 
     # Filled by backend
     currentPrice = models.FloatField(null=True)
-    volatility = models.FloatField(null=True, blank=True)
-    shortfloat = models.FloatField(null=True, blank=True)
+    volatility = models.TextField(null=True, blank=True)
+    shortfloat = models.TextField(null=True, blank=True)
     status = models.CharField(max_length=16, choices=ScanStatus.choices(),
                               default=ScanStatus.NONE.value, null=True)
     details = models.TextField(blank=True)

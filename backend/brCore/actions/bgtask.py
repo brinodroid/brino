@@ -3,6 +3,7 @@ from brCore.models import BGTask, WatchList, PortFolio, ScanEntry
 from brCore.types.bgtask_types import BGTaskAction, BGTaskStatus, BGTaskDataIdType
 import time
 import brine
+import brifz
 import logging
 import sys
 from .base import base_action
@@ -95,6 +96,20 @@ def __bgtask_runner(bgtask_id):
         time.sleep(60)
 
 
+def addScanATTNDetails(scan_entry, new_detail):
+    if scan_entry.details:
+        scan_entry.details += ' +++ '
+    else:
+        scan_entry.details = ' +++ '
+
+    logger.info('__bgtask_scanner: adding making str scan_entry.details=%s, new details=%s',
+                scan_entry.details, new_detail)
+    scan_entry.details += new_detail
+    scan_entry.status = ScanStatus.ATTN.value
+    logger.info('__bgtask_scanner: added scan_entry.details=%s', scan_entry.details)
+    return scan_entry
+
+
 def __bgtask_scanner():
     brine.login()
     while True:
@@ -112,6 +127,9 @@ def __bgtask_scanner():
             except WatchList.DoesNotExist:
                 logger.error('__bgtask_scanner: WatchList not found %d', scan_entry.watchListId)
                 continue
+
+            brifz_stats = brifz.get_stock(watchlist.ticker)
+            brifz_target_price = float(brifz_stats['Target Price'])
             stock_price = brine.get_latest_price(watchlist.ticker)
             stock_price_regular_hours_f = float(stock_price[0])
             stock_price = brine.get_latest_price(watchlist.ticker, includeExtendedHours=True)
@@ -134,22 +152,26 @@ def __bgtask_scanner():
                                                                              option_data['low_price'],
                                                                              option_data['volume'])
 
-            details = optionDetails
+            scan_entry.details = optionDetails
             scan_entry.status = ScanStatus.NONE.value
             if stock_price_extended_hours_f >= scan_entry.resistance:
-                details = 'Near resistance. Sell?'
-                scan_entry.status = ScanStatus.ATTN.value
+                addScanATTNDetails(scan_entry, 'Near resistance. Sell?')
             elif stock_price_extended_hours_f <= scan_entry.support:
-                details = 'Near support target. Buy?'
-                scan_entry.status = ScanStatus.ATTN.value
-            elif abs(stock_price_extended_hours_f - stock_price_regular_hours_f) > stock_price_regular_hours_f*1/100:
-                # Change in price more than 1% during after hours
-                details = '1% change in price during extended hours. regular price={}'.format(stock_price_regular_hours_f)
-                scan_entry.status = ScanStatus.ATTN.value
+                addScanATTNDetails(scan_entry, 'Near support target. Buy?')
 
-            # Update the scan entry fields
+            if abs(stock_price_extended_hours_f - stock_price_regular_hours_f) > stock_price_regular_hours_f * 1 / 100:
+                # Change in price more than 1% during after hours
+                addScanATTNDetails(scan_entry,
+                                   '1% change in price during extended hours. regular price={}'
+                                   .format(stock_price_regular_hours_f))
+            if scan_entry.fvTargetPrice != brifz_target_price:
+                addScanATTNDetails(scan_entry,
+                                   'fvTargetPrice updated to {} from {}'.format(brifz_target_price,
+                                                                                scan_entry.fvTargetPrice))
+
+            scan_entry.volatility = brifz_stats['Volatility']
+            scan_entry.shortfloat = brifz_stats['Short Float']
             scan_entry.currentPrice = stock_price_extended_hours_f
-            scan_entry.details = details
 
             logger.info('__bgtask_scanner: Updating %s', scan_entry)
             scan_entry.save()
