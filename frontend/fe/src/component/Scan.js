@@ -163,6 +163,12 @@ export default class Scan extends React.Component {
         return;
       }
 
+      let updateTimeFormat = function (scanEntry) {
+        scanEntry.updateTimestampLocal = new Date(scanEntry.updateTimestamp).toLocaleString();
+        console.info("updateTimeFormat: json: %o", scanEntry.updateTimestampLocal);
+      }
+      json.forEach(updateTimeFormat);
+
       console.info("loadScanCallback: json: %o", json);
       this.setState({
         isScanLoaded: true,
@@ -300,7 +306,7 @@ export default class Scan extends React.Component {
     return (
       <Form onSubmit={this.handleSubmit} >
 
-        { this.showModalFormGroup(true, "updateTimestamp", "Update Timestamp", this.state.formValues.updateTimestamp) }
+        { this.showModalFormGroup(true, "updateTimestamp", "Update Timestamp", this.state.formValues.updateTimestampLocal) }
         { this.showModalFormGroup(true, "id", "ID", this.state.formValues.id) }
         { this.showModalFormGroup(readOnly, "watchListId", "WatchList Id", this.state.formValues.watchListId) }
         { this.showModalFormGroup(readOnly, "support", "Support", this.state.formValues.support)}
@@ -398,7 +404,7 @@ export default class Scan extends React.Component {
     console.info('render: this.showDetailedViewModal=%o...', this.state.showDetailedViewModal)
 
     const columns = [
-      { Action: 'action',  accessor: 'dummy',
+      { Header: 'Action',  accessor: 'dummy',
           Cell: ({row}) => (
               <ButtonGroup className="mr-2" aria-label="First group">
                 <Button onClick={ (e) => this.onEditButtonClick(row.original) }>Edit</Button>
@@ -419,7 +425,7 @@ export default class Scan extends React.Component {
       { Header: 'Volatility', accessor: 'volatility'},
       { Header: 'Status', accessor: 'status'},
       { Header: 'Details', accessor: 'details'},
-      { Header: 'Update Time', accessor: 'updateTimestamp'},
+      { Header: 'Update Time', accessor: 'updateTimestampLocal'},
     ];
 
     const onRowClick = (state, rowInfo, column, instance) => {
