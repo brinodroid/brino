@@ -85,6 +85,8 @@ class ScanEntry(models.Model):
     resistance = models.FloatField()
     profitTarget = models.FloatField(null=True, blank=True)
     stopLoss = models.FloatField(null=True, blank=True)
+    etTargetPrice = models.FloatField(default=0)
+    fvTargetPrice = models.FloatField(default=0)
     rationale = models.TextField(default="")
 
     # Filled by backend
@@ -99,8 +101,8 @@ class ScanEntry(models.Model):
         return super(ScanEntry, self).save(*args, **kwargs)
 
     def __str__(self):
-        return "watchListId:%s, currentPrice:%s, support:%s, resistance:%s," \
-               " profitTarget:%s, stopLoss:%s, rationale:%s, volatility:%s, status:%s, details:%s, updateTimestamp:%s" \
+        return "watchListId:%s, currentPrice:%s, support:%s, resistance:%s, profitTarget:%s, stopLoss:%s,"
+        "etTargetPrice:%s, fvTargetPrice:%s, rationale:%s, volatility:%s, status:%s, details:%s, updateTimestamp:%s" \
                % (self.watchListId, self.currentPrice, self.support, self.resistance,
-                  self.profitTarget, self.stopLoss, self.rationale,
+                  self.profitTarget, self.stopLoss, self.etTargetPrice, self.fvTargetPrice, self.rationale,
                   self.volatility, self.status, self.details, self.updateTimestamp)

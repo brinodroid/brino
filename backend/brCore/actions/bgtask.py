@@ -127,25 +127,23 @@ def __bgtask_scanner():
                                                                        str(watchlist.optionExpiry),
                                                                        str(watchlist.optionStrike), 'call')
                 option_data = option_raw_data[0][0]
-                option_price_f = float(option_data['mark_price'])
                 optionDetails = 'mark={}, high={}, low={}, volume={}'.format(option_data['mark_price'],
                                                                              option_data['high_price'],
                                                                              option_data['low_price'],
                                                                              option_data['volume'])
 
             details = optionDetails
+            scan_entry.status = ScanStatus.NONE.value
             if stock_price_f >= scan_entry.resistance:
                 details = 'Near resistance. Sell?'
+                scan_entry.status = ScanStatus.ATTN.value
             elif stock_price_f <= scan_entry.support:
                 details = 'Near support target. Buy?'
+                scan_entry.status = ScanStatus.ATTN.value
 
             # Update the scan entry fields
             scan_entry.currentPrice = stock_price_f
             scan_entry.details = details
-            if details != "":
-                scan_entry.status = ScanStatus.ATTN.value
-            else:
-                scan_entry.status = ScanStatus.NONE.value
 
             logger.info('__bgtask_scanner: Updating %s', scan_entry)
             scan_entry.save()
