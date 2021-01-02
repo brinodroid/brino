@@ -112,8 +112,10 @@ def __bgtask_scanner():
             except WatchList.DoesNotExist:
                 logger.error('__bgtask_scanner: WatchList not found %d', scan_entry.watchListId)
                 continue
+            stock_price = brine.get_latest_price(watchlist.ticker)
+            stock_price_regular_hours_f = float(stock_price[0])
             stock_price = brine.get_latest_price(watchlist.ticker, includeExtendedHours=True)
-            stock_price_f = float(stock_price[0])
+            stock_price_extended_hours_f = float(stock_price[0])
             optionDetails = ""
             if watchlist.assetType == AssetTypes.CALL_OPTION.value \
                     or watchlist.assetType == AssetTypes.PUT_OPTION.value:
@@ -134,15 +136,19 @@ def __bgtask_scanner():
 
             details = optionDetails
             scan_entry.status = ScanStatus.NONE.value
-            if stock_price_f >= scan_entry.resistance:
+            if stock_price_extended_hours_f >= scan_entry.resistance:
                 details = 'Near resistance. Sell?'
                 scan_entry.status = ScanStatus.ATTN.value
-            elif stock_price_f <= scan_entry.support:
+            elif stock_price_extended_hours_f <= scan_entry.support:
                 details = 'Near support target. Buy?'
+                scan_entry.status = ScanStatus.ATTN.value
+            elif abs(stock_price_extended_hours_f - stock_price_regular_hours_f) > stock_price_regular_hours_f*1/100:
+                # Change in price more than 1% during after hours
+                details = '1% change in price during extended hours. regular price={}'.format(stock_price_regular_hours_f)
                 scan_entry.status = ScanStatus.ATTN.value
 
             # Update the scan entry fields
-            scan_entry.currentPrice = stock_price_f
+            scan_entry.currentPrice = stock_price_extended_hours_f
             scan_entry.details = details
 
             logger.info('__bgtask_scanner: Updating %s', scan_entry)

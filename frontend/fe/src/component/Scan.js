@@ -391,6 +391,13 @@ export default class Scan extends React.Component {
     );
   }
 
+  getStatusHighlight(rowData) {
+    if (rowData.status === "ATTN")
+      return "danger";
+
+    return "info"
+  }
+
   render() {
     if ( !this.props.auth.isAuthenticated ) {
       console.info('Scan:  not authenticated, redirecting to login page');
@@ -423,7 +430,10 @@ export default class Scan extends React.Component {
       { Header: 'Rationale', accessor: 'rationale'},
       { Header: 'Current Price', accessor: 'currentPrice'},
       { Header: 'Volatility', accessor: 'volatility'},
-      { Header: 'Status', accessor: 'status'},
+      { Header: 'Status', accessor: 'status',
+          Cell: ({row}) => (
+            <Alert variant={this.getStatusHighlight(row.original)} > {row.original.status} </Alert>
+          )},
       { Header: 'Details', accessor: 'details'},
       { Header: 'Update Time', accessor: 'updateTimestampLocal'},
     ];
