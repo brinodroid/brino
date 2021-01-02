@@ -92,6 +92,7 @@ class ScanEntry(models.Model):
     # Filled by backend
     currentPrice = models.FloatField(null=True)
     volatility = models.FloatField(null=True, blank=True)
+    shortfloat = models.FloatField(null=True, blank=True)
     status = models.CharField(max_length=16, choices=ScanStatus.choices(),
                               default=ScanStatus.NONE.value, null=True)
     details = models.TextField(blank=True)
@@ -102,7 +103,7 @@ class ScanEntry(models.Model):
 
     def __str__(self):
         return "watchListId:%s, currentPrice:%s, support:%s, resistance:%s, profitTarget:%s, stopLoss:%s,"
-        "etTargetPrice:%s, fvTargetPrice:%s, rationale:%s, volatility:%s, status:%s, details:%s, updateTimestamp:%s" \
+        "etTargetPrice:%s, fvTargetPrice:%s, rationale:%s, volatility:%s, shortfloat:%s, status:%s, details:%s, updateTimestamp:%s" \
                % (self.watchListId, self.currentPrice, self.support, self.resistance,
                   self.profitTarget, self.stopLoss, self.etTargetPrice, self.fvTargetPrice, self.rationale,
-                  self.volatility, self.status, self.details, self.updateTimestamp)
+                  self.volatility, self.shortfloat, self.status, self.details, self.updateTimestamp)

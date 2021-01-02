@@ -43,8 +43,8 @@ export default class Scan extends React.Component {
       addToScan: false,
       deleteFromScan: false,
       formValues : {id: "", updateTimestamp: "", watchListId: "", watchListTicker: "", support: "", resistance: "",
-       profitTarget: "", stopLoss: "", evTargetPrice:"", fvTargetPrice:"", rationale:"",
-       currentPrice: "", volatility: "", status: "", details: ""}
+       profitTarget: "", stopLoss: "", evTargetPrice: "", fvTargetPrice: "", rationale: "",
+       currentPrice: "", volatility: "", shortfloat: "", status: "", details: ""}
     }
   }
 
@@ -58,8 +58,8 @@ export default class Scan extends React.Component {
       deleteFromScan: false,
       addToScan: false,
       formValues : {id: "", updateTimestamp: "", watchListId: "", watchListTicker: "", support: "", resistance: "",
-       profitTarget: "", stopLoss: "", evTargetPrice:"", fvTargetPrice:"", rationale:"",
-       currentPrice: "", volatility: "", status: "", details: ""}
+       profitTarget: "", stopLoss: "", evTargetPrice: "", fvTargetPrice: "", rationale: "",
+       currentPrice: "", volatility: "", shortfloat: "", status: "", details: ""}
     });
   }
 
@@ -318,6 +318,7 @@ export default class Scan extends React.Component {
         { this.showModalFormGroup(readOnly, "rationale", "Rationale", this.state.formValues.rationale) }
         { this.showModalFormGroup(true, "currentPrice", "Current Price", this.state.formValues.currentPrice) }
         { this.showModalFormGroup(true, "volatility", "Volatility", this.state.formValues.volatility) }
+        { this.showModalFormGroup(true, "shortfloat", "Short float", this.state.formValues.shortfloat) }
         { this.showModalFormGroup(true, "status", "Status", this.state.formValues.status) }
         { this.showModalFormGroup(true, "details", "Details", this.state.formValues.details) }
 
@@ -419,8 +420,8 @@ export default class Scan extends React.Component {
               </ButtonGroup>
             )},
       { Header: 'ID',  accessor: 'id'},
-      { Header: 'WatchList Id', accessor: 'watchListId'},
-      { Header: 'WatchList ticker', accessor: 'watchListTicker'},
+      { Header: 'WL Id', accessor: 'watchListId'},
+      { Header: 'WL ticker', accessor: 'watchListTicker'},
       { Header: 'Support', accessor: 'support'},
       { Header: 'Resistance', accessor: 'resistance'},
       { Header: 'Profit Target', accessor: 'profitTarget'},
@@ -430,6 +431,7 @@ export default class Scan extends React.Component {
       { Header: 'Rationale', accessor: 'rationale'},
       { Header: 'Current Price', accessor: 'currentPrice'},
       { Header: 'Volatility', accessor: 'volatility'},
+      { Header: 'Short float', accessor: 'shortfloat'},
       { Header: 'Status', accessor: 'status',
           Cell: ({row}) => (
             <Alert variant={this.getStatusHighlight(row.original)} > {row.original.status} </Alert>
