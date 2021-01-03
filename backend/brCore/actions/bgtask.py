@@ -154,7 +154,7 @@ def __bgtask_scanner():
                 scan_entry.currentPrice = mark_price
                 scan_entry.details = optionDetails
                 time_to_expiry = watchlist.optionExpiry - datetime.now().date()
-                if time_to_expiry.days > 10:
+                if time_to_expiry.days <= 10:
                     addScanATTNDetails(scan_entry, 'Expiry less than 10 days. Sell?')
 
                 if mark_price >= scan_entry.resistance:
