@@ -81,6 +81,7 @@ class PortFolio(models.Model):
 class ScanEntry(models.Model):
     updateTimestamp = models.DateTimeField(default=timezone.now)
     watchListId = models.IntegerField()
+    linkedScanId = models.IntegerField(default=0)
     support = models.FloatField()
     resistance = models.FloatField()
     profitTarget = models.FloatField(null=True, blank=True)
@@ -102,8 +103,8 @@ class ScanEntry(models.Model):
         return super(ScanEntry, self).save(*args, **kwargs)
 
     def __str__(self):
-        return "watchListId:%s, currentPrice:%s, support:%s, resistance:%s, profitTarget:%s, stopLoss:%s,"
+        return "watchListId:%s, linkedScanId:%s, currentPrice:%s, support:%s, resistance:%s, profitTarget:%s, stopLoss:%s,"
         "etTargetPrice:%s, fvTargetPrice:%s, rationale:%s, volatility:%s, shortfloat:%s, status:%s, details:%s, updateTimestamp:%s" \
-               % (self.watchListId, self.currentPrice, self.support, self.resistance,
+               % (self.watchListId, self.linkedScanId, self.currentPrice, self.support, self.resistance,
                   self.profitTarget, self.stopLoss, self.etTargetPrice, self.fvTargetPrice, self.rationale,
                   self.volatility, self.shortfloat, self.status, self.details, self.updateTimestamp)

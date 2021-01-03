@@ -42,9 +42,9 @@ export default class Scan extends React.Component {
       showDetailedViewModal: false,
       addToScan: false,
       deleteFromScan: false,
-      formValues : {id: "", updateTimestamp: "", watchListId: "", watchListTicker: "", support: "", resistance: "",
-       profitTarget: "", stopLoss: "", etTargetPrice: "", fvTargetPrice: "", rationale: "",
-       currentPrice: "", volatility: "", shortfloat: "", status: "", details: ""}
+      formValues : {id: "", updateTimestamp: "", linkedScanId: "", watchListId: "", watchListTicker: "",
+       support: "", resistance: "", profitTarget: "", stopLoss: "", etTargetPrice: "", fvTargetPrice: "",
+       rationale: "", currentPrice: "", volatility: "", shortfloat: "", status: "", details: ""}
     }
   }
 
@@ -57,9 +57,9 @@ export default class Scan extends React.Component {
       showDetailedViewModal: false,
       deleteFromScan: false,
       addToScan: false,
-      formValues : {id: "", updateTimestamp: "", watchListId: "", watchListTicker: "", support: "", resistance: "",
-       profitTarget: "", stopLoss: "", etTargetPrice: "", fvTargetPrice: "", rationale: "",
-       currentPrice: "", volatility: "", shortfloat: "", status: "", details: ""}
+      formValues : {id: "", updateTimestamp: "", linkedScanId: "", watchListId: "", watchListTicker: "",
+       support: "", resistance: "", profitTarget: "", stopLoss: "", etTargetPrice: "", fvTargetPrice: "",
+       rationale: "", currentPrice: "", volatility: "", shortfloat: "", status: "", details: ""}
     });
   }
 
@@ -308,6 +308,7 @@ export default class Scan extends React.Component {
 
         { this.showModalFormGroup(true, "updateTimestamp", "Update Timestamp", this.state.formValues.updateTimestampLocal) }
         { this.showModalFormGroup(true, "id", "ID", this.state.formValues.id) }
+        { this.showModalFormGroup(readOnly, "linkedScanId", "Linked Scan Id", this.state.formValues.linkedScanId) }
         { this.showModalFormGroup(readOnly, "watchListId", "WatchList Id", this.state.formValues.watchListId) }
         { this.showModalFormGroup(readOnly, "support", "Support", this.state.formValues.support)}
         { this.showModalFormGroup(readOnly, "resistance", "Resistance", this.state.formValues.resistance)}
@@ -420,6 +421,7 @@ export default class Scan extends React.Component {
               </ButtonGroup>
             )},
       { Header: 'ID',  accessor: 'id'},
+      { Header: 'Linked Id', accessor: 'linkedScanId'},
       { Header: 'WL Id', accessor: 'watchListId'},
       { Header: 'WL ticker', accessor: 'watchListTicker'},
       { Header: 'Support', accessor: 'support'},

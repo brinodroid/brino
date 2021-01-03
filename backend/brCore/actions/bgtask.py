@@ -6,6 +6,7 @@ import brine
 import brifz
 import logging
 import sys
+from datetime import datetime, timedelta
 from .base import base_action
 from brCore.types.scan_types import ScanStatus
 from brCore.types.asset_types import AssetTypes
@@ -128,13 +129,8 @@ def __bgtask_scanner():
                 logger.error('__bgtask_scanner: WatchList not found %d', scan_entry.watchListId)
                 continue
 
-            brifz_stats = brifz.get_stock(watchlist.ticker)
-            brifz_target_price = float(brifz_stats['Target Price'])
-            stock_price = brine.get_latest_price(watchlist.ticker)
-            stock_price_regular_hours_f = float(stock_price[0])
-            stock_price = brine.get_latest_price(watchlist.ticker, includeExtendedHours=True)
-            stock_price_extended_hours_f = float(stock_price[0])
-            optionDetails = ""
+            scan_entry.details = ""
+            scan_entry.status = ScanStatus.NONE.value
             if watchlist.assetType == AssetTypes.CALL_OPTION.value \
                     or watchlist.assetType == AssetTypes.PUT_OPTION.value:
                 logger.info('__bgtask_scanner: get option price. watchlist=%s', watchlist)
@@ -147,31 +143,57 @@ def __bgtask_scanner():
                                                                        str(watchlist.optionExpiry),
                                                                        str(watchlist.optionStrike), 'call')
                 option_data = option_raw_data[0][0]
-                optionDetails = 'mark={}, high={}, low={}, volume={}'.format(option_data['mark_price'],
-                                                                             option_data['high_price'],
-                                                                             option_data['low_price'],
-                                                                             option_data['volume'])
+                optionDetails = 'high={}, low={}, volume={}.'.format(option_data['high_price'],
+                                                                     option_data['low_price'],
+                                                                     option_data['volume'])
+                mark_price = float(option_data['mark_price'])
+                low_price = float(option_data['low_price'])
+                high_price = float(option_data['high_price'])
+                scan_entry.volatility = option_data['implied_volatility']
+                scan_entry.shortfloat = 0
+                scan_entry.currentPrice = mark_price
+                scan_entry.details = optionDetails
+                time_to_expiry = watchlist.optionExpiry - datetime.now().date()
+                if time_to_expiry.days > 7:
+                    addScanATTNDetails(scan_entry, 'Expiry less than 7 days. Sell?')
 
-            scan_entry.details = optionDetails
-            scan_entry.status = ScanStatus.NONE.value
-            if stock_price_extended_hours_f >= scan_entry.resistance:
-                addScanATTNDetails(scan_entry, 'Near resistance. Sell?')
-            elif stock_price_extended_hours_f <= scan_entry.support:
-                addScanATTNDetails(scan_entry, 'Near support target. Buy?')
+                if mark_price >= scan_entry.resistance:
+                    addScanATTNDetails(scan_entry, 'Near resistance. Sell?')
+                elif mark_price <= scan_entry.support:
+                    addScanATTNDetails(scan_entry, 'Near support target. Buy?')
 
-            if abs(stock_price_extended_hours_f - stock_price_regular_hours_f) > stock_price_regular_hours_f * 1 / 100:
-                # Change in price more than 1% during after hours
-                addScanATTNDetails(scan_entry,
+                if high_price >= scan_entry.resistance:
+                    addScanATTNDetails(scan_entry, 'Update resistance?')
+
+                if low_price >= scan_entry.support:
+                    addScanATTNDetails(scan_entry, 'Update support?')
+
+            else:
+                brifz_stats = brifz.get_stock(watchlist.ticker)
+                brifz_target_price = float(brifz_stats['Target Price'])
+                stock_price = brine.get_latest_price(watchlist.ticker)
+                stock_price_regular_hours_f = float(stock_price[0])
+                stock_price = brine.get_latest_price(watchlist.ticker, includeExtendedHours=True)
+                stock_price_extended_hours_f = float(stock_price[0])
+
+                if stock_price_extended_hours_f >= scan_entry.resistance:
+                    addScanATTNDetails(scan_entry, 'Near resistance. Sell?')
+                elif stock_price_extended_hours_f <= scan_entry.support:
+                    addScanATTNDetails(scan_entry, 'Near support target. Buy?')
+
+                if abs(stock_price_extended_hours_f - stock_price_regular_hours_f) > stock_price_regular_hours_f * 1 / 100:
+                    # Change in price more than 1% during after hours
+                    addScanATTNDetails(scan_entry,
                                    '1% change in price during extended hours. regular price={}'
                                    .format(stock_price_regular_hours_f))
-            if scan_entry.fvTargetPrice != brifz_target_price:
-                addScanATTNDetails(scan_entry,
+                if scan_entry.fvTargetPrice != brifz_target_price:
+                    addScanATTNDetails(scan_entry,
                                    'fvTargetPrice updated to {} from {}'.format(brifz_target_price,
                                                                                 scan_entry.fvTargetPrice))
 
-            scan_entry.volatility = brifz_stats['Volatility']
-            scan_entry.shortfloat = brifz_stats['Short Float']
-            scan_entry.currentPrice = stock_price_extended_hours_f
+                scan_entry.volatility = brifz_stats['Volatility']
+                scan_entry.shortfloat = brifz_stats['Short Float']
+                scan_entry.currentPrice = stock_price_extended_hours_f
 
             logger.info('__bgtask_scanner: Updating %s', scan_entry)
             scan_entry.save()
