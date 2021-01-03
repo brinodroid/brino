@@ -2,7 +2,7 @@ from django.db import models
 from django.utils import timezone
 from .types.asset_types import AssetTypes
 from .types.bgtask_types import BGTaskAction, BGTaskActionResult, BGTaskStatus, BGTaskDataIdType
-from .types.scan_types import ScanStatus
+from .types.scan_types import ScanStatus, ScanProfile
 
 
 # WatchList: This is the list of assets actively tracked
@@ -81,7 +81,8 @@ class PortFolio(models.Model):
 class ScanEntry(models.Model):
     updateTimestamp = models.DateTimeField(default=timezone.now)
     watchListId = models.IntegerField()
-    linkedScanId = models.IntegerField(default=0)
+    profile = models.CharField(max_length=16, choices=ScanProfile.choices(),
+                              default=ScanProfile.STOCK.value, null=True)
     support = models.FloatField()
     resistance = models.FloatField()
     profitTarget = models.FloatField(null=True, blank=True)
@@ -103,8 +104,9 @@ class ScanEntry(models.Model):
         return super(ScanEntry, self).save(*args, **kwargs)
 
     def __str__(self):
-        return "watchListId:%s, linkedScanId:%s, currentPrice:%s, support:%s, resistance:%s, profitTarget:%s, stopLoss:%s,"
-        "etTargetPrice:%s, fvTargetPrice:%s, rationale:%s, volatility:%s, shortfloat:%s, status:%s, details:%s, updateTimestamp:%s" \
-               % (self.watchListId, self.linkedScanId, self.currentPrice, self.support, self.resistance,
+        return "watchListId:%s, profile:%s, currentPrice:%s, support:%s, resistance:%s, profitTarget:%s, stopLoss:%s," \
+            " etTargetPrice:%s, fvTargetPrice:%s, rationale:%s, volatility:%s, shortfloat:%s, status:%s," \
+                "details:%s, updateTimestamp:%s" \
+               % (self.watchListId, self.profile, self.currentPrice, self.support, self.resistance,
                   self.profitTarget, self.stopLoss, self.etTargetPrice, self.fvTargetPrice, self.rationale,
                   self.volatility, self.shortfloat, self.status, self.details, self.updateTimestamp)

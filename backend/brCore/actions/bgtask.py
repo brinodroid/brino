@@ -122,6 +122,8 @@ def __bgtask_scanner():
             continue
 
         for scan_entry in scan_list:
+            # Rereading from DB to get the latest value
+            scan_entry = ScanEntry.objects.get(pk=scan_entry.id)
             logger.info('__bgtask_scanner: checking %s', scan_entry)
             try:
                 watchlist = WatchList.objects.get(pk=scan_entry.watchListId)
@@ -131,6 +133,9 @@ def __bgtask_scanner():
 
             scan_entry.details = ""
             scan_entry.status = ScanStatus.NONE.value
+
+            stock_price = brine.get_latest_price(watchlist.ticker, includeExtendedHours=True)
+            stock_price_extended_hours_f = float(stock_price[0])
             if watchlist.assetType == AssetTypes.CALL_OPTION.value \
                     or watchlist.assetType == AssetTypes.PUT_OPTION.value:
                 logger.info('__bgtask_scanner: get option price. watchlist=%s', watchlist)
@@ -157,15 +162,23 @@ def __bgtask_scanner():
                 if time_to_expiry.days <= 10:
                     addScanATTNDetails(scan_entry, 'Expiry less than 10 days. Sell?')
 
+                if watchlist.optionStrike < stock_price_extended_hours_f:
+                    addScanATTNDetails(scan_entry, 'Stock price {} above strike price of {}.'.format(
+                        stock_price_extended_hours_f, watchlist.optionStrike))
+                elif abs(watchlist.optionStrike - stock_price_extended_hours_f) <= stock_price_extended_hours_f*5/100:
+                    # 5% of strike price
+                    addScanATTNDetails(scan_entry, 'Stock price {} within 5% of strike price {}.'.format(
+                        stock_price_extended_hours_f, watchlist.optionStrike))
+
                 if mark_price >= scan_entry.resistance:
                     addScanATTNDetails(scan_entry, 'Near resistance. Sell?')
                 elif mark_price <= scan_entry.support:
                     addScanATTNDetails(scan_entry, 'Near support target. Buy?')
 
-                if high_price >= scan_entry.resistance:
+                if high_price > scan_entry.resistance:
                     addScanATTNDetails(scan_entry, 'Update resistance?')
 
-                if low_price >= scan_entry.support:
+                if low_price < scan_entry.support:
                     addScanATTNDetails(scan_entry, 'Update support?')
 
             else:
@@ -173,8 +186,6 @@ def __bgtask_scanner():
                 brifz_target_price = float(brifz_stats['Target Price'])
                 stock_price = brine.get_latest_price(watchlist.ticker)
                 stock_price_regular_hours_f = float(stock_price[0])
-                stock_price = brine.get_latest_price(watchlist.ticker, includeExtendedHours=True)
-                stock_price_extended_hours_f = float(stock_price[0])
 
                 if stock_price_extended_hours_f >= scan_entry.resistance:
                     addScanATTNDetails(scan_entry, 'Near resistance. Sell?')
