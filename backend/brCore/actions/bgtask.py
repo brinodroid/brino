@@ -8,8 +8,9 @@ import logging
 import sys
 from datetime import datetime, timedelta
 from .base import base_action
-from brCore.types.scan_types import ScanStatus
+from brCore.types.scan_types import ScanStatus, ScanProfile
 from brCore.types.asset_types import AssetTypes
+import requests
 
 logger = logging.getLogger('django')
 
@@ -96,20 +97,88 @@ def __bgtask_runner(bgtask_id):
         # Repeat the loop after 1min
         time.sleep(60)
 
+def __float_string_convert(float_string):
+    try:
+        f = float(float_string)
+        return f
+    except:
+        logger.info('__float_sting_convert: Not valid number =%s', float_string)
+    return None
 
-def addScanATTNDetails(scan_entry, new_detail):
-    if scan_entry.details:
-        scan_entry.details += ' +++ '
-    else:
-        scan_entry.details = ' +++ '
 
-    logger.info('__bgtask_scanner: adding making str scan_entry.details=%s, new details=%s',
-                scan_entry.details, new_detail)
-    scan_entry.details += new_detail
-    scan_entry.status = ScanStatus.ATTN.value
-    logger.info('__bgtask_scanner: added scan_entry.details=%s', scan_entry.details)
-    return scan_entry
+def __addAlertDetails(scan_cache, new_detail):
+    scan_cache['details'] += ' +++ '
+    scan_cache['details'] += new_detail
+    scan_cache['status'] = ScanStatus.ATTN.value
+    logger.info('__bgtask_scanner: added scan_cache=%s', scan_cache)
 
+def __scan_support_resistance_alert(scan_entry, watchlist, scan_cache):
+    if scan_cache['current_price'] >= scan_entry.resistance:
+        __addAlertDetails(scan_cache, 'Near resistance. Sell?')
+    elif scan_cache['current_price'] <= scan_entry.support:
+        __addAlertDetails(scan_cache, 'Near support target. Buy?')
+
+def __scan_extended_hours_price_movement_alert(scan_entry, watchlist, scan_cache):
+    #get regular hours price
+    stock_price = brine.get_latest_price(watchlist.ticker, includeExtendedHours=False)
+    stock_price_regular_hours_f = float(stock_price[0])
+
+    if abs(scan_cache['current_price'] - stock_price_regular_hours_f) > stock_price_regular_hours_f * 1 / 100:
+        # Change in price more than 1% during after hours
+        __addAlertDetails(scan_cache,
+                          '1% change in price during extended hours. regular price={}'
+                          .format(stock_price_regular_hours_f))
+
+def __scan_brifz_target_price_update_alert(scan_entry, watchlist, scan_cache):
+    if scan_entry.fvTargetPrice != scan_cache['brifz_target_price']:
+        __addAlertDetails(scan_cache,
+                          'fvTargetPrice updated to {} from {}'.format(scan_cache['brifz_target_price'],
+                                                                       scan_entry.fvTargetPrice))
+
+def __scan_option_time_to_expiry_alert(scan_entry, watchlist, scan_cache):
+    time_to_expiry = watchlist.optionExpiry - datetime.now().date()
+    if time_to_expiry.days <= 10:
+        __addAlertDetails(scan_cache, 'Expiry less than 10 days. Sell?')
+
+
+def __scan_option_strike_alert(scan_entry, watchlist, scan_cache):
+    if watchlist.optionStrike < scan_cache['stock_price']:
+        __addAlertDetails(scan_cache, 'Stock price {} above strike price of {}.'.format(
+            scan_cache['stock_price'], watchlist.optionStrike))
+    elif abs(watchlist.optionStrike - scan_cache['stock_price']) <= scan_cache['stock_price'] * 5 / 100:
+        # 5% of strike price
+        __addAlertDetails(scan_cache, 'Stock price {} within 5% of strike price {}.'.format(
+            scan_cache['stock_price'], watchlist.optionStrike))
+
+def __scan_support_resistance_update_alert(scan_entry, watchlist, scan_cache):
+    if scan_cache['high_price'] is not None and scan_cache['high_price'] > scan_entry.resistance:
+        __addAlertDetails(scan_cache, 'Update resistance?')
+
+    if scan_cache['low_price'] is not None and scan_cache['low_price'] < scan_entry.support:
+        __addAlertDetails(scan_cache, 'Update support?')
+
+def __scan_covered_call_price_alert(scan_entry, watchlist, scan_cache):
+    if scan_cache['current_price'] < scan_entry.profitTarget*10/100:
+        __addAlertDetails(scan_cache, 'Current price is less than 10% of profit target. Buy back and sell CC again?')
+
+    if scan_cache['current_price'] > scan_entry.profitTarget*80/100:
+        #Price reached 80% of profit target.
+        __addAlertDetails(scan_cache, 'Current price went beyond 80% of profit target. Buy back and sell CC again?')
+
+scan_checks = {
+    ScanProfile.STOCK.value:
+        [__scan_support_resistance_alert, __scan_extended_hours_price_movement_alert,
+            __scan_brifz_target_price_update_alert],
+    ScanProfile.CC.value:
+        [__scan_support_resistance_alert, __scan_option_time_to_expiry_alert, __scan_option_strike_alert,
+            __scan_support_resistance_update_alert, __scan_covered_call_price_alert],
+    ScanProfile.CALL.value:
+        [__scan_support_resistance_alert, __scan_option_time_to_expiry_alert,
+            __scan_support_resistance_update_alert],
+    ScanProfile.PUT.value:
+        [__scan_support_resistance_alert, __scan_option_time_to_expiry_alert,
+            __scan_support_resistance_update_alert],
+}
 
 def __bgtask_scanner():
     brine.login()
@@ -118,12 +187,10 @@ def __bgtask_scanner():
             scan_list = ScanEntry.objects.all()
         except ScanEntry.DoesNotExist:
             logger.info('__bgtask_scanner: No scan entries, check after 60s')
-            time.sleep(60)
+            time.sleep(120)
             continue
 
         for scan_entry in scan_list:
-            # Rereading from DB to get the latest value
-            scan_entry = ScanEntry.objects.get(pk=scan_entry.id)
             logger.info('__bgtask_scanner: checking %s', scan_entry)
             try:
                 watchlist = WatchList.objects.get(pk=scan_entry.watchListId)
@@ -131,11 +198,19 @@ def __bgtask_scanner():
                 logger.error('__bgtask_scanner: WatchList not found %d', scan_entry.watchListId)
                 continue
 
-            scan_entry.details = ""
-            scan_entry.status = ScanStatus.NONE.value
+            try:
+                stock_price = brine.get_latest_price(watchlist.ticker, includeExtendedHours=True)
+            except requests.exceptions.ConnectionError:
+                logger.error('__bgtask_scanner: Connection error for %d. Wait and continue', scan_entry.watchListId)
+                time.sleep(120)
+                logger.info('__bgtask_scanner: Retrying after connection error', scan_entry.watchListId)
+                continue
 
-            stock_price = brine.get_latest_price(watchlist.ticker, includeExtendedHours=True)
-            stock_price_extended_hours_f = float(stock_price[0])
+            scan_cache = {}
+            scan_cache['stock_price'] = float(stock_price[0])
+            scan_cache['details'] = ""
+            scan_cache['status'] = ScanStatus.NONE.value
+
             if watchlist.assetType == AssetTypes.CALL_OPTION.value \
                     or watchlist.assetType == AssetTypes.PUT_OPTION.value:
                 logger.info('__bgtask_scanner: get option price. watchlist=%s', watchlist)
@@ -148,68 +223,42 @@ def __bgtask_scanner():
                                                                        str(watchlist.optionExpiry),
                                                                        str(watchlist.optionStrike), 'call')
                 option_data = option_raw_data[0][0]
-                optionDetails = 'high={}, low={}, volume={}.'.format(option_data['high_price'],
+                scan_cache['details'] = 'high={}, low={}, volume={}.'.format(option_data['high_price'],
                                                                      option_data['low_price'],
                                                                      option_data['volume'])
-                mark_price = float(option_data['mark_price'])
-                low_price = float(option_data['low_price'])
-                high_price = float(option_data['high_price'])
-                scan_entry.volatility = option_data['implied_volatility']
-                scan_entry.shortfloat = 0
-                scan_entry.currentPrice = mark_price
-                scan_entry.details = optionDetails
-                time_to_expiry = watchlist.optionExpiry - datetime.now().date()
-                if time_to_expiry.days <= 10:
-                    addScanATTNDetails(scan_entry, 'Expiry less than 10 days. Sell?')
-
-                if watchlist.optionStrike < stock_price_extended_hours_f:
-                    addScanATTNDetails(scan_entry, 'Stock price {} above strike price of {}.'.format(
-                        stock_price_extended_hours_f, watchlist.optionStrike))
-                elif abs(watchlist.optionStrike - stock_price_extended_hours_f) <= stock_price_extended_hours_f*5/100:
-                    # 5% of strike price
-                    addScanATTNDetails(scan_entry, 'Stock price {} within 5% of strike price {}.'.format(
-                        stock_price_extended_hours_f, watchlist.optionStrike))
-
-                if mark_price >= scan_entry.resistance:
-                    addScanATTNDetails(scan_entry, 'Near resistance. Sell?')
-                elif mark_price <= scan_entry.support:
-                    addScanATTNDetails(scan_entry, 'Near support target. Buy?')
-
-                if high_price > scan_entry.resistance:
-                    addScanATTNDetails(scan_entry, 'Update resistance?')
-
-                if low_price < scan_entry.support:
-                    addScanATTNDetails(scan_entry, 'Update support?')
+                scan_cache['current_price'] = __float_string_convert(option_data['mark_price'])
+                scan_cache['low_price'] = __float_string_convert(option_data['low_price'])
+                scan_cache['high_price'] = __float_string_convert(option_data['high_price'])
+                scan_cache['volatility'] = __float_string_convert(option_data['implied_volatility'])
+                scan_cache['shortfloat'] = 0
+                scan_cache['brifz_target_price'] = 0
 
             else:
+                #Stocks
                 brifz_stats = brifz.get_stock(watchlist.ticker)
-                brifz_target_price = float(brifz_stats['Target Price'])
-                stock_price = brine.get_latest_price(watchlist.ticker)
-                stock_price_regular_hours_f = float(stock_price[0])
 
-                if stock_price_extended_hours_f >= scan_entry.resistance:
-                    addScanATTNDetails(scan_entry, 'Near resistance. Sell?')
-                elif stock_price_extended_hours_f <= scan_entry.support:
-                    addScanATTNDetails(scan_entry, 'Near support target. Buy?')
+                scan_cache['current_price'] = scan_cache['stock_price']
+                scan_cache['low_price'] = 0
+                scan_cache['high_price'] = 0
+                scan_cache['volatility'] = brifz_stats['Volatility']
+                scan_cache['shortfloat'] = brifz_stats['Short Float']
+                scan_cache['brifz_target_price'] = __float_string_convert(brifz_stats['Target Price'])
 
-                if abs(stock_price_extended_hours_f - stock_price_regular_hours_f) > stock_price_regular_hours_f * 1 / 100:
-                    # Change in price more than 1% during after hours
-                    addScanATTNDetails(scan_entry,
-                                   '1% change in price during extended hours. regular price={}'
-                                   .format(stock_price_regular_hours_f))
-                if scan_entry.fvTargetPrice != brifz_target_price:
-                    addScanATTNDetails(scan_entry,
-                                   'fvTargetPrice updated to {} from {}'.format(brifz_target_price,
-                                                                                scan_entry.fvTargetPrice))
+            #Call all scan_checks of the given profile
+            for scan_check in scan_checks[scan_entry.profile]:
+                scan_check(scan_entry, watchlist, scan_cache)
 
-                scan_entry.volatility = brifz_stats['Volatility']
-                scan_entry.shortfloat = brifz_stats['Short Float']
-                scan_entry.currentPrice = stock_price_extended_hours_f
-
-            logger.info('__bgtask_scanner: Updating %s', scan_entry)
+            # Rereading from DB to get the latest value. TODO: Need locking
+            scan_entry = ScanEntry.objects.get(pk=scan_entry.id)
+            scan_entry.details = scan_cache['details']
+            scan_entry.status = scan_cache['status']
+            scan_entry.currentPrice = scan_cache['current_price']
+            scan_entry.volatility = scan_cache['volatility']
+            scan_entry.shortfloat = scan_cache['shortfloat']
             scan_entry.save()
+            logger.info('__bgtask_scanner: Updated {} from cache {}'.format(scan_entry, scan_cache))
 
-        time.sleep(60)
+        time.sleep(120)
 
 
 def __bgtask_thread_start(bgtask):
