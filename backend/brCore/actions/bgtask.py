@@ -130,8 +130,8 @@ def __scan_extended_hours_price_movement_alert(scan_entry, watchlist, scan_cache
                           .format(stock_price_regular_hours_f))
 
 def __scan_brifz_target_price_update_alert(scan_entry, watchlist, scan_cache):
-    if scan_entry.fvTargetPrice != scan_cache['brifz_target_price']:
-        __addAlertDetails(scan_cache,
+    if scan_cache['brifz_target_price'] is not None and scan_cache['brifz_target_price'] != scan_entry.fvTargetPrice:
+            __addAlertDetails(scan_cache,
                           'fvTargetPrice updated to {} from {}'.format(scan_cache['brifz_target_price'],
                                                                        scan_entry.fvTargetPrice))
 
