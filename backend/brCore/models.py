@@ -1,8 +1,9 @@
 from django.db import models
 from django.utils import timezone
-from .types.asset_types import AssetTypes
+from .types.asset_types import AssetTypes, PortFolioSource
 from .types.bgtask_types import BGTaskAction, BGTaskActionResult, BGTaskStatus, BGTaskDataIdType
 from .types.scan_types import ScanStatus, ScanProfile
+from .types.status_types import Status
 
 
 # WatchList: This is the list of assets actively tracked
@@ -110,3 +111,18 @@ class ScanEntry(models.Model):
                % (self.watchListId, self.profile, self.currentPrice, self.support, self.resistance,
                   self.profitTarget, self.stopLoss, self.etTargetPrice, self.fvTargetPrice, self.rationale,
                   self.volatility, self.shortfloat, self.status, self.details, self.updateTimestamp)
+
+class PortFolioUpdate(models.Model):
+    updateTimestamp = models.DateTimeField(default=timezone.now)
+    source = models.CharField(max_length=16, choices=PortFolioSource.choices(),
+                              default=PortFolioSource.BRINE.value, null=True)
+
+    status = models.CharField(max_length=16, choices=Status.choices(),
+                              default=Status.NONE.value, null=True)
+    def save(self, *args, **kwargs):
+        self.updateTimestamp = timezone.now()
+        return super(UpdatePortfolio, self).save(*args, **kwargs)
+
+    def __str__(self):
+        return "source:%s, status:%s, updateTimestamp:%s" \
+               % (self.source, self.status, self.updateTimestamp)

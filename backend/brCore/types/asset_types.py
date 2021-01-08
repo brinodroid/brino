@@ -9,3 +9,11 @@ class AssetTypes(Enum):
     @classmethod
     def choices(cls):
         return [(key.value, key.name) for key in cls]
+
+class PortFolioSource(Enum):
+    BRINE = "BRINE"
+    BRATE = "BRATE"
+
+    @classmethod
+    def choices(cls):
+        return [(key.value, key.name) for key in cls]
