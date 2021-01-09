@@ -10,6 +10,8 @@ from .serializers.bgtask import BGTaskSerializer
 from .serializers.portfolio import PortFolioSerializer, PortFolioUpdateSerializer
 from .serializers.scan import ScanEntrySerializer
 from .actions.bgtask import start_bgtask
+from .actions.pf_update import PFUpdater
+from .types.status_types import Status
 
 logger = logging.getLogger('django')
 
@@ -18,12 +20,12 @@ logger = logging.getLogger('django')
 def watchlist_list(request):
     logger.debug("request data: %s", request.data)
     if request.method == 'GET':
-        #Get the list of watchlists
+        # Get the list of watchlists
         watchlist = WatchList.objects.all()
         serializer = WatchListSerializer(watchlist, many=True)
         return Response(serializer.data)
     elif request.method == 'POST':
-        #Create a new watchlist
+        # Create a new watchlist
         serializer = WatchListSerializer(data=request.data)
         if serializer.is_valid() == False:
             logger.error(serializer.errors)
@@ -33,6 +35,7 @@ def watchlist_list(request):
         return Response(serializer.data)
 
     return Response({'detail': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
 
 @api_view(['GET', 'PUT', 'DELETE'])
 def watchlist_detail(request, pk):
@@ -61,16 +64,17 @@ def watchlist_detail(request, pk):
 
     return Response({'detail': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
+
 @api_view(['GET', 'POST'])
 def bgtask_list(request):
     logger.debug("request data: %s", request.data)
     if request.method == 'GET':
-        #Get the list of watchlists
+        # Get the list of watchlists
         bgtask = BGTask.objects.all()
         serializer = BGTaskSerializer(bgtask, many=True)
         return Response(serializer.data)
     elif request.method == 'POST':
-        #Create a new watchlist
+        # Create a new watchlist
         serializer = BGTaskSerializer(data=request.data)
         if serializer.is_valid() == False:
             logger.error(serializer.errors)
@@ -81,6 +85,7 @@ def bgtask_list(request):
         return Response(serializer.data)
 
     return Response({'detail': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
 
 @api_view(['GET', 'PUT', 'DELETE'])
 def bgtask_detail(request, pk):
@@ -110,16 +115,17 @@ def bgtask_detail(request, pk):
 
     return Response({'detail': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
+
 @api_view(['GET', 'POST'])
 def portfolio_list(request):
     logger.debug("request data: %s", request.data)
     if request.method == 'GET':
-        #Get the list of watchlists
+        # Get the list of watchlists
         portfolio_list = PortFolio.objects.all()
         serializer = PortFolioSerializer(portfolio_list, many=True)
         return Response(serializer.data)
     elif request.method == 'POST':
-        #Create a new watchlist
+        # Create a new watchlist
         serializer = PortFolioSerializer(data=request.data)
         if serializer.is_valid() == False:
             logger.error(serializer.errors)
@@ -129,6 +135,7 @@ def portfolio_list(request):
         return Response(serializer.data)
 
     return Response({'detail': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
 
 @api_view(['GET', 'PUT', 'DELETE'])
 def portfolio_detail(request, pk):
@@ -157,16 +164,17 @@ def portfolio_detail(request, pk):
 
     return Response({'detail': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
+
 @api_view(['GET', 'POST'])
 def scan_list(request):
     logger.debug("request data: %s", request.data)
     if request.method == 'GET':
-        #Get the list of watchlists
+        # Get the list of watchlists
         scan_list = ScanEntry.objects.all()
         serializer = ScanEntrySerializer(scan_list, many=True)
         return Response(serializer.data)
     elif request.method == 'POST':
-        #Create a new watchlist
+        # Create a new watchlist
         serializer = ScanEntrySerializer(data=request.data)
         if serializer.is_valid() == False:
             logger.error(serializer.errors)
@@ -176,6 +184,7 @@ def scan_list(request):
         return Response(serializer.data)
 
     return Response({'detail': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
 
 @api_view(['GET', 'PUT', 'DELETE'])
 def scan_detail(request, pk):
@@ -204,23 +213,34 @@ def scan_detail(request, pk):
 
     return Response({'detail': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
+
 @api_view(['GET', 'POST'])
 def portfolioupdate_list(request):
     logger.debug("request data: %s", request.data)
     if request.method == 'GET':
-        #Get the list of watchlists
-        portfolioupdate_list_list = PortFolioUpdateSerializer.objects.all()
+        # Get the list of watchlists
+        portfolioupdate_list = PortFolioUpdate.objects.all()
         serializer = PortFolioUpdateSerializer(portfolioupdate_list, many=True)
         return Response(serializer.data)
     elif request.method == 'POST':
-        #Create a new watchlist
+        # Create a new watchlist
         serializer = PortFolioUpdateSerializer(data=request.data)
         if serializer.is_valid() == False:
             logger.error(serializer.errors)
             return Response({'detail': 'Data validation failed'}, status=status.HTTP_400_BAD_REQUEST)
 
+        try:
+            PFUpdater.getInstance().update(serializer.validated_data.get('source'))
+            serializer.validated_data['status'] = Status.PASS.value
+        except:
+            serializer.validated_data['status'] = Status.FAIL.value
+
+            # Get exception
+            e = sys.exc_info()[0]
+            logger.error('Exception in portfolio update: {}'.format(str(e)))
+            return Response({'detail': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
         serializer.save()
         return Response(serializer.data)
 
     return Response({'detail': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
-

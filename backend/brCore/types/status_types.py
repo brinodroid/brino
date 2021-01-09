@@ -3,8 +3,8 @@ from enum import Enum
 
 class Status(Enum):
     NONE = "NONE"
-    GOOD = "GOOD"
-    BAD = "BAD"
+    PASS = "PASS"
+    FAIL = "FAIL"
 
     @classmethod
     def choices(cls):

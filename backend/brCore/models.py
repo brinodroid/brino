@@ -15,6 +15,7 @@ class WatchList(models.Model):
     # Going with float as sqlite doesnt have decimal support
     optionStrike = models.FloatField(null=True)
     optionExpiry = models.DateField(null=True)
+    brine_id = models.UUIDField(null=True)
 
     # Optional comments field
     comment = models.TextField(blank=True)
@@ -27,9 +28,9 @@ class WatchList(models.Model):
 
     def __str__(self):
         return "assetType:%s, ticker:%s, optionStrike:%s, optionExpiry:%s, comment:%s," \
-               "creationTimestamp: %s, updateTimestamp:%s" \
+               "brine_id:%s, creationTimestamp: %s, updateTimestamp:%s" \
                % (self.assetType, self.ticker, self.optionStrike, self.optionExpiry,
-                  self.comment, self.creationTimestamp, self.updateTimestamp)
+                  self.comment, self.brine_id, self.creationTimestamp, self.updateTimestamp)
 
 
 class BGTask(models.Model):
@@ -121,7 +122,7 @@ class PortFolioUpdate(models.Model):
                               default=Status.NONE.value, null=True)
     def save(self, *args, **kwargs):
         self.updateTimestamp = timezone.now()
-        return super(UpdatePortfolio, self).save(*args, **kwargs)
+        return super(PortFolioUpdate, self).save(*args, **kwargs)
 
     def __str__(self):
         return "source:%s, status:%s, updateTimestamp:%s" \
