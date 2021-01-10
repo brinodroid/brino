@@ -232,13 +232,12 @@ def portfolioupdate_list(request):
         try:
             PFUpdater.getInstance().update(serializer.validated_data.get('source'))
             serializer.validated_data['status'] = Status.PASS.value
-        except:
+        except Exception as e:
             serializer.validated_data['status'] = Status.FAIL.value
+            serializer.save()
 
-            # Get exception
-            e = sys.exc_info()[0]
-            logger.error('Exception in portfolio update: {}'.format(str(e)))
-            return Response({'detail': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            logger.error('Exception in portfolio update: {}'.format(repr(e)))
+            return Response({'detail': repr(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         serializer.save()
         return Response(serializer.data)

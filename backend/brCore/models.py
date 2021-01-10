@@ -1,6 +1,6 @@
 from django.db import models
 from django.utils import timezone
-from .types.asset_types import AssetTypes, PortFolioSource
+from .types.asset_types import AssetTypes, PortFolioSource, TransactionType
 from .types.bgtask_types import BGTaskAction, BGTaskActionResult, BGTaskStatus, BGTaskDataIdType
 from .types.scan_types import ScanStatus, ScanProfile
 from .types.status_types import Status
@@ -8,9 +8,11 @@ from .types.status_types import Status
 
 # WatchList: This is the list of assets actively tracked
 class WatchList(models.Model):
-    creationTimestamp = models.DateTimeField(editable=False, default=timezone.now)
+    creationTimestamp = models.DateTimeField(
+        editable=False, default=timezone.now)
     updateTimestamp = models.DateTimeField(default=timezone.now)
-    assetType = models.CharField(max_length=16, choices=AssetTypes.choices(), default=AssetTypes.STOCK.value)
+    assetType = models.CharField(
+        max_length=16, choices=AssetTypes.choices(), default=AssetTypes.STOCK.value)
     ticker = models.CharField(max_length=20)
     # Going with float as sqlite doesnt have decimal support
     optionStrike = models.FloatField(null=True)
@@ -60,31 +62,38 @@ class BGTask(models.Model):
 class PortFolio(models.Model):
     updateTimestamp = models.DateTimeField(default=timezone.now)
     watchListId = models.IntegerField()
-    entryDate = models.DateField()
+    entryDateTime = models.DateTimeField(null=False, blank=False, default=None)
     entryPrice = models.FloatField()
     units = models.FloatField()
     exitPrice = models.FloatField(null=True, blank=True)
-    exitDate = models.DateField(null=True, blank=True)
+    exitDateTime = models.DateTimeField(null=True, blank=True, default=None)
+
     profitTarget = models.FloatField()
     stopLoss = models.FloatField()
-    chainedPortFolioId = models.IntegerField(null=True, blank=True)
+    ttype = models.CharField(max_length=16, choices=TransactionType.choices(),
+                             default=TransactionType.BUY.value)
+    brine_id = models.UUIDField(null=True)
+    source = models.CharField(max_length=16, choices=PortFolioSource.choices(),
+                              default=PortFolioSource.BRINE.value)
 
     def save(self, *args, **kwargs):
         self.updateTimestamp = timezone.now()
         return super(PortFolio, self).save(*args, **kwargs)
 
     def __str__(self):
-        return "watchListId:%s, entryDate:%s, entryPrice:%s, units:%s," \
-               " profitTarget:%s, stopLoss:%s chainedPortFolioId:%s, updateTimestamp:%s" \
-               % (self.watchListId, self.entryDate, self.entryPrice, self.units,
-                  self.profitTarget, self.stopLoss, self.chainedPortFolioId, self.updateTimestamp)
+        return "watchListId:%s, entryDateTime:%s, entryPrice:%s, units:%s," \
+               " profitTarget:%s, stopLoss:%s, brine_id:%s, source:%s, ttype:%s, \
+                updateTimestamp:%s" \
+               % (self.watchListId, self.entryDateTime, self.entryPrice, self.units,
+                  self.profitTarget, self.stopLoss, self.brine_id, self.source,
+                  self.ttype, self.updateTimestamp)
 
 
 class ScanEntry(models.Model):
     updateTimestamp = models.DateTimeField(default=timezone.now)
     watchListId = models.IntegerField()
     profile = models.CharField(max_length=16, choices=ScanProfile.choices(),
-                              default=ScanProfile.STOCK.value, null=True)
+                               default=ScanProfile.STOCK.value, null=True)
     support = models.FloatField()
     resistance = models.FloatField()
     profitTarget = models.FloatField(null=True, blank=True)
@@ -108,10 +117,11 @@ class ScanEntry(models.Model):
     def __str__(self):
         return "watchListId:%s, profile:%s, currentPrice:%s, support:%s, resistance:%s, profitTarget:%s, stopLoss:%s," \
             " etTargetPrice:%s, fvTargetPrice:%s, rationale:%s, volatility:%s, shortfloat:%s, status:%s," \
-                "details:%s, updateTimestamp:%s" \
+            "details:%s, updateTimestamp:%s" \
                % (self.watchListId, self.profile, self.currentPrice, self.support, self.resistance,
                   self.profitTarget, self.stopLoss, self.etTargetPrice, self.fvTargetPrice, self.rationale,
                   self.volatility, self.shortfloat, self.status, self.details, self.updateTimestamp)
+
 
 class PortFolioUpdate(models.Model):
     updateTimestamp = models.DateTimeField(default=timezone.now)
@@ -120,6 +130,7 @@ class PortFolioUpdate(models.Model):
 
     status = models.CharField(max_length=16, choices=Status.choices(),
                               default=Status.NONE.value, null=True)
+
     def save(self, *args, **kwargs):
         self.updateTimestamp = timezone.now()
         return super(PortFolioUpdate, self).save(*args, **kwargs)

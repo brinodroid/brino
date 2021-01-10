@@ -10,6 +10,16 @@ class AssetTypes(Enum):
     def choices(cls):
         return [(key.value, key.name) for key in cls]
 
+
+class TransactionType(Enum):
+    BUY = "BUY"
+    SELL = "SELL"
+
+    @classmethod
+    def choices(cls):
+        return [(key.value, key.name) for key in cls]
+
+
 class PortFolioSource(Enum):
     BRINE = "BRINE"
     BRATE = "BRATE"
