@@ -90,7 +90,7 @@ def __bgtask_runner(bgtask_id):
             logger.error("__bgtask_runner: caught  exception %s", error)
 
             # Stop the thread
-            return;
+            return
 
         # Save the values
         bgtask.save()
@@ -166,16 +166,16 @@ def __scan_covered_call_price_alert(scan_entry, watchlist, scan_cache):
         __addAlertDetails(scan_cache, 'Current price went beyond 80% of profit target. Buy back and sell CC again?')
 
 scan_checks = {
-    ScanProfile.STOCK.value:
+    ScanProfile.BUY_STOCK.value:
         [__scan_support_resistance_alert, __scan_extended_hours_price_movement_alert,
             __scan_brifz_target_price_update_alert],
-    ScanProfile.CC.value:
+    ScanProfile.SELL_CALL.value:
         [__scan_support_resistance_alert, __scan_option_time_to_expiry_alert, __scan_option_strike_alert,
             __scan_support_resistance_update_alert, __scan_covered_call_price_alert],
-    ScanProfile.CALL.value:
+    ScanProfile.BUY_CALL.value:
         [__scan_support_resistance_alert, __scan_option_time_to_expiry_alert,
             __scan_support_resistance_update_alert],
-    ScanProfile.PUT.value:
+    ScanProfile.BUY_PUT.value:
         [__scan_support_resistance_alert, __scan_option_time_to_expiry_alert,
             __scan_support_resistance_update_alert],
 }

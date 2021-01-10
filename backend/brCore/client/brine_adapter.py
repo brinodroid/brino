@@ -32,6 +32,11 @@ class BrineAdapter:
             res_option['trade_value_multiplier'] = option['trade_value_multiplier']
             res_option['option_id'] = option['option_id']
             res_option['brino_transaction_type'] = self.__transaction_type_lut[option['type']]
+            if res_option['brino_transaction_type'] == TransactionType.BUY.value:
+                res_option['brino_entry_price'] = float(res_option['average_price']);
+            else:
+                #Gives negative value for price for selling transactions. Make it positve
+                res_option['brino_entry_price'] = -float(res_option['average_price']);
 
             res_option_list.append(res_option)
 
