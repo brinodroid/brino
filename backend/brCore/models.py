@@ -98,7 +98,7 @@ class ScanEntry(models.Model):
     resistance = models.FloatField(null=True, blank=True)
     brate_target = models.FloatField(null=True, blank=True)
     brifz_target = models.FloatField(null=True, blank=True)
-    rationale = models.TextField(default="")
+    rationale = models.TextField(default="", blank=True)
 
     # Filled by backend
     current_price = models.FloatField(null=True)

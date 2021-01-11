@@ -133,8 +133,10 @@ class Scanner:
                 scan_entry, watchlist, scan_data)
             scan_entry.short_float = self.__get_brifz_shortfloat(
                 scan_entry, watchlist, scan_data)
-            scan_entry.brifz_target = self.__get_brifz_target(
-                scan_entry, watchlist, scan_data)
+            if scan_entry.brifz_target is None:
+                # Update brifz_target if not present
+                scan_entry.brifz_target = self.__get_brifz_target(
+                    scan_entry, watchlist, scan_data)
 
         # Call all __scan_profile_check of the given profile
         for scan_profile_check in self.__scan_profile_check_list[scan_entry.profile]:
@@ -224,6 +226,25 @@ class Scanner:
         scan_entry.status = ScanStatus.ATTN.value
         logger.info('__addAlertDetails: added scan_entry=%s', scan_entry)
 
+    def __set_default_support_resistance(self, scan_entry):
+        # Set default resistance as profit target
+
+        if scan_entry.profile == ScanProfile.SELL_CALL.value \
+                or scan_entry.profile == ScanProfile.SELL_PUT.value:
+            # For sell transactions, we expect profit target to be lower than stop loss.
+            if scan_entry.resistance is None or scan_entry.resistance == 0:
+                scan_entry.resistance = scan_entry.stop_loss
+
+            if scan_entry.support is None or scan_entry.support == 0:
+                scan_entry.support = scan_entry.profit_target
+
+        else :
+            if scan_entry.resistance is None or scan_entry.resistance == 0:
+                scan_entry.resistance = scan_entry.profit_target
+
+            if scan_entry.support is None or scan_entry.support == 0:
+                scan_entry.support = scan_entry.stop_loss
+
     def __update_scan_entry_in_db(self, scan_entry):
         # Rereading from DB to get the latest value. TODO: Need locking with API updates
         scan_latest_entry = ScanEntry.objects.get(pk=scan_entry.id)
@@ -232,6 +253,13 @@ class Scanner:
         scan_latest_entry.current_price = scan_entry.current_price
         scan_latest_entry.volatility = scan_entry.volatility
         scan_latest_entry.short_float = scan_entry.short_float
+
+        self.__set_default_support_resistance(scan_latest_entry)
+
+        if scan_latest_entry.brifz_target is None:
+            # Update brifz_target if not present
+            scan_latest_entry.brifz_target = scan_entry.brifz_target
+
         scan_latest_entry.save()
         logger.info('__update_scan_entry_in_db: Updated {} with {}'.format(
             scan_latest_entry, scan_entry))
@@ -245,14 +273,14 @@ class Scanner:
                 scan_entry, self.__SCAN_ERROR_MSG, 'Resistance data missing.')
         elif scan_entry.resistance <= latest_price:
             self.__addAlertDetails(
-                scan_entry, self.__SCAN_WARN_MSG, 'Hitting resistance. Sell?')
+                scan_entry, self.__SCAN_INFO_MSG, 'Hitting resistance. Sell?')
 
         if scan_entry.support is None or scan_entry.support == 0:
             self.__addAlertDetails(
                 scan_entry, self.__SCAN_ERROR_MSG, 'Support data missing.')
         elif scan_entry.support >= latest_price:
             self.__addAlertDetails(
-                scan_entry, self.__SCAN_WARN_MSG, 'Hitting support. Buy?')
+                scan_entry, self.__SCAN_INFO_MSG, 'Hitting support. Buy?')
 
     def __check_extended_hours_price_movement_alert(self, scan_entry, watchlist, scan_data):
         latest_price = scan_data[self.__SCAN_DATA_LATEST_TICKER_PRICE_DICT_KEY][watchlist.ticker]
@@ -270,7 +298,8 @@ class Scanner:
                 scan_entry, self.__SCAN_ERROR_MSG, 'Brifz target missing.')
             return
 
-        latest_brifz_target = scan_data[self.__SCAN_DATA_BRIFZ_STAT_DICT_KEY][watchlist.ticker]
+        latest_brifz_target = self.__get_brifz_target(
+            scan_entry, watchlist, scan_data)
 
         if scan_entry.brifz_target != latest_brifz_target:
             # Update in brifz target price
@@ -280,18 +309,18 @@ class Scanner:
 
     def __check_option_time_to_expiry_alert(self, scan_entry, watchlist, scan_data):
         time_to_expiry = watchlist.option_expiry - datetime.now().date()
-        if time_to_expiry.days <= 10:
-            self.__addAlertDetails(scan_entry, self.__SCAN_WARN_MSG,
-                                   'Expiry less than 10 days. Close?')
 
         if time_to_expiry.days <= 5:
             self.__addAlertDetails(scan_entry, self.__SCAN_ERROR_MSG,
                                    'Expiry less than 5 days. Close?')
+        elif time_to_expiry.days <= 10:
+            self.__addAlertDetails(scan_entry, self.__SCAN_WARN_MSG,
+                                   'Expiry less than 10 days. Close?')
 
-    def __check_option_strike_alert(self, scan_entry, watchlist, scan_data):
+    def __check_option_above_strike_alert(self, scan_entry, watchlist, scan_data):
         latest_price = scan_data[self.__SCAN_DATA_LATEST_TICKER_PRICE_DICT_KEY][watchlist.ticker]
 
-        if watchlist.option_strike < latest_price:
+        if watchlist.option_strike <= latest_price:
             self.__addAlertDetails(scan_entry, self.__SCAN_INFO_MSG,
                                    'Stock price {} above strike price of {}.'
                                    .format(latest_price, watchlist.option_strike))
@@ -300,6 +329,20 @@ class Scanner:
             # 5% of strike price
             self.__addAlertDetails(scan_entry, self.__SCAN_INFO_MSG,
                                    'Stock price {} within 5% strike price of {}.'
+                                   .format(latest_price, watchlist.option_strike))
+
+    def __check_option_below_strike_alert(self, scan_entry, watchlist, scan_data):
+        latest_price = scan_data[self.__SCAN_DATA_LATEST_TICKER_PRICE_DICT_KEY][watchlist.ticker]
+
+        if watchlist.option_strike >= latest_price:
+            self.__addAlertDetails(scan_entry, self.__SCAN_INFO_MSG,
+                                   'Stock price {} above strike price of {}. Buy back and sell?'
+                                   .format(latest_price, watchlist.option_strike))
+
+        elif abs(watchlist.option_strike - latest_price) >= latest_price * 5 / 100:
+            # 5% of strike price
+            self.__addAlertDetails(scan_entry, self.__SCAN_INFO_MSG,
+                                   'Stock price {} within 5% strike price of {}. Buy back and sell?'
                                    .format(latest_price, watchlist.option_strike))
 
     def __check_sold_option_buyback_alert(self, scan_entry, watchlist, scan_data):
@@ -312,12 +355,12 @@ class Scanner:
 
         if latest_option_price < scan_entry.profit_target*10/100:
             self.__addAlertDetails(scan_entry, self.__SCAN_WARN_MSG,
-                                   'Current price is less than 10% of profit target. Buy back and sell CC again?')
+                                   'Current price is less than 10% of profit target. Buy back and sell option again?')
 
         if latest_option_price > scan_entry.profit_target*80/100:
             # Price reached 80% of profit target.
             self.__addAlertDetails(scan_entry, self.__SCAN_INFO_MSG,
-                                   'Current price went beyond 80% of profit target. Buy back and sell CC again?')
+                                   'Current price went beyond 80% of profit target. Buy back and sell option again?')
 
     __scan_profile_check_list = {
         ScanProfile.BUY_STOCK.value:
@@ -330,7 +373,7 @@ class Scanner:
             [
                 __check_support_resistance_alert,
                 __check_extended_hours_price_movement_alert,
-                __check_option_strike_alert,
+                __check_option_above_strike_alert,
                 __check_option_time_to_expiry_alert,
                 __check_sold_option_buyback_alert
             ],
@@ -338,21 +381,21 @@ class Scanner:
             [
                 __check_support_resistance_alert,
                 __check_extended_hours_price_movement_alert,
-                __check_option_strike_alert,
+                __check_option_below_strike_alert,
                 __check_option_time_to_expiry_alert,
             ],
         ScanProfile.BUY_PUT.value:
             [
                 __check_support_resistance_alert,
                 __check_extended_hours_price_movement_alert,
-                __check_option_strike_alert,
+                __check_option_above_strike_alert,
                 __check_option_time_to_expiry_alert,
             ],
         ScanProfile.SELL_PUT.value:
             [
                 __check_support_resistance_alert,
                 __check_extended_hours_price_movement_alert,
-                __check_option_strike_alert,
+                __check_option_below_strike_alert,
                 __check_option_time_to_expiry_alert,
                 __check_sold_option_buyback_alert
             ],

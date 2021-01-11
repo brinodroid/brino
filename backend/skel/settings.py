@@ -28,7 +28,7 @@ if os.environ['DEBUG'] == 'True':
 
 ALLOWED_HOSTS = ['localhost']
 if os.environ['PROD'] == 'True':
-    ALLOWED_HOSTS += ['192.168.1.{}'.format(i) for i in range(256)]
+    ALLOWED_HOSTS += ['192.170.1.{}'.format(i) for i in range(256)]
     #ALLOWED_HOSTS = ['192.168.1.125']
 
 # Application definition

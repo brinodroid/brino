@@ -68,7 +68,7 @@ class PFUpdater:
         # Portfolio has to be identified by the brine_id. Add it the right brine id
         portfolio = PortFolio(watchlist_id=watchlist.id,
                               entry_datetime=option['created_at'],
-                              entry_price=option['brino_entry_price'],
+                              entry_price=option['brino_entry_price']/100,
                               units=float(
                                   option['quantity'])*float(option['trade_value_multiplier']),
                               transaction_type=option['brino_transaction_type'],
@@ -111,6 +111,7 @@ class PFUpdater:
                 (100+configuration.profitTargetPercent)/100
             stop_loss = portfolio.entry_price * \
                 (100-configuration.stopLossPercent)/100
+
         else:
             # When we sell,
             # 1. profit target should be less than entry_price
@@ -122,8 +123,8 @@ class PFUpdater:
 
         scan_entry = ScanEntry(watchlist_id=watchlist.id,
                                profile=profile,
-                               profit_target=profit_target,
-                               stop_loss=stop_loss)
+                               profit_target=round(profit_target, 2),
+                               stop_loss=round(stop_loss, 2))
         scan_entry.save()
         return scan_entry
 
