@@ -41,7 +41,7 @@ export default class PortFolio extends React.Component {
       showDetailedViewModal: false,
       addToPortFolio: false,
       deleteFromPortFolio: false,
-      formValues : {id: "", updateTimestamp: "", watchListId: "", entryDate: "", entryPrice: "", units: "", exitPrice: "", exitDate: "", profitTarget: "", stopLoss: "", chainedPortFolioId: null}
+      formValues : {id: "", update_timestamp: "", watchlist_id: "", source:"", transaction_type:"", entry_datetime: "", entry_price: "", units: "", exit_price: "", exit_datetime: ""}
     }
   }
 
@@ -51,7 +51,7 @@ export default class PortFolio extends React.Component {
       showDetailedViewModal: false,
       deleteFromPortFolio: false,
       addToPortFolio: false,
-      formValues : {id: "", updateTimestamp: "", watchListId: "", entryDate: "", entryPrice: "", units: "", exitPrice: "", exitDate: "", profitTarget: "", stopLoss: "", chainedPortFolioId: null}
+      formValues : {id: "", update_timestamp: "", watchlist_id: "", source:"", transaction_type:"", entry_datetime: "", entry_price: "", units: "", exit_price: "", exit_datetime: ""}
     });
   }
 
@@ -231,16 +231,17 @@ export default class PortFolio extends React.Component {
     return (
       <Form onSubmit={this.handleSubmit} >
 
-        { this.showModalFormGroup(true, "updateTimestamp", "Update Timestamp", this.state.formValues.updateTimestamp) }
+        { this.showModalFormGroup(true, "update_timestamp", "Update Timestamp", this.state.formValues.update_timestamp) }
         { this.showModalFormGroup(true, "id", "ID", this.state.formValues.id) }
-        { this.showModalFormGroup(readOnly, "watchListId", "WatchList Id", this.state.formValues.watchListId) }
-        { this.showModalFormGroup(readOnly, "entryDate", "Entry Date", this.state.formValues.entryDate) }
-        { this.showModalFormGroup(readOnly, "entryPrice", "Entry Price", this.state.formValues.entryPrice)}
+        { this.showModalFormGroup(readOnly, "watchlist_id", "WatchList Id", this.state.formValues.watchlist_id) }
+        { this.showModalFormGroup(readOnly, "source", "Source", this.state.formValues.source)}
+        { this.showModalFormGroup(readOnly, "transaction_type", "Units", this.state.formValues.transaction_type)}
+        { this.showModalFormGroup(readOnly, "entry_datetime", "Entry Date", this.state.formValues.entry_datetime) }
+        { this.showModalFormGroup(readOnly, "entry_price", "Entry Price", this.state.formValues.entry_price)}
         { this.showModalFormGroup(readOnly, "units", "Units", this.state.formValues.units)}
-        { this.showModalFormGroup(readOnly, "profitTarget", "Profit Target", this.state.formValues.profitTarget) }
-        { this.showModalFormGroup(readOnly, "stopLoss", "Stop Loss", this.state.formValues.stopLoss) }
-        { this.showModalFormGroup(readOnly, "exitDate", "Exit Date", this.state.formValues.exitDate) }
-        { this.showModalFormGroup(readOnly, "exitPrice", "Exit Price", this.state.formValues.exitPrice) }
+        { this.showModalFormGroup(readOnly, "exit_datetime", "Exit Date", this.state.formValues.exit_datetime) }
+        { this.showModalFormGroup(readOnly, "exit_price", "Exit Price", this.state.formValues.exit_price) }
+        { this.showModalFormGroup(true, "brine_id", "Brine Id", this.state.formValues.brine_id)}
 
       </Form>
     );
@@ -333,16 +334,13 @@ export default class PortFolio extends React.Component {
               </ButtonGroup>
             )},
       { Header: 'ID',  accessor: 'id'},
-      { Header: 'WatchList Id', accessor: 'watchListId'},
-      { Header: 'Entry Date', accessor: 'entryDate'},
-      { Header: 'Entry Price', accessor: 'entryPrice'},
+      { Header: 'WatchList Id', accessor: 'watchlist_id'},
+      { Header: 'Entry Date', accessor: 'entry_datetime'},
+      { Header: 'Entry Price', accessor: 'entry_price'},
       { Header: 'Units', accessor: 'units'},
-      { Header: 'Profit Target', accessor: 'profitTarget'},
-      { Header: 'Stop Loss', accessor: 'stopLoss'},
-      { Header: 'Exit Date', accessor: 'exitDate'},
-      { Header: 'Exit Price', accessor: 'exitPrice'},
-      { Header: 'Linked PortFolio ID', accessor: 'chainedPortFolioId'},
-      { Header: 'Update Time', accessor: 'updateTimestamp'},
+      { Header: 'Exit Date', accessor: 'exit_datetime'},
+      { Header: 'Exit Price', accessor: 'exit_price'},
+      { Header: 'Update Time', accessor: 'update_timestamp'},
     ];
 
     const onRowClick = (state, rowInfo, column, instance) => {

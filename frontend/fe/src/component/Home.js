@@ -42,9 +42,9 @@ export default class Scan extends React.Component {
       showDetailedViewModal: false,
       addToScan: false,
       deleteFromScan: false,
-      formValues : {id: "", updateTimestamp: "", profile: "", watchListId: "", watchListTicker: "",
-       support: "", resistance: "", profitTarget: "", stopLoss: "", etTargetPrice: "", fvTargetPrice: "",
-       rationale: "", currentPrice: "", volatility: "", shortfloat: "", status: "", details: ""}
+      formValues : {id: "", update_timestamp: "", profile: "", watchlist_id: "", watchListTicker: "",
+       support: "", resistance: "", profit_target: "", stopLoss: "", brate_target: "", brifz_target: "",
+       rationale: "", current_price: "", volatility: "", short_float: "", status: "", details: ""}
     }
   }
 
@@ -57,9 +57,9 @@ export default class Scan extends React.Component {
       showDetailedViewModal: false,
       deleteFromScan: false,
       addToScan: false,
-      formValues : {id: "", updateTimestamp: "", profile: "", watchListId: "", watchListTicker: "",
-       support: "", resistance: "", profitTarget: "", stopLoss: "", etTargetPrice: "", fvTargetPrice: "",
-       rationale: "", currentPrice: "", volatility: "", shortfloat: "", status: "", details: ""}
+      formValues : {id: "", update_timestamp: "", profile: "", watchlist_id: "", watchListTicker: "",
+       support: "", resistance: "", profit_target: "", stopLoss: "", brate_target: "", brifz_target: "",
+       rationale: "", current_price: "", volatility: "", short_float: "", status: "", details: ""}
     });
   }
 
@@ -121,15 +121,15 @@ export default class Scan extends React.Component {
       console.info("loadWatchListCallback: watListMap: %o", watchListMap);
       let scanArray= this.state.scan;
       let updateWatchListTicker = function (scanEntry) {
-        let watchListItem = watchListMap[scanEntry.watchListId];
+        let watchListItem = watchListMap[scanEntry.watchlist_id];
         let watchListTicker = '';
         console.info("loadWatchListCallback: item: %o", watchListItem);
         if (!watchListItem) {
             watchListTicker = 'NOT FOUND. Stale?';
-        } else if (watchListItem.assetType === 'STOCK') {
+        } else if (watchListItem.asset_type === 'STOCK') {
             watchListTicker = watchListItem.ticker;
         } else {
-            watchListTicker = watchListItem.ticker + ' ' + watchListItem.assetType + ' ' + watchListItem.optionStrike + ' ' + watchListItem.optionExpiry;
+            watchListTicker = watchListItem.ticker + ' ' + watchListItem.asset_type + ' ' + watchListItem.option_strike + ' ' + watchListItem.option_expiry;
         }
 
         scanEntry.watchListTicker = watchListTicker;
@@ -164,7 +164,7 @@ export default class Scan extends React.Component {
       }
 
       let updateTimeFormat = function (scanEntry) {
-        scanEntry.updateTimestampLocal = new Date(scanEntry.updateTimestamp).toLocaleString();
+        scanEntry.updateTimestampLocal = new Date(scanEntry.update_timestamp).toLocaleString();
         console.info("updateTimeFormat: json: %o", scanEntry.updateTimestampLocal);
       }
       json.forEach(updateTimeFormat);
@@ -306,20 +306,20 @@ export default class Scan extends React.Component {
     return (
       <Form onSubmit={this.handleSubmit} >
 
-        { this.showModalFormGroup(true, "updateTimestamp", "Update Timestamp", this.state.formValues.updateTimestampLocal) }
+        { this.showModalFormGroup(true, "update_timestamp", "Update Timestamp", this.state.formValues.updateTimestampLocal) }
         { this.showModalFormGroup(true, "id", "ID", this.state.formValues.id) }
         { this.showModalFormGroup(readOnly, "profile", "Profile", this.state.formValues.profile) }
-        { this.showModalFormGroup(readOnly, "watchListId", "WatchList Id", this.state.formValues.watchListId) }
+        { this.showModalFormGroup(readOnly, "watchlist_id", "WatchList Id", this.state.formValues.watchlist_id) }
         { this.showModalFormGroup(readOnly, "support", "Support", this.state.formValues.support)}
         { this.showModalFormGroup(readOnly, "resistance", "Resistance", this.state.formValues.resistance)}
-        { this.showModalFormGroup(readOnly, "profitTarget", "Profit Target", this.state.formValues.profitTarget) }
-        { this.showModalFormGroup(readOnly, "stopLoss", "Stop Loss", this.state.formValues.stopLoss) }
-        { this.showModalFormGroup(readOnly, "etTargetPrice", "ET Target", this.state.formValues.etTargetPrice) }
-        { this.showModalFormGroup(readOnly, "fvTargetPrice", "FV Target", this.state.formValues.fvTargetPrice) }
+        { this.showModalFormGroup(readOnly, "profit_target", "Profit Target", this.state.formValues.profit_target) }
+        { this.showModalFormGroup(readOnly, "stop_loss", "Stop Loss", this.state.formValues.stop_loss) }
+        { this.showModalFormGroup(readOnly, "brate_target", "ET Target", this.state.formValues.brate_target) }
+        { this.showModalFormGroup(readOnly, "brifz_target", "FV Target", this.state.formValues.brifz_target) }
         { this.showModalFormGroup(readOnly, "rationale", "Rationale", this.state.formValues.rationale) }
-        { this.showModalFormGroup(true, "currentPrice", "Current Price", this.state.formValues.currentPrice) }
+        { this.showModalFormGroup(true, "current_price", "Current Price", this.state.formValues.current_price) }
         { this.showModalFormGroup(true, "volatility", "Volatility", this.state.formValues.volatility) }
-        { this.showModalFormGroup(true, "shortfloat", "Short float", this.state.formValues.shortfloat) }
+        { this.showModalFormGroup(true, "short_float", "Short float", this.state.formValues.short_float) }
         { this.showModalFormGroup(true, "status", "Status", this.state.formValues.status) }
         { this.showModalFormGroup(true, "details", "Details", this.state.formValues.details) }
 
@@ -422,18 +422,18 @@ export default class Scan extends React.Component {
             )},
       { Header: 'ID',  accessor: 'id'},
       { Header: 'profile', accessor: 'profile'},
-      { Header: 'WL Id', accessor: 'watchListId'},
+      { Header: 'WL Id', accessor: 'watchlist_id'},
       { Header: 'WL ticker', accessor: 'watchListTicker'},
       { Header: 'Support', accessor: 'support'},
       { Header: 'Resistance', accessor: 'resistance'},
-      { Header: 'Profit Target', accessor: 'profitTarget'},
-      { Header: 'Stop Loss', accessor: 'stopLoss'},
-      { Header: 'ET Target', accessor: 'etTargetPrice'},
-      { Header: 'FV Target', accessor: 'fvTargetPrice'},
+      { Header: 'Profit Target', accessor: 'profit_target'},
+      { Header: 'Stop Loss', accessor: 'stop_loss'},
+      { Header: 'ET Target', accessor: 'brate_target'},
+      { Header: 'FV Target', accessor: 'brifz_target'},
       { Header: 'Rationale', accessor: 'rationale'},
-      { Header: 'Current Price', accessor: 'currentPrice'},
+      { Header: 'Current Price', accessor: 'current_price'},
       { Header: 'Volatility', accessor: 'volatility'},
-      { Header: 'Short float', accessor: 'shortfloat'},
+      { Header: 'Short float', accessor: 'short_float'},
       { Header: 'Status', accessor: 'status',
           Cell: ({row}) => (
             <Alert variant={this.getStatusHighlight(row.original)} > {row.original.status} </Alert>

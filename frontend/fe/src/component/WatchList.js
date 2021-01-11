@@ -231,13 +231,13 @@ export default class WatchList extends React.Component {
     return (
       <Form onSubmit={this.handleSubmit} >
 
-        { this.showModalFormGroup(true, "creationTimestamp", "Create Timestamp", this.state.formValues.creationTimestamp) }
-        { this.showModalFormGroup(true, "updateTimestamp", "Update Timestamp", this.state.formValues.updateTimestamp) }
+        { this.showModalFormGroup(true, "creation_timestamp", "Create Timestamp", this.state.formValues.creation_timestamp) }
+        { this.showModalFormGroup(true, "update_timestamp", "Update Timestamp", this.state.formValues.update_timestamp) }
         { this.showModalFormGroup(true, "id", "ID", this.state.formValues.id) }
-        { this.showModalFormGroup(readOnly, "assetType", "Asset Type", this.state.formValues.assetType) }
+        { this.showModalFormGroup(readOnly, "asset_type", "Asset Type", this.state.formValues.asset_type) }
         { this.showModalFormGroup(readOnly, "ticker", "Ticker", this.state.formValues.ticker) }
-        { this.showModalFormGroup(readOnly, "optionStrike", "Strike", this.state.formValues.optionStrike? this.state.formValues.optionStrike: "") }
-        { this.showModalFormGroup(readOnly, "optionExpiry", "Expiry", this.state.formValues.optionExpiry? this.state.formValues.optionExpiry:"" ) }
+        { this.showModalFormGroup(readOnly, "option_strike", "Strike", this.state.formValues.option_strike? this.state.formValues.option_strike: "") }
+        { this.showModalFormGroup(readOnly, "option_expiry", "Expiry", this.state.formValues.option_expiry? this.state.formValues.option_expiry:"" ) }
         { this.showModalFormGroup(readOnly, "comment", "Comment", this.state.formValues.comment) }
 
       </Form>
@@ -327,13 +327,13 @@ export default class WatchList extends React.Component {
               </ButtonGroup>
             )},
       { Header: 'ID',  accessor: 'id'},
-      { Header: 'Asset Type', accessor: 'assetType'},
+      { Header: 'Asset Type', accessor: 'asset_type'},
       { Header: 'Ticker', accessor: 'ticker'},
-      { Header: 'Strike', accessor: 'optionStrike'},
-      { Header: 'Expiry', accessor: 'optionExpiry'},
+      { Header: 'Strike', accessor: 'option_strike'},
+      { Header: 'Expiry', accessor: 'option_expiry'},
       { Header: 'Comment', accessor: 'comment'},
-      { Header: 'Update Time', accessor: 'updateTimestamp'},
-      { Header: 'Create Time', accessor: 'creationTimestamp'},
+      { Header: 'Update Time', accessor: 'update_timestamp'},
+      { Header: 'Create Time', accessor: 'creation_timestamp'},
     ];
 
     const onRowClick = (state, rowInfo, column, instance) => {
