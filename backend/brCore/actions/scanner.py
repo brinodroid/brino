@@ -129,17 +129,55 @@ class Scanner:
         else:
             # Update  current price, volatility and short float
             scan_entry.current_price = scan_data[self.__SCAN_DATA_LATEST_TICKER_PRICE_DICT_KEY][watchlist.ticker]
-            scan_entry.volatility = self.__safe_float(
-                scan_data[self.__SCAN_DATA_BRIFZ_STAT_DICT_KEY][watchlist.ticker]['volatility'])
-            scan_entry.short_float = self.__safe_float(
-                scan_data[self.__SCAN_DATA_BRIFZ_STAT_DICT_KEY][watchlist.ticker]['short_float'])
+            scan_entry.volatility = self.__get_brifz_volatility(
+                scan_entry, watchlist, scan_data)
+            scan_entry.short_float = self.__get_brifz_shortfloat(
+                scan_entry, watchlist, scan_data)
+            scan_entry.brifz_target = self.__get_brifz_target(
+                scan_entry, watchlist, scan_data)
 
         # Call all __scan_profile_check of the given profile
-        for __scan_profile_check in self.__scan_profile_check_list[scan_entry.profile]:
-            __scan_profile_check(self, scan_entry, watchlist, scan_data)
+        for scan_profile_check in self.__scan_profile_check_list[scan_entry.profile]:
+            try:
+                scan_profile_check(self, scan_entry, watchlist, scan_data)
+            except Exception as e:
+                logger.error(
+                    '__update_scan_entry_values: scan_profile_check: {} gave Exception: {}'.format(scan_profile_check, repr(e)))
+                self.__addAlertDetails(scan_entry, self.__SCAN_ERROR_MSG,
+                                       'scan_profile_check: {} gave Exception: {}'.format(scan_profile_check, repr(e)))
 
         # Reset the option data to not use stale info
         scan_data[self.__SCAN_DATA_LOCAL_OPTION_DATA_KEY] = None
+
+    def __get_brifz_volatility(self, scan_entry, watchlist, scan_data):
+        try:
+            return self.__safe_float(scan_data[self.__SCAN_DATA_BRIFZ_STAT_DICT_KEY][watchlist.ticker]['Volatility'])
+        except Exception as e:
+            logger.error(
+                '__get_brifz_volatility: Exception: {}'.format(repr(e)))
+            self.__addAlertDetails(
+                scan_entry, self.__SCAN_ERROR_MSG, '__get_brifz_volatility: Exception: {}'.format(repr(e)))
+        return None
+
+    def __get_brifz_shortfloat(self, scan_entry, watchlist, scan_data):
+        try:
+            return self.__safe_float(scan_data[self.__SCAN_DATA_BRIFZ_STAT_DICT_KEY][watchlist.ticker]['Short Float'])
+        except Exception as e:
+            logger.error(
+                '__get_brifz_shortfloat: Exception: {}'.format(repr(e)))
+            self.__addAlertDetails(
+                scan_entry, self.__SCAN_ERROR_MSG, '__get_brifz_shortfloat: Exception: {}'.format(repr(e)))
+        return None
+
+    def __get_brifz_target(self, scan_entry, watchlist, scan_data):
+        try:
+            return self.__safe_float(scan_data[self.__SCAN_DATA_BRIFZ_STAT_DICT_KEY][watchlist.ticker]['Target Price'])
+        except Exception as e:
+            logger.error(
+                '__get_brifz_target: Exception: {}'.format(repr(e)))
+            self.__addAlertDetails(
+                scan_entry, self.__SCAN_ERROR_MSG, '__get_brifz_target: Exception: {}'.format(repr(e)))
+        return None
 
     def __get_uniq_ticker_list(self, scan_list):
         ticker_list = []
@@ -200,7 +238,7 @@ class Scanner:
 
     def __check_support_resistance_alert(self, scan_entry, watchlist, scan_data):
         # current_price contains the latest price for option or stock
-        latest_price = scan_entry.current_price 
+        latest_price = scan_entry.current_price
 
         if scan_entry.resistance is None or scan_entry.resistance == 0:
             self.__addAlertDetails(
@@ -270,7 +308,7 @@ class Scanner:
                 scan_entry, self.__SCAN_ERROR_MSG, 'profit_target data missing.')
             return
 
-        latest_option_price = scan_entry.current_price 
+        latest_option_price = scan_entry.current_price
 
         if latest_option_price < scan_entry.profit_target*10/100:
             self.__addAlertDetails(scan_entry, self.__SCAN_WARN_MSG,
