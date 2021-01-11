@@ -42,28 +42,28 @@ class Backend {
     authenticateRequest.username = username;
     authenticateRequest.password = password;
 
-    fetch( this.getURL() + 'token-auth/', {
+    fetch(this.getURL() + 'token-auth/', {
       method: 'POST',
-      headers: {'Content-Type': 'application/json'},
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(authenticateRequest)
     })
-    .then(response => {
-      httpStatus = response.status;
-      return response.json();
-    })
-    .then(json => {
-      if (httpStatus !== 200) {
-        console.error("authenticate: json=%o", json);
+      .then(response => {
+        httpStatus = response.status;
+        return response.json();
+      })
+      .then(json => {
+        if (httpStatus !== 200) {
+          console.error("authenticate: json=%o", json);
+          callback(httpStatus);
+          return;
+        }
+        localStorage.setItem('token', json.token);
         callback(httpStatus);
-        return;
-      }
-      localStorage.setItem('token', json.token);
-      callback(httpStatus);
-    })
-    .catch (error => {
-      console.error("authenticate: error %o", error);
-      callback(httpStatus);
-    });
+      })
+      .catch(error => {
+        console.error("authenticate: error %o", error);
+        callback(httpStatus);
+      });
   }
 
   isAuthenticated() {
@@ -101,11 +101,11 @@ class Backend {
   }
 
   deleteFromWatchList(watchListEntry, callback) {
-    this.deleteWithToken('brCore/watchlist/'+watchListEntry.id, callback);
+    this.deleteWithToken('brCore/watchlist/' + watchListEntry.id, callback);
   }
 
   updateWatchList(watchListEntry, callback) {
-    this.putWithToken('brCore/watchlist/'+watchListEntry.id, watchListEntry, callback);
+    this.putWithToken('brCore/watchlist/' + watchListEntry.id, watchListEntry, callback);
   }
 
   getBgtask(callback) {
@@ -121,11 +121,11 @@ class Backend {
   }
 
   deleteBgtask(bgtask, callback) {
-    this.deleteWithToken('brCore/bgtask/'+bgtask.id, callback);
+    this.deleteWithToken('brCore/bgtask/' + bgtask.id, callback);
   }
 
   updateBgtask(bgtask, callback) {
-    this.putWithToken('brCore/bgtask/'+bgtask.id, bgtask, callback);
+    this.putWithToken('brCore/bgtask/' + bgtask.id, bgtask, callback);
   }
 
   getPortFolio(callback) {
@@ -134,18 +134,18 @@ class Backend {
 
   createPortFolio(portfolio, callback) {
     // The below fields are not needed during creation
-    delete portfolio.updateTimestamp;
+    delete portfolio.update_timestamp;
     delete portfolio.exitDate;
     delete portfolio.exitPrice;
     this.postWithToken('brCore/portfolio/', portfolio, callback);
   }
 
   deletePortFolio(portfolio, callback) {
-    this.deleteWithToken('brCore/portfolio/'+portfolio.id, callback);
+    this.deleteWithToken('brCore/portfolio/' + portfolio.id, callback);
   }
 
   updatePortFolio(portfolio, callback) {
-    this.putWithToken('brCore/portfolio/'+portfolio.id, portfolio, callback);
+    this.putWithToken('brCore/portfolio/' + portfolio.id, portfolio, callback);
   }
 
   getScan(callback) {
@@ -154,10 +154,24 @@ class Backend {
 
   createScan(scan, callback) {
     // The below fields are not needed during creation
-    delete scan.updateTimestamp;
+    delete scan.update_timestamp;
     delete scan.status;
-    delete scan.currentPrice;
+    delete scan.current_price;
     delete scan.volatility;
+
+    // Delete empty fields
+    if (scan.brifz_target === "")
+      delete scan.brifz_target;
+
+    if (scan.brate_target === "")
+      delete scan.brate_target;
+
+    if (scan.profit_target === "")
+      delete scan.profit_target;
+
+    if (scan.stop_loss === "")
+      delete scan.stop_loss;
+
     this.postWithToken('brCore/scan/', scan, callback);
   }
 
@@ -175,16 +189,16 @@ class Backend {
 
     fetch(url, {
       method: 'DELETE',
-      headers: {'Content-Type': 'application/json', Authorization: `JWT ${localStorage.getItem('token')}`},
+      headers: { 'Content-Type': 'application/json', Authorization: `JWT ${localStorage.getItem('token')}` },
     })
-    .then(response => {
-      httpStatus = response.status;
-      callback(httpStatus, undefined);
-    })
-    .catch (error => {
-      console.error("deleteWithToken: url=%o error=%o", url, error);
-      callback(httpStatus, undefined);
-    });
+      .then(response => {
+        httpStatus = response.status;
+        callback(httpStatus, undefined);
+      })
+      .catch(error => {
+        console.error("deleteWithToken: url=%o error=%o", url, error);
+        callback(httpStatus, undefined);
+      });
   }
 
   putWithToken(api, data, callback) {
@@ -193,25 +207,25 @@ class Backend {
 
     fetch(url, {
       method: 'PUT',
-      headers: {'Content-Type': 'application/json', Authorization: `JWT ${localStorage.getItem('token')}`},
+      headers: { 'Content-Type': 'application/json', Authorization: `JWT ${localStorage.getItem('token')}` },
       body: JSON.stringify(data)
     })
-    .then(response => {
-      httpStatus = response.status;
-      return response.json();
-    })
-    .then(json => {
-      if (httpStatus !== 200) {
-        console.error("putWithToken: url=%o json=%o", url, json);
-        callback(httpStatus, json);
-        return;
-      }
-      callback(httpStatus);
-    })
-    .catch (error => {
-      console.error("putWithToken: url=%o error=%o", url, error);
-      callback(httpStatus, undefined);
-    });
+      .then(response => {
+        httpStatus = response.status;
+        return response.json();
+      })
+      .then(json => {
+        if (httpStatus !== 200) {
+          console.error("putWithToken: url=%o json=%o", url, json);
+          callback(httpStatus, json);
+          return;
+        }
+        callback(httpStatus);
+      })
+      .catch(error => {
+        console.error("putWithToken: url=%o error=%o", url, error);
+        callback(httpStatus, undefined);
+      });
   }
 
   postWithToken(api, data, callback) {
@@ -220,25 +234,25 @@ class Backend {
 
     fetch(url, {
       method: 'POST',
-      headers: {'Content-Type': 'application/json', Authorization: `JWT ${localStorage.getItem('token')}`},
+      headers: { 'Content-Type': 'application/json', Authorization: `JWT ${localStorage.getItem('token')}` },
       body: JSON.stringify(data)
     })
-    .then(response => {
-      httpStatus = response.status;
-      return response.json();
-    })
-    .then(json => {
-      if (httpStatus !== 200) {
-        console.error("postWithToken: url=%o json=%o", url, json);
-        callback(httpStatus, json);
-        return;
-      }
-      callback(httpStatus);
-    })
-    .catch (error => {
-      console.error("postWithToken: url=%o error=%o", url, error);
-      callback(httpStatus, undefined);
-    });
+      .then(response => {
+        httpStatus = response.status;
+        return response.json();
+      })
+      .then(json => {
+        if (httpStatus !== 200) {
+          console.error("postWithToken: url=%o json=%o", url, json);
+          callback(httpStatus, json);
+          return;
+        }
+        callback(httpStatus);
+      })
+      .catch(error => {
+        console.error("postWithToken: url=%o error=%o", url, error);
+        callback(httpStatus, undefined);
+      });
   }
 
   getWithToken(api, callback) {
@@ -246,24 +260,24 @@ class Backend {
     let url = this.getURL() + api;
 
     fetch(url, {
-      headers: {Authorization: `JWT ${localStorage.getItem('token')}`}
+      headers: { Authorization: `JWT ${localStorage.getItem('token')}` }
     })
-    .then(response => {
-      httpStatus = response.status;
-      return response.json();
-    })
-    .then(json => {
-      if (httpStatus !== 200) {
-        console.error("getWithToken: url=%o json=%o", url, json);
+      .then(response => {
+        httpStatus = response.status;
+        return response.json();
+      })
+      .then(json => {
+        if (httpStatus !== 200) {
+          console.error("getWithToken: url=%o json=%o", url, json);
+          callback(httpStatus, undefined);
+          return;
+        }
+        callback(httpStatus, json);
+      })
+      .catch(error => {
+        console.error("getWithToken: url=%o error=%o", url, error);
         callback(httpStatus, undefined);
-        return;
-      }
-      callback(httpStatus, json);
-    })
-    .catch (error => {
-      console.error("getWithToken: url=%o error=%o", url, error);
-      callback(httpStatus, undefined);
-    });
+      });
   }
 
   getURL() {

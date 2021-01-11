@@ -37,14 +37,16 @@ export default class Scan extends React.Component {
 
     this.state = {
       isScanLoaded: false,
-      errorMsg : '',
-      Scan : null,
+      errorMsg: '',
+      Scan: null,
       showDetailedViewModal: false,
       addToScan: false,
       deleteFromScan: false,
-      formValues : {id: "", update_timestamp: "", profile: "", watchlist_id: "", watchListTicker: "",
-       support: "", resistance: "", profit_target: "", stopLoss: "", brate_target: "", brifz_target: "",
-       rationale: "", current_price: "", volatility: "", short_float: "", status: "", details: ""}
+      formValues: {
+        id: "", update_timestamp: "", profile: "", watchlist_id: "", watchListTicker: "",
+        support: "", resistance: "", profit_target: "", stopLoss: "", brate_target: "", brifz_target: "",
+        rationale: "", current_price: "", volatility: "", short_float: "", status: "", details: ""
+      }
     }
   }
 
@@ -57,13 +59,15 @@ export default class Scan extends React.Component {
       showDetailedViewModal: false,
       deleteFromScan: false,
       addToScan: false,
-      formValues : {id: "", update_timestamp: "", profile: "", watchlist_id: "", watchListTicker: "",
-       support: "", resistance: "", profit_target: "", stopLoss: "", brate_target: "", brifz_target: "",
-       rationale: "", current_price: "", volatility: "", short_float: "", status: "", details: ""}
+      formValues: {
+        id: "", update_timestamp: "", profile: "", watchlist_id: "", watchListTicker: "",
+        support: "", resistance: "", profit_target: "", stopLoss: "", brate_target: "", brifz_target: "",
+        rationale: "", current_price: "", volatility: "", short_float: "", status: "", details: ""
+      }
     });
   }
 
-  onEditButtonClick (rowData) {
+  onEditButtonClick(rowData) {
     console.info('onEditButtonClick: rowData=%o', rowData);
     this.setState({
       showDetailedViewModal: true,
@@ -97,13 +101,13 @@ export default class Scan extends React.Component {
   loadWatchList() {
     console.info('loadWatchList: Loading watchlist...')
     let loadWatchListCallback = function (httpStatus, json) {
-      if ( httpStatus === 401) {
+      if (httpStatus === 401) {
         this.props.auth.setAuthenticationStatus(false);
         console.error("loadWatchListCallback: authentication expired?");
         return;
       }
 
-      if ( httpStatus !== 200) {
+      if (httpStatus !== 200) {
         console.error("loadWatchListCallback: failure: http:%o", httpStatus);
         this.setState({
           errorMsg: "Failed to load watchlist"
@@ -113,23 +117,23 @@ export default class Scan extends React.Component {
 
       // Converting watchList json array to a map
       console.info("loadWatchListCallback: json: %o", json);
-      let watchListMap = json.reduce(function(map, obj) {
+      let watchListMap = json.reduce(function (map, obj) {
         map[obj.id] = obj;
         return map;
-        }, {});
+      }, {});
 
       console.info("loadWatchListCallback: watListMap: %o", watchListMap);
-      let scanArray= this.state.scan;
+      let scanArray = this.state.scan;
       let updateWatchListTicker = function (scanEntry) {
         let watchListItem = watchListMap[scanEntry.watchlist_id];
         let watchListTicker = '';
         console.info("loadWatchListCallback: item: %o", watchListItem);
         if (!watchListItem) {
-            watchListTicker = 'NOT FOUND. Stale?';
+          watchListTicker = 'NOT FOUND. Stale?';
         } else if (watchListItem.asset_type === 'STOCK') {
-            watchListTicker = watchListItem.ticker;
+          watchListTicker = watchListItem.ticker;
         } else {
-            watchListTicker = watchListItem.ticker + ' ' + watchListItem.asset_type + ' ' + watchListItem.option_strike + ' ' + watchListItem.option_expiry;
+          watchListTicker = watchListItem.ticker + ' ' + watchListItem.asset_type + ' ' + watchListItem.option_strike + ' ' + watchListItem.option_expiry;
         }
 
         scanEntry.watchListTicker = watchListTicker;
@@ -149,13 +153,13 @@ export default class Scan extends React.Component {
   loadScan() {
     console.info('loadScan: Loading Scan...')
     let loadScanCallback = function (httpStatus, json) {
-      if ( httpStatus === 401) {
+      if (httpStatus === 401) {
         this.props.auth.setAuthenticationStatus(false);
         console.error("loadScanCallback: authentication expired?");
         return;
       }
 
-      if ( httpStatus !== 200) {
+      if (httpStatus !== 200) {
         console.error("loadScanCallback: failure: http:%o", httpStatus);
         this.setState({
           errorMsg: "Failed to load Scan"
@@ -186,13 +190,13 @@ export default class Scan extends React.Component {
   addToScan(ScanEntry) {
     console.info('addToScan: adding entry=%o', ScanEntry)
     let createScanCallback = function (httpStatus, json) {
-      if ( httpStatus === 401) {
+      if (httpStatus === 401) {
         this.props.auth.setAuthenticationStatus(false);
         console.error("createScanCallback: authentication expired?");
         return;
       }
 
-      if ( httpStatus !== 200) {
+      if (httpStatus !== 200) {
         console.error("createScanCallback: failure: http:%o", httpStatus);
         this.setState({
           errorMsg: "Failed to add to Scan"
@@ -212,14 +216,14 @@ export default class Scan extends React.Component {
 
   updateScan(ScanEntry) {
     console.info('updateScan: adding entry=%o', ScanEntry)
-    let updateScanCallback= function (httpStatus, json) {
-      if ( httpStatus === 401) {
+    let updateScanCallback = function (httpStatus, json) {
+      if (httpStatus === 401) {
         this.props.auth.setAuthenticationStatus(false);
         console.error("updateScanCallback: authentication expired?");
         return;
       }
 
-      if ( httpStatus !== 200) {
+      if (httpStatus !== 200) {
         console.error("updateScanCallback: failure: http:%o", httpStatus);
         this.setState({
           errorMsg: "Failed to update Scan"
@@ -240,13 +244,13 @@ export default class Scan extends React.Component {
   deleteFromScan(ScanEntry) {
     console.info('deleteFromScan: adding entry=%o', ScanEntry)
     let deleteFromScanCallback = function (httpStatus, json) {
-      if ( httpStatus === 401) {
+      if (httpStatus === 401) {
         this.props.auth.setAuthenticationStatus(false);
         console.error("deleteFromScanCallback: authentication expired?");
         return;
       }
 
-      if ( httpStatus !== 204) {
+      if (httpStatus !== 204) {
         console.error("deleteFromScanCallback: failure: http:%o", httpStatus);
         this.setState({
           errorMsg: "Failed to delete to Scan"
@@ -279,9 +283,9 @@ export default class Scan extends React.Component {
   }
 
   onFormValuesChange(event) {
-    let updatedFormValues = {...this.state.formValues, [event.target.id]: event.target.value};
+    let updatedFormValues = { ...this.state.formValues, [event.target.id]: event.target.value };
     console.info('onFormValuesChange: updatedFormValues=%o ', updatedFormValues);
-    this.setState({formValues: updatedFormValues});
+    this.setState({ formValues: updatedFormValues });
   }
 
   showModalFormGroup(readOnly, controlId, label, value) {
@@ -306,22 +310,22 @@ export default class Scan extends React.Component {
     return (
       <Form onSubmit={this.handleSubmit} >
 
-        { this.showModalFormGroup(true, "update_timestamp", "Update Timestamp", this.state.formValues.updateTimestampLocal) }
-        { this.showModalFormGroup(true, "id", "ID", this.state.formValues.id) }
-        { this.showModalFormGroup(readOnly, "profile", "Profile", this.state.formValues.profile) }
-        { this.showModalFormGroup(readOnly, "watchlist_id", "WatchList Id", this.state.formValues.watchlist_id) }
+        { this.showModalFormGroup(true, "update_timestamp", "Update Timestamp", this.state.formValues.updateTimestampLocal)}
+        { this.showModalFormGroup(true, "id", "ID", this.state.formValues.id)}
+        { this.showModalFormGroup(readOnly, "profile", "Profile", this.state.formValues.profile)}
+        { this.showModalFormGroup(readOnly, "watchlist_id", "WatchList Id", this.state.formValues.watchlist_id)}
         { this.showModalFormGroup(readOnly, "support", "Support", this.state.formValues.support)}
         { this.showModalFormGroup(readOnly, "resistance", "Resistance", this.state.formValues.resistance)}
-        { this.showModalFormGroup(readOnly, "profit_target", "Profit Target", this.state.formValues.profit_target) }
-        { this.showModalFormGroup(readOnly, "stop_loss", "Stop Loss", this.state.formValues.stop_loss) }
-        { this.showModalFormGroup(readOnly, "brate_target", "ET Target", this.state.formValues.brate_target) }
-        { this.showModalFormGroup(readOnly, "brifz_target", "FV Target", this.state.formValues.brifz_target) }
-        { this.showModalFormGroup(readOnly, "rationale", "Rationale", this.state.formValues.rationale) }
-        { this.showModalFormGroup(true, "current_price", "Current Price", this.state.formValues.current_price) }
-        { this.showModalFormGroup(true, "volatility", "Volatility", this.state.formValues.volatility) }
-        { this.showModalFormGroup(true, "short_float", "Short float", this.state.formValues.short_float) }
-        { this.showModalFormGroup(true, "status", "Status", this.state.formValues.status) }
-        { this.showModalFormGroup(true, "details", "Details", this.state.formValues.details) }
+        { this.showModalFormGroup(readOnly, "profit_target", "Profit Target", this.state.formValues.profit_target)}
+        { this.showModalFormGroup(readOnly, "stop_loss", "Stop Loss", this.state.formValues.stop_loss)}
+        { this.showModalFormGroup(readOnly, "brate_target", "Brate Target", this.state.formValues.brate_target)}
+        { this.showModalFormGroup(readOnly, "brifz_target", "Brifz Target", this.state.formValues.brifz_target)}
+        { this.showModalFormGroup(readOnly, "rationale", "Rationale", this.state.formValues.rationale)}
+        { this.showModalFormGroup(true, "current_price", "Current Price", this.state.formValues.current_price)}
+        { this.showModalFormGroup(true, "volatility", "Volatility", this.state.formValues.volatility)}
+        { this.showModalFormGroup(true, "short_float", "Short float", this.state.formValues.short_float)}
+        { this.showModalFormGroup(true, "status", "Status", this.state.formValues.status)}
+        { this.showModalFormGroup(true, "details", "Details", this.state.formValues.details)}
 
       </Form>
     );
@@ -376,7 +380,7 @@ export default class Scan extends React.Component {
   showModal() {
     /* animation=false added due to warning in console: https://github.com/react-bootstrap/react-bootstrap/issues/5075 */
     return (
-        <Modal show={this.state.showDetailedViewModal} onHide={this.onCloseDetailedViewModal} animation={false}>
+      <Modal show={this.state.showDetailedViewModal} onHide={this.onCloseDetailedViewModal} animation={false}>
         <Modal.Header closeButton>
           <Modal.Title>Scan Details</Modal.Title>
         </Modal.Header>
@@ -401,57 +405,61 @@ export default class Scan extends React.Component {
   }
 
   render() {
-    if ( !this.props.auth.isAuthenticated ) {
+    if (!this.props.auth.isAuthenticated) {
       console.info('Scan:  not authenticated, redirecting to login page');
-      return <Redirect to= '/login' />;
+      return <Redirect to='/login' />;
     }
 
-    if ( !this.state.isScanLoaded) {
+    if (!this.state.isScanLoaded) {
       return <Alert variant="primary"> Loading Scan... </Alert>;
     }
 
     console.info('render: this.showDetailedViewModal=%o...', this.state.showDetailedViewModal)
 
     const columns = [
-      { Header: 'Action',  accessor: 'dummy',
-          Cell: ({row}) => (
-              <ButtonGroup className="mr-2" aria-label="First group">
-                <Button onClick={ (e) => this.onEditButtonClick(row.original) }>Edit</Button>
-                <Button onClick={ (e) => this.onDeleteButtonClick(row.original) }>Delete</Button>
-              </ButtonGroup>
-            )},
-      { Header: 'ID',  accessor: 'id'},
-      { Header: 'profile', accessor: 'profile'},
-      { Header: 'WL Id', accessor: 'watchlist_id'},
-      { Header: 'WL ticker', accessor: 'watchListTicker'},
-      { Header: 'Support', accessor: 'support'},
-      { Header: 'Resistance', accessor: 'resistance'},
-      { Header: 'Profit Target', accessor: 'profit_target'},
-      { Header: 'Stop Loss', accessor: 'stop_loss'},
-      { Header: 'ET Target', accessor: 'brate_target'},
-      { Header: 'FV Target', accessor: 'brifz_target'},
-      { Header: 'Rationale', accessor: 'rationale'},
-      { Header: 'Current Price', accessor: 'current_price'},
-      { Header: 'Volatility', accessor: 'volatility'},
-      { Header: 'Short float', accessor: 'short_float'},
-      { Header: 'Status', accessor: 'status',
-          Cell: ({row}) => (
-            <Alert variant={this.getStatusHighlight(row.original)} > {row.original.status} </Alert>
-          )},
-      { Header: 'Details', accessor: 'details'},
-      { Header: 'Update Time', accessor: 'updateTimestampLocal'},
+      {
+        Header: 'Action', accessor: 'dummy',
+        Cell: ({ row }) => (
+          <ButtonGroup className="mr-2" aria-label="First group">
+            <Button onClick={(e) => this.onEditButtonClick(row.original)}>Edit</Button>
+            <Button onClick={(e) => this.onDeleteButtonClick(row.original)}>Delete</Button>
+          </ButtonGroup>
+        )
+      },
+      { Header: 'ID', accessor: 'id' },
+      { Header: 'profile', accessor: 'profile' },
+      { Header: 'WL Id', accessor: 'watchlist_id' },
+      { Header: 'WL ticker', accessor: 'watchListTicker' },
+      { Header: 'Support', accessor: 'support' },
+      { Header: 'Resistance', accessor: 'resistance' },
+      { Header: 'Current Price', accessor: 'current_price' },
+      { Header: 'Profit Target', accessor: 'profit_target' },
+      { Header: 'Stop Loss', accessor: 'stop_loss' },
+      { Header: 'Brate Target', accessor: 'brate_target' },
+      { Header: 'Brifz Target', accessor: 'brifz_target' },
+      { Header: 'Rationale', accessor: 'rationale' },
+      { Header: 'Volatility', accessor: 'volatility' },
+      { Header: 'Short float', accessor: 'short_float' },
+      {
+        Header: 'Status', accessor: 'status',
+        Cell: ({ row }) => (
+          <Alert variant={this.getStatusHighlight(row.original)} > {row.original.status} </Alert>
+        )
+      },
+      { Header: 'Details', accessor: 'details' },
+      { Header: 'Update Time', accessor: 'updateTimestampLocal' },
     ];
 
     const onRowClick = (state, rowInfo, column, instance) => {
-    return {
+      return {
         onClick: e => {
-            console.log('A Td Element was clicked!')
-            console.log('it produced this event:', e)
-            console.log('It was in this column:', column)
-            console.log('It was in this row:', rowInfo)
-            console.log('It was in this table instance:', instance)
+          console.log('A Td Element was clicked!')
+          console.log('it produced this event:', e)
+          console.log('It was in this column:', column)
+          console.log('It was in this row:', rowInfo)
+          console.log('It was in this table instance:', instance)
         }
-    }
+      }
     }
 
     return (
@@ -466,11 +474,11 @@ export default class Scan extends React.Component {
           </ButtonGroup>
         </ButtonToolbar>
         Welcome Scan {this.props.auth.loggedInUser}
-        { this.showErrorMsg() }
+        { this.showErrorMsg()}
 
         <Table columns={columns} data={this.state.scan} getTrProps={onRowClick} />
 
-        { this.showModal() }
+        { this.showModal()}
 
       </div>
     );
