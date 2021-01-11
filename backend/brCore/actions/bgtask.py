@@ -193,17 +193,17 @@ def __bgtask_scanner():
         for scan_entry in scan_list:
             logger.info('__bgtask_scanner: checking %s', scan_entry)
             try:
-                watchlist = WatchList.objects.get(pk=scan_entry.watchListId)
+                watchlist = WatchList.objects.get(pk=scan_entry.watchlist_id)
             except WatchList.DoesNotExist:
-                logger.error('__bgtask_scanner: WatchList not found %d', scan_entry.watchListId)
+                logger.error('__bgtask_scanner: WatchList not found %d', scan_entry.watchlist_id)
                 continue
 
             try:
                 stock_price = brine.get_latest_price(watchlist.ticker, includeExtendedHours=True)
             except requests.exceptions.ConnectionError:
-                logger.error('__bgtask_scanner: Connection error for %d. Wait and continue', scan_entry.watchListId)
+                logger.error('__bgtask_scanner: Connection error for %d. Wait and continue', scan_entry.watchlist_id)
                 time.sleep(120)
-                logger.info('__bgtask_scanner: Retrying after connection error', scan_entry.watchListId)
+                logger.info('__bgtask_scanner: Retrying after connection error', scan_entry.watchlist_id)
                 continue
 
             scan_cache = {}
@@ -211,17 +211,17 @@ def __bgtask_scanner():
             scan_cache['details'] = ""
             scan_cache['status'] = ScanStatus.NONE.value
 
-            if watchlist.assetType == AssetTypes.CALL_OPTION.value \
-                    or watchlist.assetType == AssetTypes.PUT_OPTION.value:
+            if watchlist.asset_type == AssetTypes.CALL_OPTION.value \
+                    or watchlist.asset_type == AssetTypes.PUT_OPTION.value:
                 logger.info('__bgtask_scanner: get option price. watchlist=%s', watchlist)
 
                 optionType = 'call'
-                if watchlist.assetType == AssetTypes.PUT_OPTION.value:
+                if watchlist.asset_type == AssetTypes.PUT_OPTION.value:
                     optionType = 'put'
 
                 option_raw_data = brine.options.get_option_market_data(watchlist.ticker,
-                                                                       str(watchlist.optionExpiry),
-                                                                       str(watchlist.optionStrike), 'call')
+                                                                       str(watchlist.option_expiry),
+                                                                       str(watchlist.option_strike), 'call')
                 option_data = option_raw_data[0][0]
                 scan_cache['details'] = 'high={}, low={}, volume={}.'.format(option_data['high_price'],
                                                                      option_data['low_price'],
@@ -252,9 +252,9 @@ def __bgtask_scanner():
             scan_entry = ScanEntry.objects.get(pk=scan_entry.id)
             scan_entry.details = scan_cache['details']
             scan_entry.status = scan_cache['status']
-            scan_entry.currentPrice = scan_cache['current_price']
+            scan_entry.current_price = scan_cache['current_price']
             scan_entry.volatility = scan_cache['volatility']
-            scan_entry.shortfloat = scan_cache['shortfloat']
+            scan_entry.short_float = scan_cache['shortfloat']
             scan_entry.save()
             logger.info('__bgtask_scanner: Updated {} from cache {}'.format(scan_entry, scan_cache))
 

@@ -1,6 +1,9 @@
 import re
+import logging
 import brine
 from brCore.types.asset_types import PortFolioSource, AssetTypes, TransactionType
+
+logger = logging.getLogger('django')
 
 
 class BrineAdapter:
@@ -78,3 +81,33 @@ class BrineAdapter:
     def get_stock_instrument_data(self, instrument_url):
         stock_data = brine.stocks.get_instrument_by_url(instrument_url)
         return stock_data
+
+    def get_ticker_price_dict(self, uniq_ticker_list, includeExtendedHours):
+        try:
+            current_price_list = brine.get_latest_price(
+                uniq_ticker_list, includeExtendedHours=True)
+
+            if len(uniq_ticker_list) != len(current_price_list):
+                # Something is wrong as the lists size are mismatching
+                logger.error('get_stock_current_price: list size mismatch uniq_ticker_list: {}, current_price_list: {}'
+                             .format(len(uniq_ticker_list), len(current_price_list)))
+                return None
+
+            # return as a dictionary for easy lookup
+            ticker_price_dict = {}
+            i = 0
+            while i < len(current_price_list):
+                ticker_price_dict[uniq_ticker_list[i]
+                                  ] = float(current_price_list[i])
+                i += 1
+
+            return ticker_price_dict
+
+        except Exception as e:
+            logger.error(
+                'get_stock_current_price: Exception: {}'.format(repr(e)))
+            return None
+
+    def get_option_price(self, ticker, expiry, strike, type):
+        # TODO: Investigate why option price is returned as dictionary list
+        return brine.options.get_option_market_data(ticker, expiry, strike, type)
