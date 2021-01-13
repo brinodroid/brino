@@ -13,4 +13,4 @@ class PortFolioSerializer(serializers.ModelSerializer):
 class PortFolioUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = PortFolioUpdate
-        fields = ('id', 'update_timestamp', 'source', 'status')
+        fields = ('id', 'update_timestamp', 'source', 'status', 'details')

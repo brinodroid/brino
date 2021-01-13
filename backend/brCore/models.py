@@ -90,6 +90,7 @@ class PortFolio(models.Model):
 class ScanEntry(models.Model):
     update_timestamp = models.DateTimeField(default=timezone.now)
     watchlist_id = models.IntegerField()
+    portfolio_id = models.IntegerField(default=0)
     profile = models.CharField(max_length=16, choices=ScanProfile.choices(),
                                default=ScanProfile.BUY_STOCK.value, null=True)
     profit_target = models.FloatField(null=True, blank=True)
@@ -113,10 +114,10 @@ class ScanEntry(models.Model):
         return super(ScanEntry, self).save(*args, **kwargs)
 
     def __str__(self):
-        return "watchlist_id:%s, profile:%s, current_price:%s, support:%s, resistance:%s, profit_target:%s, stop_loss:%s," \
-            " brate_target:%s, brifz_target:%s, rationale:%s, volatility:%s, short_float:%s, status:%s," \
-            "details:%s, update_timestamp:%s" \
-               % (self.watchlist_id, self.profile, self.current_price, self.support, self.resistance,
+        return "watchlist_id:%s, portfolio_id:%s, profile:%s, current_price:%s, support:%s, resistance:%s," \
+            " profit_target:%s, stop_loss:%s, brate_target:%s, brifz_target:%s, rationale:%s," \
+            " volatility:%s, short_float:%s, status:%s, details:%s, update_timestamp:%s" \
+               % (self.watchlist_id, self.portfolio_id, self.profile, self.current_price, self.support, self.resistance,
                   self.profit_target, self.stop_loss, self.brate_target, self.brifz_target, self.rationale,
                   self.volatility, self.short_float, self.status, self.details, self.update_timestamp)
 
@@ -128,11 +129,12 @@ class PortFolioUpdate(models.Model):
 
     status = models.CharField(max_length=16, choices=Status.choices(),
                               default=Status.NONE.value, null=True)
+    details = models.TextField(blank=True)
 
     def save(self, *args, **kwargs):
         self.update_timestamp = timezone.now()
         return super(PortFolioUpdate, self).save(*args, **kwargs)
 
     def __str__(self):
-        return "source:%s, status:%s, update_timestamp:%s" \
-               % (self.source, self.status, self.update_timestamp)
+        return "source:%s, status:%s, details=%s, update_timestamp:%s" \
+               % (self.source, self.status, self.details, self.update_timestamp)

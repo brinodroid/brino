@@ -3,10 +3,10 @@ import time
 import logging
 from datetime import datetime, timedelta
 import brifz
-from brCore.models import WatchList, ScanEntry
+from brCore.models import WatchList, ScanEntry, PortFolio
 from brCore.client.Factory import get_client
 from brCore.types.scan_types import ScanStatus, ScanProfile
-from brCore.types.asset_types import AssetTypes
+from brCore.types.asset_types import AssetTypes, TransactionType
 
 logger = logging.getLogger('django')
 
@@ -128,7 +128,12 @@ class Scanner:
 
         else:
             # Update  current price, volatility and short float
-            scan_entry.current_price = scan_data[self.__SCAN_DATA_LATEST_TICKER_PRICE_DICT_KEY][watchlist.ticker]
+            if scan_data[self.__SCAN_DATA_LATEST_TICKER_PRICE_DICT_KEY] is not None:
+                scan_entry.current_price = scan_data[self.__SCAN_DATA_LATEST_TICKER_PRICE_DICT_KEY][watchlist.ticker]
+            else:
+                logger.error(
+                    'Latest price for {} is unavailable'.format(watchlist.ticker))
+
             scan_entry.volatility = self.__get_brifz_volatility(
                 scan_entry, watchlist, scan_data)
             scan_entry.short_float = self.__get_brifz_shortfloat(
@@ -153,7 +158,7 @@ class Scanner:
 
     def __get_brifz_volatility(self, scan_entry, watchlist, scan_data):
         try:
-            return self.__safe_float(scan_data[self.__SCAN_DATA_BRIFZ_STAT_DICT_KEY][watchlist.ticker]['Volatility'])
+            return scan_data[self.__SCAN_DATA_BRIFZ_STAT_DICT_KEY][watchlist.ticker]['Volatility']
         except Exception as e:
             logger.error(
                 '__get_brifz_volatility: Exception: {}'.format(repr(e)))
@@ -163,7 +168,7 @@ class Scanner:
 
     def __get_brifz_shortfloat(self, scan_entry, watchlist, scan_data):
         try:
-            return self.__safe_float(scan_data[self.__SCAN_DATA_BRIFZ_STAT_DICT_KEY][watchlist.ticker]['Short Float'])
+            return scan_data[self.__SCAN_DATA_BRIFZ_STAT_DICT_KEY][watchlist.ticker]['Short Float']
         except Exception as e:
             logger.error(
                 '__get_brifz_shortfloat: Exception: {}'.format(repr(e)))
@@ -238,7 +243,7 @@ class Scanner:
             if scan_entry.support is None or scan_entry.support == 0:
                 scan_entry.support = scan_entry.profit_target
 
-        else :
+        else:
             if scan_entry.resistance is None or scan_entry.resistance == 0:
                 scan_entry.resistance = scan_entry.profit_target
 
@@ -263,6 +268,35 @@ class Scanner:
         scan_latest_entry.save()
         logger.info('__update_scan_entry_in_db: Updated {} with {}'.format(
             scan_latest_entry, scan_entry))
+
+    def __check_missed_covered_call_sell_alert(self, scan_entry, watchlist, scan_data):
+        # TODO: Find a way to restrict the check to a source
+        this_stock_portfolio_list = PortFolio.objects.all().filter(watchlist_id=watchlist.id)
+
+        total_stock_units = 0
+        for this_stock_portfolio in this_stock_portfolio_list:
+            total_stock_units = total_stock_units + this_stock_portfolio.units
+
+        ticker_call_watchlist = WatchList.objects.filter(
+            asset_type=AssetTypes.CALL_OPTION.value).filter(ticker=watchlist.ticker)
+
+        total_sold_calls = 0
+        for ticker_call_watch in ticker_call_watchlist:
+            sold_call_portfolio = PortFolio.objects.all().filter(
+                watchlist_id=ticker_call_watch.id).filter(transaction_type=TransactionType.SELL.value)
+            for portfolio in sold_call_portfolio:
+                total_sold_calls = total_sold_calls + portfolio.units
+
+        total_bought_calls = 0
+        for ticker_call_watch in ticker_call_watchlist:
+            bought_call_portfolio = PortFolio.objects.all().filter(
+                watchlist_id=ticker_call_watch.id).filter(transaction_type=TransactionType.BUY.value)
+            for portfolio in bought_call_portfolio:
+                total_bought_calls = total_bought_calls + portfolio.units
+
+        if (int(total_stock_units/100) + total_bought_calls - total_sold_calls) > 0:
+            self.__addAlertDetails(
+                scan_entry, self.__SCAN_ERROR_MSG, 'Missed to sell covered call?')
 
     def __check_support_resistance_alert(self, scan_entry, watchlist, scan_data):
         # current_price contains the latest price for option or stock
@@ -367,7 +401,8 @@ class Scanner:
             [
                 __check_support_resistance_alert,
                 __check_extended_hours_price_movement_alert,
-                __check_brifz_target_price_update_alert
+                __check_brifz_target_price_update_alert,
+                __check_missed_covered_call_sell_alert
             ],
         ScanProfile.SELL_CALL.value:
             [

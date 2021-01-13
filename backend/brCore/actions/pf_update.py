@@ -94,7 +94,7 @@ class PFUpdater:
         try:
             scan_entry = ScanEntry.objects.get(
                 watchlist_id=watchlist.id, profile=profile)
-            # Portfolio already has the entry. Nothing to do
+            # Scan has the entry, nothing to do
             return scan_entry
         except ScanEntry.DoesNotExist:
             logger.info('__update_option_in_scan_entry: Adding watchlist_id={}, profile={} to ScanEntry'
@@ -122,6 +122,7 @@ class PFUpdater:
                 (100+configuration.stopLossPercent)/100
 
         scan_entry = ScanEntry(watchlist_id=watchlist.id,
+                               portfolio_id=portfolio.id,
                                profile=profile,
                                profit_target=round(profit_target, 2),
                                stop_loss=round(stop_loss, 2))

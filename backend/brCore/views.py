@@ -230,10 +230,14 @@ def portfolioupdate_list(request):
             return Response({'detail': 'Data validation failed'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
+
             PFUpdater.getInstance().update(serializer.validated_data.get('source'))
             serializer.validated_data['status'] = Status.PASS.value
+            serializer.validated_data['details'] = 'Success'
+
         except Exception as e:
             serializer.validated_data['status'] = Status.FAIL.value
+            serializer.validated_data['details'] = repr(e)
             serializer.save()
 
             logger.error('Exception in portfolio update: {}'.format(repr(e)))
