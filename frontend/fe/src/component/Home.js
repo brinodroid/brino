@@ -429,6 +429,7 @@ export default class Scan extends React.Component {
       { Header: 'ID', accessor: 'id' },
       { Header: 'profile', accessor: 'profile' },
       { Header: 'WL Id', accessor: 'watchlist_id' },
+      { Header: 'PF Id', accessor: 'portfolio_id' },
       { Header: 'WL ticker', accessor: 'watchListTicker' },
       { Header: 'Support', accessor: 'support' },
       { Header: 'Resistance', accessor: 'resistance' },

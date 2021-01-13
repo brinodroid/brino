@@ -335,11 +335,14 @@ export default class PortFolio extends React.Component {
             )},
       { Header: 'ID',  accessor: 'id'},
       { Header: 'WatchList Id', accessor: 'watchlist_id'},
+      { Header: 'Type', accessor: 'transaction_type'},
       { Header: 'Entry Date', accessor: 'entry_datetime'},
       { Header: 'Entry Price', accessor: 'entry_price'},
       { Header: 'Units', accessor: 'units'},
       { Header: 'Exit Date', accessor: 'exit_datetime'},
       { Header: 'Exit Price', accessor: 'exit_price'},
+      { Header: 'Source', accessor: 'source'},
+      { Header: 'Brine Id', accessor: 'brine_id'},
       { Header: 'Update Time', accessor: 'update_timestamp'},
     ];
 

@@ -332,6 +332,7 @@ export default class WatchList extends React.Component {
       { Header: 'Strike', accessor: 'option_strike'},
       { Header: 'Expiry', accessor: 'option_expiry'},
       { Header: 'Comment', accessor: 'comment'},
+      { Header: 'Brine Id', accessor: 'brine_id'},
       { Header: 'Update Time', accessor: 'update_timestamp'},
       { Header: 'Create Time', accessor: 'creation_timestamp'},
     ];
