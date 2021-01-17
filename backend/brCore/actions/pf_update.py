@@ -4,7 +4,7 @@ from brCore.client.Factory import get_client
 from brCore.models import WatchList, BGTask, PortFolio, ScanEntry, PortFolioUpdate
 from brSetting.models import Configuration
 from brCore.types.asset_types import PortFolioSource, AssetTypes, TransactionType
-from brCore.types.scan_types import ScanProfile
+from brCore.types.scan_types import ScanProfile, ScanStatus
 
 logger = logging.getLogger('django')
 
@@ -132,8 +132,13 @@ class PFUpdater:
     def __update_options(self, client, configuration):
         option_list = client.get_my_options_list()
 
+        brine_id_lut = {}
+
+        # Add new options
         for option in option_list:
             # Check if we already have this in watchlist
+            brine_id_lut[option['id']] = True
+
             try:
                 watchlist = WatchList.objects.get(
                     brine_id=option['option_id'])
@@ -147,6 +152,37 @@ class PFUpdater:
                 option, watchlist, configuration)
 
             self.__update_scan_entry(watchlist, portfolio, configuration)
+
+        # Search for deleted options
+        portfolio_list = PortFolio.objects.filter(
+            source=PortFolioSource.BRINE.value).filter()
+        for portfolio in portfolio_list:
+
+            try:
+                watchlist = WatchList.objects.get(id=portfolio.watchlist_id)
+            except WatchList.DoesNotExist:
+                # Log error and continue
+                logger.error('__update_options: watchlist_id {} from portfolio.id MISSING'.format(
+                    portfolio.watchlist_id, portfolio.id))
+                continue
+
+            if watchlist.asset_type == AssetTypes.CALL_OPTION.value or watchlist.asset_type == AssetTypes.CALL_OPTION:
+                # This portfolio is an call/put option
+
+                if str(portfolio.brine_id) not in brine_id_lut:
+                    # This position has been closed.
+                    # Update scan object as DEL
+                    try:
+                        scan_entry = ScanEntry.objects.get(
+                            portfolio_id=portfolio.id)
+                        scan_entry.status = ScanStatus.MISSING.value
+                        scan_entry.save()
+
+                    except ScanEntry.DoesNotExist:
+                        # Log error and continue
+                        logger.error('__update_options: scan entry MISSING with portfolio_id {}'.format(
+                            portfolio.watchlist_id, portfolio.id))
+
         return
 
     def __update_stock_in_watchlist(self, stock, instrument_data):
