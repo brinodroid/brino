@@ -3,6 +3,7 @@ from enum import Enum
 
 class ScanStatus(Enum):
     ATTN = "ATTN"
+    MISSING = "MISSING"
     NONE = "NONE"
 
     @classmethod

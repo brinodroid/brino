@@ -106,6 +106,15 @@ class Scanner:
         if watchlist.asset_type == AssetTypes.CALL_OPTION.value \
                 or watchlist.asset_type == AssetTypes.PUT_OPTION.value:
 
+            now = datetime.now().date()
+            time_to_expiry = watchlist.option_expiry - datetime.now().date()
+
+            if now > watchlist.option_expiry:
+                # This option has expired. Brine cannot get market data on it
+                self.__addAlertDetails(scan_entry, self.__SCAN_ERROR_MSG,
+                                       'Option EXPIRED')
+                return
+
             optionType = 'call'
             if watchlist.asset_type == AssetTypes.PUT_OPTION.value:
                 optionType = 'put'
@@ -114,6 +123,7 @@ class Scanner:
             option_raw_data = client.get_option_price(watchlist.ticker,
                                                       str(watchlist.option_expiry),
                                                       str(watchlist.option_strike), optionType)
+
             option_data = option_raw_data[0][0]
             scan_data[self.__SCAN_DATA_LOCAL_OPTION_DATA_KEY] = option_data
 
