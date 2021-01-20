@@ -280,33 +280,33 @@ class Scanner:
             scan_latest_entry, scan_entry))
 
     def __check_missed_covered_call_sell_alert(self, scan_entry, watchlist, scan_data):
-        # TODO: Find a way to restrict the check to a source
-        this_stock_portfolio_list = PortFolio.objects.all().filter(watchlist_id=watchlist.id)
+        # TODO: Find a way to restrict the check to a source to BRINE
 
-        total_stock_units = 0
-        for this_stock_portfolio in this_stock_portfolio_list:
-            total_stock_units = total_stock_units + this_stock_portfolio.units
-
-        ticker_call_watchlist = WatchList.objects.filter(
-            asset_type=AssetTypes.CALL_OPTION.value).filter(ticker=watchlist.ticker)
+        #Get a list of all watchlists with this ticker
+        ticker_watchlist_list = WatchList.objects.filter(ticker=watchlist.ticker)
 
         total_sold_calls = 0
-        for ticker_call_watch in ticker_call_watchlist:
-            sold_call_portfolio = PortFolio.objects.all().filter(
-                watchlist_id=ticker_call_watch.id).filter(transaction_type=TransactionType.SELL.value)
-            for portfolio in sold_call_portfolio:
-                total_sold_calls = total_sold_calls + portfolio.units
-
         total_bought_calls = 0
-        for ticker_call_watch in ticker_call_watchlist:
-            bought_call_portfolio = PortFolio.objects.all().filter(
-                watchlist_id=ticker_call_watch.id).filter(transaction_type=TransactionType.BUY.value)
-            for portfolio in bought_call_portfolio:
-                total_bought_calls = total_bought_calls + portfolio.units
+        total_stock_units = 0
 
-        if (int(total_stock_units/100) + total_bought_calls - total_sold_calls) > 0:
+        for ticker_watchlist in ticker_watchlist_list:
+            portfolio_list = PortFolio.objects.all().filter(
+                watchlist_id=ticker_watchlist.id)
+            for portfolio in portfolio_list:
+                if ticker_watchlist.asset_type == AssetTypes.STOCK.value:
+                    total_stock_units += portfolio.units
+                elif ticker_watchlist.asset_type == AssetTypes.CALL_OPTION.value:
+                    if portfolio.transaction_type == TransactionType.BUY.value:
+                        total_bought_calls += portfolio.units
+                    else :
+                        total_sold_calls += portfolio.units
+
+
+        if int((total_stock_units + total_bought_calls - total_sold_calls)/100) > 0:
             self.__addAlertDetails(
-                scan_entry, self.__SCAN_ERROR_MSG, 'Missed to sell covered call?')
+                scan_entry, self.__SCAN_ERROR_MSG,
+                 'Missed to sell covered call? stocks={}, calls bought={} calls sold={}'
+                 .format(total_stock_units, total_bought_calls, total_sold_calls))
 
     def __check_support_resistance_alert(self, scan_entry, watchlist, scan_data):
         # current_price contains the latest price for option or stock
@@ -428,6 +428,7 @@ class Scanner:
                 __check_extended_hours_price_movement_alert,
                 __check_option_below_strike_alert,
                 __check_option_time_to_expiry_alert,
+                __check_missed_covered_call_sell_alert
             ],
         ScanProfile.BUY_PUT.value:
             [
