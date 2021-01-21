@@ -85,7 +85,7 @@ class BrineAdapter:
     def get_ticker_price_dict(self, uniq_ticker_list, includeExtendedHours):
         try:
             current_price_list = brine.get_latest_price(
-                uniq_ticker_list, includeExtendedHours=True)
+                uniq_ticker_list, includeExtendedHours=includeExtendedHours)
 
             if len(uniq_ticker_list) != len(current_price_list):
                 # Something is wrong as the lists size are mismatching

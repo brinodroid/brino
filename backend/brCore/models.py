@@ -1,9 +1,13 @@
+import logging
 from django.db import models
 from django.utils import timezone
 from .types.asset_types import AssetTypes, PortFolioSource, TransactionType
 from .types.bgtask_types import BGTaskAction, BGTaskActionResult, BGTaskStatus, BGTaskDataIdType
 from .types.scan_types import ScanStatus, ScanProfile
 from .types.status_types import Status
+
+logger = logging.getLogger('django')
+
 
 
 # WatchList: This is the list of assets actively tracked

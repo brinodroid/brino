@@ -3,6 +3,7 @@ import time
 import logging
 from datetime import datetime, timedelta
 import brifz
+from django.db.models import Q
 from brCore.models import WatchList, ScanEntry, PortFolio
 from brCore.client.Factory import get_client
 from brCore.types.scan_types import ScanStatus, ScanProfile
@@ -23,6 +24,7 @@ class Scanner:
     __SCAN_DATA_MARKET_HOURS_TICKER_PRICE_DICT_KEY = 'market_hours_ticker_price_dict'
     __SCAN_DATA_BRIFZ_STAT_DICT_KEY = 'brifz_stats_dict'
     __SCAN_DATA_LOCAL_OPTION_DATA_KEY = 'local_option_data'
+    __lock = threading.Lock()
 
     def __init__(self):
         """ Virtually private constructor. """
@@ -38,6 +40,51 @@ class Scanner:
             Scanner()
         return Scanner.__instance
 
+    def get_lock(self):
+        return self.__lock
+
+    def __scanner_run_with_lock(self, client):
+        try:
+            scan_list = ScanEntry.objects.filter(
+                ~Q(status=ScanStatus.MISSING.value))
+        except ScanEntry.DoesNotExist:
+            # Nothing to scan
+            logger.info('__scanner_thread: No scan entries, check after {}'.format(
+                self.__sleep_duration))
+            return
+
+        uniq_ticker_list = self.__get_uniq_ticker_list(scan_list)
+        latest_ticker_price_dict = client.get_ticker_price_dict(
+            uniq_ticker_list, True)
+        market_hours_ticker_price_dict = client.get_ticker_price_dict(
+            uniq_ticker_list, False)
+
+        brifz_stats_dict = self.__get_brifz_stats_dict(uniq_ticker_list)
+
+        if latest_ticker_price_dict is None and brifz_stats_dict is None:
+            # Cannot get the latest price from client. Sleep and try again
+            logger.error('__scanner_thread: Failed to get the latest info. Try again after {}'
+                         .format(self.__sleep_duration))
+            return
+
+        scan_data = {}
+        scan_data[self.__SCAN_DATA_LATEST_TICKER_PRICE_DICT_KEY] = latest_ticker_price_dict
+        scan_data[self.__SCAN_DATA_MARKET_HOURS_TICKER_PRICE_DICT_KEY] = market_hours_ticker_price_dict
+        scan_data[self.__SCAN_DATA_BRIFZ_STAT_DICT_KEY] = brifz_stats_dict
+
+        for scan_entry in scan_list:
+
+            logger.info(
+                '__scanner_thread: running scanner for {}'.format(scan_entry))
+
+            # Resetting the values
+            scan_entry.details = ""
+            scan_entry.status = ScanStatus.NONE.value
+
+            self.__update_scan_entry_values(scan_entry, scan_data, client)
+
+            self.__update_scan_entry_in_db(scan_entry)
+
     def start(self):
         t = threading.Thread(target=self.__scanner_thread, args=[])
         t.setDaemon(True)
@@ -50,46 +97,12 @@ class Scanner:
         client = get_client()
 
         while True:
+
+            self.__lock.acquire()
             try:
-                scan_list = ScanEntry.objects.all()
-            except ScanEntry.DoesNotExist:
-                # Nothing to scan
-                logger.info('__scanner_thread: No scan entries, check after {}'.format(
-                    self.__sleep_duration))
-                time.sleep(self.__sleep_duration)
-                continue
-
-            uniq_ticker_list = self.__get_uniq_ticker_list(scan_list)
-            latest_ticker_price_dict = client.get_ticker_price_dict(
-                uniq_ticker_list, True)
-            market_hours_ticker_price_dict = client.get_ticker_price_dict(
-                uniq_ticker_list, False)
-
-            brifz_stats_dict = self.__get_brifz_stats_dict(uniq_ticker_list)
-
-            if latest_ticker_price_dict is None and brifz_stats_dict is None:
-                # Cannot get the latest price from client. Sleep and try again
-                logger.error('__scanner_thread: Failed to get the latest info. Try again after {}'
-                             .format(self.__sleep_duration))
-
-                time.sleep(self.__sleep_duration)
-                continue
-
-            scan_data = {}
-            scan_data[self.__SCAN_DATA_LATEST_TICKER_PRICE_DICT_KEY] = latest_ticker_price_dict
-            scan_data[self.__SCAN_DATA_MARKET_HOURS_TICKER_PRICE_DICT_KEY] = market_hours_ticker_price_dict
-            scan_data[self.__SCAN_DATA_BRIFZ_STAT_DICT_KEY] = brifz_stats_dict
-
-            for scan_entry in scan_list:
-                logger.info('__scanner_thread: checking {}'.format(scan_entry))
-
-                # Resetting the values
-                scan_entry.details = ""
-                scan_entry.status = ScanStatus.NONE.value
-
-                self.__update_scan_entry_values(scan_entry, scan_data, client)
-
-                self.__update_scan_entry_in_db(scan_entry)
+                self.__scanner_run_with_lock(client)
+            finally:
+                self.__lock.release()
 
             time.sleep(self.__sleep_duration)
 
@@ -119,10 +132,19 @@ class Scanner:
             if watchlist.asset_type == AssetTypes.PUT_OPTION.value:
                 optionType = 'put'
 
-            # TODO: get_option_price can return a list of option prices?
-            option_raw_data = client.get_option_price(watchlist.ticker,
-                                                      str(watchlist.option_expiry),
-                                                      str(watchlist.option_strike), optionType)
+            try:
+                # TODO: get_option_price can return a list of option prices?
+                option_raw_data = client.get_option_price(watchlist.ticker,
+                                                          str(watchlist.option_expiry),
+                                                          str(watchlist.option_strike), optionType)
+            except Exception as e:
+                logger.error(
+                    '__update_scan_entry_values: get_option_price() for watchlist.id {} gave Exception: {}'
+                    .format(watchlist.id, repr(e)))
+                self.__addAlertDetails(scan_entry, self.__SCAN_ERROR_MSG,
+                                       'get_option_price() for watchlist.id {} gave Exception: {}'.format(watchlist.id, repr(e)))
+                # Cannot process. Return
+                return
 
             option_data = option_raw_data[0][0]
             scan_data[self.__SCAN_DATA_LOCAL_OPTION_DATA_KEY] = option_data
@@ -282,8 +304,9 @@ class Scanner:
     def __check_missed_covered_call_sell_alert(self, scan_entry, watchlist, scan_data):
         # TODO: Find a way to restrict the check to a source to BRINE
 
-        #Get a list of all watchlists with this ticker
-        ticker_watchlist_list = WatchList.objects.filter(ticker=watchlist.ticker)
+        # Get a list of all watchlists with this ticker
+        ticker_watchlist_list = WatchList.objects.filter(
+            ticker=watchlist.ticker)
 
         total_sold_calls = 0
         total_bought_calls = 0
@@ -298,15 +321,14 @@ class Scanner:
                 elif ticker_watchlist.asset_type == AssetTypes.CALL_OPTION.value:
                     if portfolio.transaction_type == TransactionType.BUY.value:
                         total_bought_calls += portfolio.units
-                    else :
+                    else:
                         total_sold_calls += portfolio.units
-
 
         if int((total_stock_units + total_bought_calls - total_sold_calls)/100) > 0:
             self.__addAlertDetails(
                 scan_entry, self.__SCAN_ERROR_MSG,
-                 'Missed to sell covered call? stocks={}, calls bought={} calls sold={}'
-                 .format(total_stock_units, total_bought_calls, total_sold_calls))
+                'Missed to sell covered call? stocks={}, calls bought={} calls sold={}'
+                .format(total_stock_units, total_bought_calls, total_sold_calls))
 
     def __check_support_resistance_alert(self, scan_entry, watchlist, scan_data):
         # current_price contains the latest price for option or stock

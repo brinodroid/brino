@@ -12,6 +12,8 @@ from .serializers.scan import ScanEntrySerializer
 from .actions.bgtask import start_bgtask
 from .actions.pf_update import PFUpdater
 from .types.status_types import Status
+from brCore.actions.scanner import Scanner
+
 
 logger = logging.getLogger('django')
 
@@ -180,7 +182,12 @@ def scan_list(request):
             logger.error(serializer.errors)
             return Response({'detail': 'Data validation failed'}, status=status.HTTP_400_BAD_REQUEST)
 
-        serializer.save()
+        try:
+            Scanner.getInstance().get_lock().acquire()
+            serializer.save()
+        finally:
+            Scanner.getInstance().get_lock().release()
+
         return Response(serializer.data)
 
     return Response({'detail': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
@@ -204,11 +211,21 @@ def scan_detail(request, pk):
             logger.error(serializer.errors)
             return Response({'detail': 'Data validation failed'}, status=status.HTTP_400_BAD_REQUEST)
 
-        serializer.save()
+        try:
+            Scanner.getInstance().get_lock().acquire()
+            serializer.save()
+        finally:
+            Scanner.getInstance().get_lock().release()
+
         return Response(serializer.data)
 
     elif request.method == 'DELETE':
-        scan.delete()
+        try:
+            Scanner.getInstance().get_lock().acquire()
+            scan.delete()
+        finally:
+            Scanner.getInstance().get_lock().release()
+
         return Response({'detail': 'Deleted'}, status=status.HTTP_204_NO_CONTENT)
 
     return Response({'detail': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
@@ -230,8 +247,14 @@ def portfolioupdate_list(request):
             return Response({'detail': 'Data validation failed'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
+            # Acquire the scanner lock to prevent the scanner thread from overwriting updated values
 
-            PFUpdater.getInstance().update(serializer.validated_data.get('source'))
+            try:
+                Scanner.getInstance().get_lock().acquire()
+                PFUpdater.getInstance().update(serializer.validated_data.get('source'))
+            finally:
+                Scanner.getInstance().get_lock().release()
+
             serializer.validated_data['status'] = Status.PASS.value
             serializer.validated_data['details'] = 'Success'
 
