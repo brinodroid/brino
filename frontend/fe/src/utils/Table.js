@@ -1,6 +1,7 @@
 import React from 'react';
 import { useTable, useFilters } from 'react-table';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import './Table.css';
 import BTable from 'react-bootstrap/Table';
 import FormControl from 'react-bootstrap/FormControl';
 import InputGroup from 'react-bootstrap/InputGroup';
@@ -85,6 +86,7 @@ function Table({ columns, data }) {
 
   // Render the UI for your table
   return (
+    <div className="Table">
     <BTable striped bordered hover size="sm" variant="dark" {...getTableProps()}>
       <thead>
         {headerGroups.map(headerGroup => (
@@ -117,6 +119,7 @@ function Table({ columns, data }) {
         })}
       </tbody>
     </BTable>
+    </div>
   )
 }
 

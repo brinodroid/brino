@@ -36,12 +36,12 @@ export default class WatchList extends React.Component {
 
     this.state = {
       isWatchListLoaded: false,
-      errorMsg : '',
-      watchList : null,
+      errorMsg: '',
+      watchList: null,
       showDetailedViewModal: false,
       addToWatchList: false,
       deleteFromWatchList: false,
-      formValues : {id: "", assetType: "", ticker: "", optionStrike: "", optionExpiry: "", comment: ""}
+      formValues: { id: "", assetType: "", ticker: "", optionStrike: "", optionExpiry: "", comment: "" }
     }
   }
 
@@ -51,11 +51,11 @@ export default class WatchList extends React.Component {
       showDetailedViewModal: false,
       deleteFromWatchList: false,
       addToWatchList: false,
-      formValues : {id: "", assetType: "", ticker: "", optionStrike: "", optionExpiry: "", comment: ""}
+      formValues: { id: "", assetType: "", ticker: "", optionStrike: "", optionExpiry: "", comment: "" }
     });
   }
 
-  onEditButtonClick (rowData) {
+  onEditButtonClick(rowData) {
     console.info('onEditButtonClick: rowData=%o', rowData);
     this.setState({
       showDetailedViewModal: true,
@@ -89,13 +89,13 @@ export default class WatchList extends React.Component {
   loadWatchList() {
     console.info('loadWatchList: Loading watchlist...')
     let loadWatchListCallback = function (httpStatus, json) {
-      if ( httpStatus === 401) {
+      if (httpStatus === 401) {
         this.props.auth.setAuthenticationStatus(false);
         console.error("loadWatchListCallback: authentication expired?");
         return;
       }
 
-      if ( httpStatus !== 200) {
+      if (httpStatus !== 200) {
         console.error("loadWatchListCallback: failure: http:%o", httpStatus);
         this.setState({
           errorMsg: "Failed to load watchlist"
@@ -117,13 +117,13 @@ export default class WatchList extends React.Component {
   addToWatchList(watchListEntry) {
     console.info('addToWatchList: adding entry=%o', watchListEntry)
     let createWatchListEntryCallback = function (httpStatus, json) {
-      if ( httpStatus === 401) {
+      if (httpStatus === 401) {
         this.props.auth.setAuthenticationStatus(false);
         console.error("createWatchListEntryCallback: authentication expired?");
         return;
       }
 
-      if ( httpStatus !== 200) {
+      if (httpStatus !== 200) {
         console.error("createWatchListEntryCallback: failure: http:%o", httpStatus);
         this.setState({
           errorMsg: "Failed to add to watchlist"
@@ -143,14 +143,14 @@ export default class WatchList extends React.Component {
 
   updateWatchList(watchListEntry) {
     console.info('updateWatchList: adding entry=%o', watchListEntry)
-    let updateWatchListCallback= function (httpStatus, json) {
-      if ( httpStatus === 401) {
+    let updateWatchListCallback = function (httpStatus, json) {
+      if (httpStatus === 401) {
         this.props.auth.setAuthenticationStatus(false);
         console.error("updateWatchListCallback: authentication expired?");
         return;
       }
 
-      if ( httpStatus !== 200) {
+      if (httpStatus !== 200) {
         console.error("updateWatchListCallback: failure: http:%o", httpStatus);
         this.setState({
           errorMsg: "Failed to update watchlist"
@@ -171,13 +171,13 @@ export default class WatchList extends React.Component {
   deleteFromWatchList(watchListEntry) {
     console.info('deleteFromWatchList: adding entry=%o', watchListEntry)
     let deleteFromWatchListCallback = function (httpStatus, json) {
-      if ( httpStatus === 401) {
+      if (httpStatus === 401) {
         this.props.auth.setAuthenticationStatus(false);
         console.error("deleteFromWatchListCallback: authentication expired?");
         return;
       }
 
-      if ( httpStatus !== 204) {
+      if (httpStatus !== 204) {
         console.error("deleteFromWatchListCallback: failure: http:%o", httpStatus);
         this.setState({
           errorMsg: "Failed to delete to watchlist"
@@ -204,9 +204,9 @@ export default class WatchList extends React.Component {
   }
 
   onFormValuesChange(event) {
-    let updatedFormValues = {...this.state.formValues, [event.target.id]: event.target.value};
+    let updatedFormValues = { ...this.state.formValues, [event.target.id]: event.target.value };
     console.info('onFormValuesChange: updatedFormValues=%o ', updatedFormValues);
-    this.setState({formValues: updatedFormValues});
+    this.setState({ formValues: updatedFormValues });
   }
 
   showModalFormGroup(readOnly, controlId, label, value) {
@@ -231,14 +231,14 @@ export default class WatchList extends React.Component {
     return (
       <Form onSubmit={this.handleSubmit} >
 
-        { this.showModalFormGroup(true, "creation_timestamp", "Create Timestamp", this.state.formValues.creation_timestamp) }
-        { this.showModalFormGroup(true, "update_timestamp", "Update Timestamp", this.state.formValues.update_timestamp) }
-        { this.showModalFormGroup(true, "id", "ID", this.state.formValues.id) }
-        { this.showModalFormGroup(readOnly, "asset_type", "Asset Type", this.state.formValues.asset_type) }
-        { this.showModalFormGroup(readOnly, "ticker", "Ticker", this.state.formValues.ticker) }
-        { this.showModalFormGroup(readOnly, "option_strike", "Strike", this.state.formValues.option_strike? this.state.formValues.option_strike: "") }
-        { this.showModalFormGroup(readOnly, "option_expiry", "Expiry", this.state.formValues.option_expiry? this.state.formValues.option_expiry:"" ) }
-        { this.showModalFormGroup(readOnly, "comment", "Comment", this.state.formValues.comment) }
+        { this.showModalFormGroup(true, "creation_timestamp", "Create Timestamp", this.state.formValues.creation_timestamp)}
+        { this.showModalFormGroup(true, "update_timestamp", "Update Timestamp", this.state.formValues.update_timestamp)}
+        { this.showModalFormGroup(true, "id", "ID", this.state.formValues.id)}
+        { this.showModalFormGroup(readOnly, "asset_type", "Asset Type", this.state.formValues.asset_type)}
+        { this.showModalFormGroup(readOnly, "ticker", "Ticker", this.state.formValues.ticker)}
+        { this.showModalFormGroup(readOnly, "option_strike", "Strike", this.state.formValues.option_strike ? this.state.formValues.option_strike : "")}
+        { this.showModalFormGroup(readOnly, "option_expiry", "Expiry", this.state.formValues.option_expiry ? this.state.formValues.option_expiry : "")}
+        { this.showModalFormGroup(readOnly, "comment", "Comment", this.state.formValues.comment)}
 
       </Form>
     );
@@ -289,7 +289,7 @@ export default class WatchList extends React.Component {
   showModal() {
     /* animation=false added due to warning in console: https://github.com/react-bootstrap/react-bootstrap/issues/5075 */
     return (
-        <Modal show={this.state.showDetailedViewModal} onHide={this.onCloseDetailedViewModal} animation={false}>
+      <Modal show={this.state.showDetailedViewModal} onHide={this.onCloseDetailedViewModal} animation={false}>
         <Modal.Header closeButton>
           <Modal.Title>Watch List Details</Modal.Title>
         </Modal.Header>
@@ -307,46 +307,48 @@ export default class WatchList extends React.Component {
   }
 
   render() {
-    if ( !this.props.auth.isAuthenticated ) {
+    if (!this.props.auth.isAuthenticated) {
       console.info('WatchList:  not authenticated, redirecting to login page');
-      return <Redirect to= '/login' />;
+      return <Redirect to='/login' />;
     }
 
-    if ( !this.state.isWatchListLoaded) {
+    if (!this.state.isWatchListLoaded) {
       return <Alert variant="primary"> Loading watchlist... </Alert>;
     }
 
     console.info('render: this.showDetailedViewModal=%o...', this.state.showDetailedViewModal)
 
     const columns = [
-      { Action: 'action',  accessor: 'dummy',
-          Cell: ({row}) => (
-              <ButtonGroup className="mr-2" aria-label="First group">
-                <Button onClick={ (e) => this.onEditButtonClick(row.original) }>Edit</Button>
-                <Button onClick={ (e) => this.onDeleteButtonClick(row.original) }>Delete</Button>
-              </ButtonGroup>
-            )},
-      { Header: 'ID',  accessor: 'id'},
-      { Header: 'Asset Type', accessor: 'asset_type'},
-      { Header: 'Ticker', accessor: 'ticker'},
-      { Header: 'Strike', accessor: 'option_strike'},
-      { Header: 'Expiry', accessor: 'option_expiry'},
-      { Header: 'Comment', accessor: 'comment'},
-      { Header: 'Brine Id', accessor: 'brine_id'},
-      { Header: 'Update Time', accessor: 'update_timestamp'},
-      { Header: 'Create Time', accessor: 'creation_timestamp'},
+      {
+        Action: 'action', accessor: 'dummy',
+        Cell: ({ row }) => (
+          <ButtonGroup className="mr-2" aria-label="First group">
+            <Button onClick={(e) => this.onEditButtonClick(row.original)}>Edit</Button>
+            <Button onClick={(e) => this.onDeleteButtonClick(row.original)}>Delete</Button>
+          </ButtonGroup>
+        )
+      },
+      { Header: 'ID', accessor: 'id' },
+      { Header: 'Asset Type', accessor: 'asset_type' },
+      { Header: 'Ticker', accessor: 'ticker' },
+      { Header: 'Strike', accessor: 'option_strike' },
+      { Header: 'Expiry', accessor: 'option_expiry' },
+      { Header: 'Comment', accessor: 'comment' },
+      { Header: 'Brine Id', accessor: 'brine_id' },
+      { Header: 'Update Time', accessor: 'update_timestamp' },
+      { Header: 'Create Time', accessor: 'creation_timestamp' },
     ];
 
     const onRowClick = (state, rowInfo, column, instance) => {
-    return {
+      return {
         onClick: e => {
-            console.log('A Td Element was clicked!')
-            console.log('it produced this event:', e)
-            console.log('It was in this column:', column)
-            console.log('It was in this row:', rowInfo)
-            console.log('It was in this table instance:', instance)
+          console.log('A Td Element was clicked!')
+          console.log('it produced this event:', e)
+          console.log('It was in this column:', column)
+          console.log('It was in this row:', rowInfo)
+          console.log('It was in this table instance:', instance)
         }
-    }
+      }
     }
 
     return (
@@ -360,12 +362,12 @@ export default class WatchList extends React.Component {
             <Button onClick={this.loadWatchList}> Refresh </Button>
           </ButtonGroup>
         </ButtonToolbar>
-        Welcome WatchList {this.props.auth.loggedInUser}
-        { this.showErrorMsg() }
+
+        { this.showErrorMsg()}
 
         <Table columns={columns} data={this.state.watchList} getTrProps={onRowClick} />
 
-        { this.showModal() }
+        { this.showModal()}
 
       </div>
     );

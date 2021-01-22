@@ -387,7 +387,7 @@ export default class Home extends React.Component {
     }
 
     return (
-      <div className="home">
+      <div className="BGTask">
 
         <ButtonToolbar aria-label="Toolbar with button groups">
           <ButtonGroup className="mr-2" aria-label="First group">

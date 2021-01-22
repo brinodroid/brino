@@ -369,7 +369,6 @@ export default class PortFolio extends React.Component {
             <Button onClick={this.loadPortFolio}> Refresh </Button>
           </ButtonGroup>
         </ButtonToolbar>
-        Welcome PortFolio {this.props.auth.loggedInUser}
         { this.showErrorMsg() }
 
         <Table columns={columns} data={this.state.PortFolio} getTrProps={onRowClick} />

@@ -53,7 +53,7 @@ export default class App extends React.Component {
     return (
       <Router>
         <div className="App">
-          <Navbar style={{marginBottom: "20px"}} bg="dark" variant="dark">
+          <Navbar bg="dark" variant="dark">
             <Navbar.Brand href="/home">
               Brino
             </Navbar.Brand>

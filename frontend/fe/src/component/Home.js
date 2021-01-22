@@ -464,7 +464,7 @@ export default class Scan extends React.Component {
     }
 
     return (
-      <div className="Scan">
+      <div className="Home">
 
         <ButtonToolbar aria-label="Toolbar with button groups">
           <ButtonGroup className="mr-2" aria-label="First group">
@@ -474,7 +474,6 @@ export default class Scan extends React.Component {
             <Button onClick={this.loadScan}> Refresh </Button>
           </ButtonGroup>
         </ButtonToolbar>
-        Welcome Scan {this.props.auth.loggedInUser}
         { this.showErrorMsg()}
 
         <Table columns={columns} data={this.state.scan} getTrProps={onRowClick} />
