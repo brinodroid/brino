@@ -35,6 +35,11 @@ export default class Scan extends React.Component {
     this.showModalFormGroup = this.showModalFormGroup.bind(this);
     this.onFormValuesChange = this.onFormValuesChange.bind(this);
 
+    this.onAutoRefreshButtonPress = this.onAutoRefreshButtonPress.bind(this);
+    this.startAutoRefresh = this.startAutoRefresh.bind(this);
+    this.stopAutoRefresh = this.stopAutoRefresh.bind(this);
+
+
     this.state = {
       isScanLoaded: false,
       errorMsg: '',
@@ -42,6 +47,7 @@ export default class Scan extends React.Component {
       showDetailedViewModal: false,
       addToScan: false,
       deleteFromScan: false,
+      enableAutoRefresh: true,
       formValues: {
         id: "", update_timestamp: "", profile: "", watchlist_id: "", watchListTicker: "",
         support: "", resistance: "", profit_target: "", stopLoss: "", brate_target: "", brifz_target: "",
@@ -52,6 +58,27 @@ export default class Scan extends React.Component {
 
   // Class variable to hold the setInterval Id, used to refresh the page every 5 seconds
   intervalID;
+
+  onAutoRefreshButtonPress() {
+    let enableAutoRefreshToggled = !this.state.enableAutoRefresh;
+    if (enableAutoRefreshToggled) {
+      this.startAutoRefresh();
+    } else {
+      this.stopAutoRefresh();
+    }
+
+    this.setState({ enableAutoRefresh: enableAutoRefreshToggled });
+  }
+
+  startAutoRefresh() {
+    this.intervalID = setInterval(this.loadScan, 30000); // 30s
+    console.info('startAutoRefresh: Started auto refresh. intervalID=%o', this.intervalID);
+  }
+
+  stopAutoRefresh() {
+    console.info('stopAutoRefresh: Started auto refresh. intervalID=%o', this.intervalID);
+    clearInterval(this.intervalID);
+  }
 
   onCloseDetailedViewModal() {
     console.info('onCloseDetailedViewModal: ...')
@@ -273,13 +300,15 @@ export default class Scan extends React.Component {
 
     if (!this.state.isScanLoaded) {
       this.loadScan();
-      this.intervalID = setInterval(this.loadScan, 30000); // 30s
+
+      // Start with auto refresh being on
+      this.startAutoRefresh();
     }
   }
 
   componentWillUnmount() {
     console.info("componentWillUnmount: json:%o", this.intervalID);
-    clearInterval(this.intervalID);
+    this.stopAutoRefresh();
   }
 
   onFormValuesChange(event) {
@@ -472,6 +501,9 @@ export default class Scan extends React.Component {
           </ButtonGroup>
           <ButtonGroup className="mr-2" aria-label="Second group">
             <Button onClick={this.loadScan}> Refresh </Button>
+          </ButtonGroup>
+          <ButtonGroup className="mr-2" aria-label="Second group">
+            <Button onClick={this.onAutoRefreshButtonPress}> {this.state.enableAutoRefresh ? "Disable Auto Refresh" : "Enable Auto Refresh"} </Button>
           </ButtonGroup>
         </ButtonToolbar>
         { this.showErrorMsg()}
