@@ -6,7 +6,7 @@ import BTable from 'react-bootstrap/Table';
 import FormControl from 'react-bootstrap/FormControl';
 import InputGroup from 'react-bootstrap/InputGroup';
 
-import {matchSorter} from 'match-sorter'
+import { matchSorter } from 'match-sorter'
 
 
 // Define a default UI for filtering
@@ -17,15 +17,15 @@ function DefaultColumnFilter({
 
   return (
     <InputGroup className="mb-3">
-    <FormControl
-      placeholder={`Search ${count} records...`}
-      aria-label="Amount (toasdf the nearest dollar)"
-      value={filterValue || ''}
-      onChange={e => {
-        setFilter(e.target.value || undefined) // Set undefined to remove the filter entirely
-      }}
-    />
-  </InputGroup>
+      <FormControl
+        placeholder={`Search ${count} records...`}
+        aria-label="Amount (toasdf the nearest dollar)"
+        value={filterValue || ''}
+        onChange={e => {
+          setFilter(e.target.value || undefined) // Set undefined to remove the filter entirely
+        }}
+      />
+    </InputGroup>
   )
 }
 
@@ -46,8 +46,8 @@ function Table({ columns, data }) {
           const rowValue = row.values[id]
           return rowValue !== undefined
             ? String(rowValue)
-                .toLowerCase()
-                .startsWith(String(filterValue).toLowerCase())
+              .toLowerCase()
+              .startsWith(String(filterValue).toLowerCase())
             : true
         })
       },
@@ -66,14 +66,9 @@ function Table({ columns, data }) {
   // Use the state and functions returned from useTable to build your UI
   const {
     getTableProps,
-    getTableBodyProps,
     headerGroups,
     rows,
     prepareRow,
-    state,
-    visibleColumns,
-    preGlobalFilteredRows,
-    setGlobalFilter,
   } = useTable(
     {
       columns,
@@ -87,38 +82,38 @@ function Table({ columns, data }) {
   // Render the UI for your table
   return (
     <div className="Table">
-    <BTable striped bordered hover size="sm" variant="dark" {...getTableProps()}>
-      <thead>
-        {headerGroups.map(headerGroup => (
-          <tr {...headerGroup.getHeaderGroupProps()}>
-            {headerGroup.headers.map(column => (
-              <th {...column.getHeaderProps()}>
-                {column.render('Header')}
-                {/* Render the columns filter UI */}
-                <div>{column.canFilter ? column.render('Filter') : null}</div>
+      <BTable striped bordered hover size="sm" variant="dark" {...getTableProps()}>
+        <thead>
+          {headerGroups.map(headerGroup => (
+            <tr {...headerGroup.getHeaderGroupProps()}>
+              {headerGroup.headers.map(column => (
+                <th {...column.getHeaderProps()}>
+                  {column.render('Header')}
+                  {/* Render the columns filter UI */}
+                  <div>{column.canFilter ? column.render('Filter') : null}</div>
 
-              </th>
-            ))}
-          </tr>
-        ))}
-      </thead>
-      <tbody>
-        {rows.map((row, i) => {
-          prepareRow(row)
-          return (
-            <tr {...row.getRowProps()}>
-              {row.cells.map(cell => {
-                return (
-                  <td {...cell.getCellProps()}>
-                    {cell.render('Cell')}
-                  </td>
-                )
-              })}
+                </th>
+              ))}
             </tr>
-          )
-        })}
-      </tbody>
-    </BTable>
+          ))}
+        </thead>
+        <tbody>
+          {rows.map((row, i) => {
+            prepareRow(row)
+            return (
+              <tr {...row.getRowProps()}>
+                {row.cells.map(cell => {
+                  return (
+                    <td {...cell.getCellProps()}>
+                      {cell.render('Cell')}
+                    </td>
+                  )
+                })}
+              </tr>
+            )
+          })}
+        </tbody>
+      </BTable>
     </div>
   )
 }
