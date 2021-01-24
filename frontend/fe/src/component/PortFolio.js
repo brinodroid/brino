@@ -10,6 +10,7 @@ import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 
 import { getBackend } from '../utils/Backend';
+import watchlistCache from '../utils/WatchListCache';
 import Table from '../utils/Table';
 
 export default class PortFolio extends React.Component {
@@ -36,12 +37,12 @@ export default class PortFolio extends React.Component {
 
     this.state = {
       isPortFolioLoaded: false,
-      errorMsg : '',
-      PortFolio : null,
+      errorMsg: '',
+      PortFolio: null,
       showDetailedViewModal: false,
       addToPortFolio: false,
       deleteFromPortFolio: false,
-      formValues : {id: "", update_timestamp: "", watchlist_id: "", source:"", transaction_type:"", entry_datetime: "", entry_price: "", units: "", exit_price: "", exit_datetime: ""}
+      formValues: { id: "", update_timestamp: "", watchlist_id: "", source: "", transaction_type: "", entry_datetime: "", entry_price: "", units: "", exit_price: "", exit_datetime: "" }
     }
   }
 
@@ -51,11 +52,11 @@ export default class PortFolio extends React.Component {
       showDetailedViewModal: false,
       deleteFromPortFolio: false,
       addToPortFolio: false,
-      formValues : {id: "", update_timestamp: "", watchlist_id: "", source:"", transaction_type:"", entry_datetime: "", entry_price: "", units: "", exit_price: "", exit_datetime: ""}
+      formValues: { id: "", update_timestamp: "", watchlist_id: "", source: "", transaction_type: "", entry_datetime: "", entry_price: "", units: "", exit_price: "", exit_datetime: "" }
     });
   }
 
-  onEditButtonClick (rowData) {
+  onEditButtonClick(rowData) {
     console.info('onEditButtonClick: rowData=%o', rowData);
     this.setState({
       showDetailedViewModal: true,
@@ -89,19 +90,26 @@ export default class PortFolio extends React.Component {
   loadPortFolio() {
     console.info('loadPortFolio: Loading PortFolio...')
     let loadPortFolioCallback = function (httpStatus, json) {
-      if ( httpStatus === 401) {
+      if (httpStatus === 401) {
         this.props.auth.setAuthenticationStatus(false);
         console.error("loadPortFolioCallback: authentication expired?");
         return;
       }
 
-      if ( httpStatus !== 200) {
+      if (httpStatus !== 200) {
         console.error("loadPortFolioCallback: failure: http:%o", httpStatus);
         this.setState({
           errorMsg: "Failed to load PortFolio"
         })
         return;
       }
+
+      // Update the watchlist ticker to portfolio
+      let updateWatchListTicker = function (portfolio) {
+        portfolio.watchListTicker = watchlistCache.getWatchListTicker(portfolio.watchlist_id);
+      }
+
+      json.forEach(updateWatchListTicker);
 
       console.info("loadPortFolioCallback: json: %o", json);
       this.setState({
@@ -117,13 +125,13 @@ export default class PortFolio extends React.Component {
   addToPortFolio(PortFolioEntry) {
     console.info('addToPortFolio: adding entry=%o', PortFolioEntry)
     let createPortFolioCallback = function (httpStatus, json) {
-      if ( httpStatus === 401) {
+      if (httpStatus === 401) {
         this.props.auth.setAuthenticationStatus(false);
         console.error("createPortFolioCallback: authentication expired?");
         return;
       }
 
-      if ( httpStatus !== 200) {
+      if (httpStatus !== 200) {
         console.error("createPortFolioCallback: failure: http:%o", httpStatus);
         this.setState({
           errorMsg: "Failed to add to PortFolio"
@@ -143,14 +151,14 @@ export default class PortFolio extends React.Component {
 
   updatePortFolio(PortFolioEntry) {
     console.info('updatePortFolio: adding entry=%o', PortFolioEntry)
-    let updatePortFolioCallback= function (httpStatus, json) {
-      if ( httpStatus === 401) {
+    let updatePortFolioCallback = function (httpStatus, json) {
+      if (httpStatus === 401) {
         this.props.auth.setAuthenticationStatus(false);
         console.error("updatePortFolioCallback: authentication expired?");
         return;
       }
 
-      if ( httpStatus !== 200) {
+      if (httpStatus !== 200) {
         console.error("updatePortFolioCallback: failure: http:%o", httpStatus);
         this.setState({
           errorMsg: "Failed to update PortFolio"
@@ -171,13 +179,13 @@ export default class PortFolio extends React.Component {
   deleteFromPortFolio(PortFolioEntry) {
     console.info('deleteFromPortFolio: adding entry=%o', PortFolioEntry)
     let deleteFromPortFolioCallback = function (httpStatus, json) {
-      if ( httpStatus === 401) {
+      if (httpStatus === 401) {
         this.props.auth.setAuthenticationStatus(false);
         console.error("deleteFromPortFolioCallback: authentication expired?");
         return;
       }
 
-      if ( httpStatus !== 204) {
+      if (httpStatus !== 204) {
         console.error("deleteFromPortFolioCallback: failure: http:%o", httpStatus);
         this.setState({
           errorMsg: "Failed to delete to PortFolio"
@@ -198,15 +206,20 @@ export default class PortFolio extends React.Component {
   componentDidMount() {
     console.info('componentDidMount..');
 
+    if (!watchlistCache.isCached()) {
+      // Load the watchlist
+      watchlistCache.loadWatchList();
+    }
+
     if (!this.state.isPortFolioLoaded) {
       this.loadPortFolio();
     }
   }
 
   onFormValuesChange(event) {
-    let updatedFormValues = {...this.state.formValues, [event.target.id]: event.target.value};
+    let updatedFormValues = { ...this.state.formValues, [event.target.id]: event.target.value };
     console.info('onFormValuesChange: updatedFormValues=%o ', updatedFormValues);
-    this.setState({formValues: updatedFormValues});
+    this.setState({ formValues: updatedFormValues });
   }
 
   showModalFormGroup(readOnly, controlId, label, value) {
@@ -231,16 +244,16 @@ export default class PortFolio extends React.Component {
     return (
       <Form onSubmit={this.handleSubmit} >
 
-        { this.showModalFormGroup(true, "update_timestamp", "Update Timestamp", this.state.formValues.update_timestamp) }
-        { this.showModalFormGroup(true, "id", "ID", this.state.formValues.id) }
-        { this.showModalFormGroup(readOnly, "watchlist_id", "WatchList Id", this.state.formValues.watchlist_id) }
+        { this.showModalFormGroup(true, "update_timestamp", "Update Timestamp", this.state.formValues.update_timestamp)}
+        { this.showModalFormGroup(true, "id", "ID", this.state.formValues.id)}
+        { this.showModalFormGroup(readOnly, "watchlist_id", "WatchList Id", this.state.formValues.watchlist_id)}
         { this.showModalFormGroup(readOnly, "source", "Source", this.state.formValues.source)}
         { this.showModalFormGroup(readOnly, "transaction_type", "Units", this.state.formValues.transaction_type)}
-        { this.showModalFormGroup(readOnly, "entry_datetime", "Entry Date", this.state.formValues.entry_datetime) }
+        { this.showModalFormGroup(readOnly, "entry_datetime", "Entry Date", this.state.formValues.entry_datetime)}
         { this.showModalFormGroup(readOnly, "entry_price", "Entry Price", this.state.formValues.entry_price)}
         { this.showModalFormGroup(readOnly, "units", "Units", this.state.formValues.units)}
-        { this.showModalFormGroup(readOnly, "exit_datetime", "Exit Date", this.state.formValues.exit_datetime) }
-        { this.showModalFormGroup(readOnly, "exit_price", "Exit Price", this.state.formValues.exit_price) }
+        { this.showModalFormGroup(readOnly, "exit_datetime", "Exit Date", this.state.formValues.exit_datetime)}
+        { this.showModalFormGroup(readOnly, "exit_price", "Exit Price", this.state.formValues.exit_price)}
         { this.showModalFormGroup(true, "brine_id", "Brine Id", this.state.formValues.brine_id)}
 
       </Form>
@@ -296,7 +309,7 @@ export default class PortFolio extends React.Component {
   showModal() {
     /* animation=false added due to warning in console: https://github.com/react-bootstrap/react-bootstrap/issues/5075 */
     return (
-        <Modal show={this.state.showDetailedViewModal} onHide={this.onCloseDetailedViewModal} animation={false}>
+      <Modal show={this.state.showDetailedViewModal} onHide={this.onCloseDetailedViewModal} animation={false}>
         <Modal.Header closeButton>
           <Modal.Title>PortFolio Details</Modal.Title>
         </Modal.Header>
@@ -314,48 +327,51 @@ export default class PortFolio extends React.Component {
   }
 
   render() {
-    if ( !this.props.auth.isAuthenticated ) {
+    if (!this.props.auth.isAuthenticated) {
       console.info('PortFolio:  not authenticated, redirecting to login page');
-      return <Redirect to= '/login' />;
+      return <Redirect to='/login' />;
     }
 
-    if ( !this.state.isPortFolioLoaded) {
+    if (!this.state.isPortFolioLoaded) {
       return <Alert variant="primary"> Loading PortFolio... </Alert>;
     }
 
     console.info('render: this.showDetailedViewModal=%o...', this.state.showDetailedViewModal)
 
     const columns = [
-      { Action: 'action',  accessor: 'dummy',
-          Cell: ({row}) => (
-              <ButtonGroup className="mr-2" aria-label="First group">
-                <Button onClick={ (e) => this.onEditButtonClick(row.original) }>Edit</Button>
-                <Button onClick={ (e) => this.onDeleteButtonClick(row.original) }>Delete</Button>
-              </ButtonGroup>
-            )},
-      { Header: 'ID',  accessor: 'id'},
-      { Header: 'WatchList Id', accessor: 'watchlist_id'},
-      { Header: 'Type', accessor: 'transaction_type'},
-      { Header: 'Entry Date', accessor: 'entry_datetime'},
-      { Header: 'Entry Price', accessor: 'entry_price'},
-      { Header: 'Units', accessor: 'units'},
-      { Header: 'Exit Date', accessor: 'exit_datetime'},
-      { Header: 'Exit Price', accessor: 'exit_price'},
-      { Header: 'Source', accessor: 'source'},
-      { Header: 'Brine Id', accessor: 'brine_id'},
-      { Header: 'Update Time', accessor: 'update_timestamp'},
+      {
+        Action: 'action', accessor: 'dummy',
+        Cell: ({ row }) => (
+          <ButtonGroup className="mr-2" aria-label="First group">
+            <Button onClick={(e) => this.onEditButtonClick(row.original)}>Edit</Button>
+            <Button onClick={(e) => this.onDeleteButtonClick(row.original)}>Delete</Button>
+          </ButtonGroup>
+        )
+      },
+      { Header: 'ID', accessor: 'id' },
+      { Header: 'WatchList Id', accessor: 'watchlist_id' },
+      { Header: 'WL ticker', accessor: 'watchListTicker' },
+      { Header: 'Type', accessor: 'transaction_type' },
+      { Header: 'Entry Date', accessor: 'entry_datetime' },
+      { Header: 'Entry Price', accessor: 'entry_price' },
+      { Header: 'Units', accessor: 'units' },
+      { Header: 'Exit Date', accessor: 'exit_datetime' },
+      { Header: 'Exit Price', accessor: 'exit_price' },
+      { Header: 'Source', accessor: 'source' },
+      { Header: 'Brine Id', accessor: 'brine_id' },
+      { Header: 'Update Time', accessor: 'update_timestamp' },
     ];
 
     const onRowClick = (state, rowInfo, column, instance) => {
-    return {
+      return {
         onClick: e => {
-            console.log('A Td Element was clicked!')
-            console.log('it produced this event:', e)
-            console.log('It was in this column:', column)
-            console.log('It was in this row:', rowInfo)
-            console.log('It was in this table instance:', instance)
+          console.log('A Td Element was clicked!')
+          console.log('it produced this event:', e)
+          console.log('It was in this column:', column)
+          console.log('It was in this row:', rowInfo)
+          console.log('It was in this table instance:', instance)
         }
-    }
+      }
     }
 
     return (
@@ -369,11 +385,11 @@ export default class PortFolio extends React.Component {
             <Button onClick={this.loadPortFolio}> Refresh </Button>
           </ButtonGroup>
         </ButtonToolbar>
-        { this.showErrorMsg() }
+        { this.showErrorMsg()}
 
         <Table columns={columns} data={this.state.PortFolio} getTrProps={onRowClick} />
 
-        { this.showModal() }
+        { this.showModal()}
 
       </div>
     );

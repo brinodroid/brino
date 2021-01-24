@@ -9,6 +9,7 @@ import Form from 'react-bootstrap/Form';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 
+import watchlistCache from '../utils/WatchListCache';
 import { getBackend } from '../utils/Backend';
 import Table from '../utils/Table';
 
@@ -35,9 +36,9 @@ export default class WatchList extends React.Component {
     this.onFormValuesChange = this.onFormValuesChange.bind(this);
 
     this.state = {
-      isWatchListLoaded: false,
+      isWatchListLoaded: watchlistCache.isCached(),
       errorMsg: '',
-      watchList: null,
+      watchList: watchlistCache.getWatchList(),
       showDetailedViewModal: false,
       addToWatchList: false,
       deleteFromWatchList: false,
@@ -111,7 +112,7 @@ export default class WatchList extends React.Component {
       });
     }
 
-    getBackend().getWatchList(loadWatchListCallback.bind(this));
+    watchlistCache.loadWatchList(loadWatchListCallback.bind(this));
   }
 
   addToWatchList(watchListEntry) {
@@ -199,7 +200,11 @@ export default class WatchList extends React.Component {
     console.info('componentDidMount..');
 
     if (!this.state.isWatchListLoaded) {
+      console.info('componentDidMount: Need to load the watchlist');
+
       this.loadWatchList();
+    } else {
+      console.info('componentDidMount: Loaded from cache');
     }
   }
 

@@ -10,6 +10,7 @@ import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 
 import { getBackend } from '../utils/Backend';
+import watchlistCache from '../utils/WatchListCache';
 import Table from '../utils/Table';
 
 export default class Scan extends React.Component {
@@ -20,7 +21,6 @@ export default class Scan extends React.Component {
     this.onDeleteButtonClick = this.onDeleteButtonClick.bind(this);
     this.onAddButtonClick = this.onAddButtonClick.bind(this);
 
-    this.loadWatchList = this.loadWatchList.bind(this);
     this.loadScan = this.loadScan.bind(this);
     this.addToScan = this.addToScan.bind(this);
     this.deleteFromScan = this.deleteFromScan.bind(this);
@@ -125,58 +125,6 @@ export default class Scan extends React.Component {
     }
   }
 
-  loadWatchList() {
-    console.info('loadWatchList: Loading watchlist...')
-    let loadWatchListCallback = function (httpStatus, json) {
-      if (httpStatus === 401) {
-        this.props.auth.setAuthenticationStatus(false);
-        console.error("loadWatchListCallback: authentication expired?");
-        return;
-      }
-
-      if (httpStatus !== 200) {
-        console.error("loadWatchListCallback: failure: http:%o", httpStatus);
-        this.setState({
-          errorMsg: "Failed to load watchlist"
-        })
-        return;
-      }
-
-      // Converting watchList json array to a map
-      console.info("loadWatchListCallback: json: %o", json);
-      let watchListMap = json.reduce(function (map, obj) {
-        map[obj.id] = obj;
-        return map;
-      }, {});
-
-      console.info("loadWatchListCallback: watListMap: %o", watchListMap);
-      let scanArray = this.state.scan;
-      let updateWatchListTicker = function (scanEntry) {
-        let watchListItem = watchListMap[scanEntry.watchlist_id];
-        let watchListTicker = '';
-        console.info("loadWatchListCallback: item: %o", watchListItem);
-        if (!watchListItem) {
-          watchListTicker = 'NOT FOUND. Stale?';
-        } else if (watchListItem.asset_type === 'STOCK') {
-          watchListTicker = watchListItem.ticker;
-        } else {
-          watchListTicker = watchListItem.ticker + ' ' + watchListItem.asset_type + ' ' + watchListItem.option_strike + ' ' + watchListItem.option_expiry;
-        }
-
-        scanEntry.watchListTicker = watchListTicker;
-      }
-      scanArray.forEach(updateWatchListTicker);
-      console.info("loadWatchListCallback: scanArray: %o", scanArray);
-
-      // This update is needed to refresh the UI
-      this.setState({
-        scan: scanArray
-      });
-    }
-
-    getBackend().getWatchList(loadWatchListCallback.bind(this));
-  }
-
   loadScan() {
     console.info('loadScan: Loading Scan...')
     let loadScanCallback = function (httpStatus, json) {
@@ -200,15 +148,18 @@ export default class Scan extends React.Component {
       }
       json.forEach(updateTimeFormat);
 
+      let updateWatchListTicker = function (scanEntry) {
+        scanEntry.watchListTicker = watchlistCache.getWatchListTicker(scanEntry.watchlist_id);
+      }
+
+      json.forEach(updateWatchListTicker);
+
       console.info("loadScanCallback: json: %o", json);
       this.setState({
         isScanLoaded: true,
         scan: json,
         errorMsg: ""
       });
-
-      // Update the ticker
-      this.loadWatchList();
     }
 
     getBackend().getScan(loadScanCallback.bind(this));
@@ -298,7 +249,13 @@ export default class Scan extends React.Component {
   componentDidMount() {
     console.info('componentDidMount..');
 
+    if (!watchlistCache.isCached()) {
+      // Load the watchlist
+      watchlistCache.loadWatchList();
+    }
+
     if (!this.state.isScanLoaded) {
+      // Load the scan
       this.loadScan();
 
       // Start with auto refresh being on
