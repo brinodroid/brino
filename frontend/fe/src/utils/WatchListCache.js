@@ -1,6 +1,8 @@
 
 import { getBackend } from './Backend';
 
+
+
 class WatchListCache {
   constructor() {
 
@@ -23,7 +25,7 @@ class WatchListCache {
   }
 
   isCached() {
-    return this.watchList.length > 0;
+    return this.watchListMap.size > 0;
   }
 
   getWatchList() {
@@ -31,6 +33,8 @@ class WatchListCache {
   }
 
   getWatchListTicker(watchlistId) {
+
+    //TODO: How to wait for watchListMap is filled?
     let watchListItem = this.watchListMap[watchlistId];
     let watchListTicker = '';
     console.info("getWatchListTicker: item: %o", watchListItem);
@@ -69,10 +73,13 @@ class WatchListCache {
       // Converting watchList json array to a map
       console.info("loadWatchListCallback: json: %o", json);
       this.watchList = json;
-      this.watchListMap = json.reduce(function (map, obj) {
+      let watchListMap = json.reduce(function (map, obj) {
         map[obj.id] = obj;
         return map;
       }, {});
+
+      // Update this in a single go
+      this.watchListMap = watchListMap;
 
       if (watchlistLoadedCallback) {
         watchlistLoadedCallback(httpStatus, json);
