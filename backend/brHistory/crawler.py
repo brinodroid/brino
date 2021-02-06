@@ -219,7 +219,9 @@ class Crawler:
         self.__option_history_update(client, AssetTypes.CALL_OPTION.value)
         self.__option_history_update(client, AssetTypes.PUT_OPTION.value)
 
-    def start(self):
+        self.__setup_timer()
+
+    def __setup_timer(self):
         x = datetime.today()
         # Time specified below is in UTC.
         # 7am UTC is same as 11pm PST or 12pm PDT
@@ -232,4 +234,11 @@ class Crawler:
         secs = delta_t.seconds+1
         timer = Timer(secs, self.__save_data)
         timer.start()
+
+    def start(self):
+        # Hack to do saving if the timer is missed
+        # self.__save_data()
+
+        self.__setup_timer()
+
         return
