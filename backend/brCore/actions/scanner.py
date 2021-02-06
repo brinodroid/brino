@@ -137,6 +137,16 @@ class Scanner:
                 option_raw_data = client.get_option_price(watchlist.ticker,
                                                           str(watchlist.option_expiry),
                                                           str(watchlist.option_strike), optionType)
+
+                # Sometimes option data seems empty
+                if len(option_raw_data) == 0 or len(option_raw_data[0]) == 0:
+                    logger.error(
+                        '__update_scan_entry_values: get_option_price() for watchlist.id {} didnt get any data'
+                        .format(watchlist.id))
+                    self.__addAlertDetails(scan_entry, self.__SCAN_ERROR_MSG,
+                                           'get_option_price() failed to get ata for watchlist.id {} '.format(watchlist.id))
+                    return
+
             except Exception as e:
                 logger.error(
                     '__update_scan_entry_values: get_option_price() for watchlist.id {} gave Exception: {}'
@@ -338,15 +348,19 @@ class Scanner:
             self.__addAlertDetails(
                 scan_entry, self.__SCAN_ERROR_MSG, 'Resistance data missing.')
         elif scan_entry.resistance <= latest_price:
+            change_percent = round(
+                ((latest_price - scan_entry.resistance)*100/scan_entry.resistance), 2)
             self.__addAlertDetails(
-                scan_entry, self.__SCAN_INFO_MSG, 'Hitting resistance. Sell?')
+                scan_entry, self.__SCAN_INFO_MSG, '{}% above resistance, . Sell?'.format(change_percent))
 
         if scan_entry.support is None or scan_entry.support == 0:
             self.__addAlertDetails(
                 scan_entry, self.__SCAN_ERROR_MSG, 'Support data missing.')
         elif scan_entry.support >= latest_price:
+            change_percent = round(
+                ((latest_price - scan_entry.support)*100/scan_entry.support), 2)
             self.__addAlertDetails(
-                scan_entry, self.__SCAN_INFO_MSG, 'Hitting support. Buy?')
+                scan_entry, self.__SCAN_INFO_MSG, '{}% below support. Buy?'.format(change_percent))
 
     def __check_extended_hours_price_movement_alert(self, scan_entry, watchlist, scan_data):
         latest_price = scan_data[self.__SCAN_DATA_LATEST_TICKER_PRICE_DICT_KEY][watchlist.ticker]
@@ -367,11 +381,22 @@ class Scanner:
         latest_brifz_target = self.__get_brifz_target(
             scan_entry, watchlist, scan_data)
 
-        if scan_entry.brifz_target != latest_brifz_target:
+        if scan_entry.brifz_target == latest_brifz_target:
+            # No update
+            return
+
+        # There is a change. Calculate percentage of change
+        change_percent = round(((latest_brifz_target -
+                                 scan_entry.brifz_target)*100/scan_entry.brifz_target), 2)
+
+        change_direction = 'UPGRADE'
+        if scan_entry.brifz_target > latest_brifz_target:
             # Update in brifz target price
-            self.__addAlertDetails(scan_entry, self.__SCAN_WARN_MSG,
-                                   'brifz_target updated to {} from {}'
-                                   .format(latest_brifz_target, scan_entry.brifz_target))
+            change_direction = 'DOWNGRADE'
+
+        self.__addAlertDetails(scan_entry, self.__SCAN_WARN_MSG,
+                               'brifz_target {} {}% to {} from {}'
+                               .format(change_direction, change_percent, latest_brifz_target, scan_entry.brifz_target, change_percent))
 
     def __check_option_time_to_expiry_alert(self, scan_entry, watchlist, scan_data):
         time_to_expiry = watchlist.option_expiry - datetime.now().date()
@@ -402,7 +427,7 @@ class Scanner:
 
         if watchlist.option_strike >= latest_price:
             self.__addAlertDetails(scan_entry, self.__SCAN_INFO_MSG,
-                                   'Stock price {} above strike price of {}. Buy back and sell?'
+                                   'Stock price {} below strike price of {}. Buy back and sell?'
                                    .format(latest_price, watchlist.option_strike))
 
         elif abs(watchlist.option_strike - latest_price) >= latest_price * 5 / 100:
