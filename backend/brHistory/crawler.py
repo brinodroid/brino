@@ -6,7 +6,7 @@ import logging
 from brHistory.models import CallOptionData, PutOptionData
 from brCore.models import WatchList
 from brCore.types.asset_types import AssetTypes
-from brCore.client.Factory import get_client
+from common.client.Factory import get_client
 
 logger = logging.getLogger('django')
 

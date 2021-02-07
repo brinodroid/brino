@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 import brifz
 from django.db.models import Q
 from brCore.models import WatchList, ScanEntry, PortFolio
-from brCore.client.Factory import get_client
+from common.client.Factory import get_client
 from brCore.types.scan_types import ScanStatus, ScanProfile
 from brCore.types.asset_types import AssetTypes, TransactionType
 

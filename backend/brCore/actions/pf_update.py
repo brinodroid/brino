@@ -1,6 +1,6 @@
 import logging
 
-from brCore.client.Factory import get_client
+from common.client.Factory import get_client
 from brCore.models import WatchList, BGTask, PortFolio, ScanEntry, PortFolioUpdate
 from brSetting.models import Configuration
 from brCore.types.asset_types import PortFolioSource, AssetTypes, TransactionType
