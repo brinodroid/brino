@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand, CommandError
-from brCore.actions.bgtask import start_bgtask
+from common.actions.bgtask import start_bgtask
 from brCore.models import BGTask
 
 class Command(BaseCommand):
