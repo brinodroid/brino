@@ -23,5 +23,6 @@ urlpatterns = [
     path('brAuth/', include('brAuth.urls')),
     path('brSetting/', include('brSetting.urls')),
     path('brCore/', include('brCore.urls')),
-    path('brHistory/', include('brHistory.urls'))
+    path('brHistory/', include('brHistory.urls')),
+    path('brOrder/', include('brOrder.urls'))
 ]
