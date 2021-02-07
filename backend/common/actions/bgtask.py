@@ -1,16 +1,16 @@
 import threading
-from brCore.models import BGTask, WatchList, PortFolio, ScanEntry
-from brCore.types.bgtask_types import BGTaskAction, BGTaskStatus, BGTaskDataIdType
 import time
 import brine
 import brifz
 import logging
 import sys
-from datetime import datetime, timedelta
-from .base import base_action
-from brCore.types.scan_types import ScanStatus, ScanProfile
-from brCore.types.asset_types import AssetTypes
 import requests
+from datetime import datetime, timedelta
+from common.types.scan_types import ScanStatus, ScanProfile
+from common.types.asset_types import AssetTypes
+from common.types.bgtask_types import BGTaskAction, BGTaskStatus, BGTaskDataIdType
+from .base import base_action
+from brCore.models import BGTask, WatchList, PortFolio, ScanEntry
 
 logger = logging.getLogger('django')
 

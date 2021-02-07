@@ -1,7 +1,7 @@
 import re
 import logging
 import brine
-from brCore.types.asset_types import PortFolioSource, AssetTypes, TransactionType
+from common.types.asset_types import PortFolioSource, AssetTypes, TransactionType
 
 logger = logging.getLogger('django')
 

@@ -1,4 +1,4 @@
-from brCore.types.asset_types import PortFolioSource
+from common.types.asset_types import PortFolioSource
 from .brine_adapter import BrineAdapter
 
 

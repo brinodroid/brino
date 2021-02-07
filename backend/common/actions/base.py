@@ -3,8 +3,8 @@ import brine
 import json
 import logging
 import traceback
-from brCore.types.bgtask_types import BGTaskAction,  BGTaskActionResult, BGTaskStatus
-from brCore.types.asset_types import AssetTypes
+from common.types.bgtask_types import BGTaskAction,  BGTaskActionResult, BGTaskStatus
+from common.types.asset_types import AssetTypes
 
 logger = logging.getLogger('django')
 

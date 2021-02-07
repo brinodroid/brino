@@ -1,6 +1,6 @@
 from django.db import models
 from django.utils import timezone
-from brCore.types.asset_types import PortFolioSource, TransactionType
+from common.types.asset_types import PortFolioSource, TransactionType
 
 # Model presenting a pending order
 class Order(models.Model):

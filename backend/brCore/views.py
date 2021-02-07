@@ -7,13 +7,13 @@ import logging
 from common.actions.scanner import Scanner
 from common.actions.bgtask import start_bgtask
 from common.actions.pf_update import PFUpdater
+from common.types.status_types import Status
 
 from .models import WatchList, BGTask, PortFolio, ScanEntry, PortFolioUpdate
 from .serializers.watchlist import WatchListSerializer
 from .serializers.bgtask import BGTaskSerializer
 from .serializers.portfolio import PortFolioSerializer, PortFolioUpdateSerializer
 from .serializers.scan import ScanEntrySerializer
-from .types.status_types import Status
 
 
 logger = logging.getLogger('django')

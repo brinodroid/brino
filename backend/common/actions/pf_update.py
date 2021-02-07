@@ -1,10 +1,10 @@
 import logging
 
 from common.client.Factory import get_client
+from common.types.asset_types import PortFolioSource, AssetTypes, TransactionType
+from common.types.scan_types import ScanProfile, ScanStatus
 from brCore.models import WatchList, BGTask, PortFolio, ScanEntry, PortFolioUpdate
 from brSetting.models import Configuration
-from brCore.types.asset_types import PortFolioSource, AssetTypes, TransactionType
-from brCore.types.scan_types import ScanProfile, ScanStatus
 
 logger = logging.getLogger('django')
 

@@ -1,10 +1,10 @@
 import logging
 from django.db import models
 from django.utils import timezone
-from .types.asset_types import AssetTypes, PortFolioSource, TransactionType
-from .types.bgtask_types import BGTaskAction, BGTaskActionResult, BGTaskStatus, BGTaskDataIdType
-from .types.scan_types import ScanStatus, ScanProfile
-from .types.status_types import Status
+from common.types.asset_types import AssetTypes, PortFolioSource, TransactionType
+from common.types.bgtask_types import BGTaskAction, BGTaskActionResult, BGTaskStatus, BGTaskDataIdType
+from common.types.scan_types import ScanStatus, ScanProfile
+from common.types.status_types import Status
 
 logger = logging.getLogger('django')
 

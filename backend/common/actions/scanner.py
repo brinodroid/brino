@@ -4,10 +4,11 @@ import logging
 from datetime import datetime, timedelta
 import brifz
 from django.db.models import Q
-from brCore.models import WatchList, ScanEntry, PortFolio
 from common.client.Factory import get_client
-from brCore.types.scan_types import ScanStatus, ScanProfile
-from brCore.types.asset_types import AssetTypes, TransactionType
+from common.types.scan_types import ScanStatus, ScanProfile
+from common.types.asset_types import AssetTypes, TransactionType
+
+from brCore.models import WatchList, ScanEntry, PortFolio
 
 logger = logging.getLogger('django')
 

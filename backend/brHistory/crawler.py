@@ -3,10 +3,10 @@ from datetime import datetime, timedelta
 from django.utils import timezone
 
 import logging
+from common.types.asset_types import AssetTypes
+from common.client.Factory import get_client
 from brHistory.models import CallOptionData, PutOptionData
 from brCore.models import WatchList
-from brCore.types.asset_types import AssetTypes
-from common.client.Factory import get_client
 
 logger = logging.getLogger('django')
 
