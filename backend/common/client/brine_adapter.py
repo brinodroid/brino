@@ -111,3 +111,9 @@ class BrineAdapter:
     def get_option_price(self, ticker, expiry, strike, type):
         # TODO: Investigate why option price is returned as dictionary list
         return brine.options.get_option_market_data(ticker, expiry, strike, type)
+
+    def get_open_stock_orders(self):
+        return brine.orders.get_all_open_stock_orders()
+
+    def get_open_option_orders(self):
+        return brine.orders.get_all_open_option_orders()
