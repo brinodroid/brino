@@ -97,8 +97,8 @@ class PFUpdater:
                 watchlist_id=watchlist.id, profile=profile)
             # Scan has the entry, nothing to do
 
-            #scan_entry.status = ScanStatus.NONE.value
-            #scan_entry.save()
+            scan_entry.status = ScanStatus.NONE.value
+            scan_entry.save()
             return scan_entry
         except ScanEntry.DoesNotExist:
             logger.info('__update_option_in_scan_entry: Adding watchlist_id={}, profile={} to ScanEntry'

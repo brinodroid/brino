@@ -428,13 +428,13 @@ class Scanner:
 
         if watchlist.option_strike >= latest_price:
             self.__addAlertDetails(scan_entry, self.__SCAN_INFO_MSG,
-                                   'Stock price {} below strike price of {}. Buy back and sell?'
+                                   'Stock price {} below strike price of {}.'
                                    .format(latest_price, watchlist.option_strike))
 
         elif abs(watchlist.option_strike - latest_price) >= latest_price * 5 / 100:
             # 5% of strike price
             self.__addAlertDetails(scan_entry, self.__SCAN_INFO_MSG,
-                                   'Stock price {} within 5% strike price of {}. Buy back and sell?'
+                                   'Stock price {} within 5% strike price of {}.'
                                    .format(latest_price, watchlist.option_strike))
 
     def __check_sold_option_buyback_alert(self, scan_entry, watchlist, scan_data):
