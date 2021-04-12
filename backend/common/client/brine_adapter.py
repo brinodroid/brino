@@ -14,8 +14,25 @@ class BrineAdapter:
 
     __transaction_type_lut = {
         'long': TransactionType.BUY.value,
-        'short': TransactionType.SELL.value
+        'buy': TransactionType.BUY.value,
+        'short': TransactionType.SELL.value,
+        'sell': TransactionType.SELL.value
     }
+
+    __opening_strategy_transaction_type_lut = {
+        'long_put': TransactionType.BUY.value,
+        'long_call': TransactionType.BUY.value,
+        'short_put': TransactionType.SELL.value,
+        'short_call': TransactionType.SELL.value
+    }
+
+    __opening_strategy_transaction_type_lut = {
+        'long_put': TransactionType.BUY.value,
+        'long_call': TransactionType.BUY.value,
+        'short_put': TransactionType.SELL.value,
+        'short_call': TransactionType.SELL.value
+    }
+
 
     def __init__(self):
         brine.login()
@@ -116,4 +133,36 @@ class BrineAdapter:
         return brine.orders.get_all_open_stock_orders()
 
     def get_open_option_orders(self):
-        return brine.orders.get_all_open_option_orders()
+        order_list = brine.orders.get_all_open_option_orders()
+        res_order_list = []
+
+        for order in order_list:
+            res_order = {}
+            res_order['client'] = PortFolioSource.BRINE.value
+
+            res_order['brino_entry_price'] = float(order['price'])
+            res_order['quantity'] = order['quantity']
+            res_order['pending_quantity'] = order['pending_quantity']
+            res_order['chain_id'] = order['chain_id']
+            res_order['chain_symbol'] = order['chain_symbol']
+            res_order['id'] = order['id']
+            res_order['created_at'] = order['created_at']
+            res_order['opening_strategy'] = order['opening_strategy']
+            res_order['closing_strategy'] = order['closing_strategy']
+
+            res_legs_list = []
+            for leg in order['legs']:
+                res_leg = {}
+                res_leg['brino_transaction_type'] = self.__transaction_type_lut[leg['side']]
+                res_leg['id'] = leg['id']
+                res_leg['instrument_url'] = leg['option']
+                # Extract the instrument id from the url
+                res_leg['instrument_id'] = re.search(
+                    'https://api.robinhood.com/options/instruments/(.+?)/', leg['option']).group(1)
+
+                res_legs_list.append(res_leg)
+
+            res_order['res_legs_list'] = res_legs_list
+            res_order_list.append(res_order)
+
+        return res_order_list

@@ -4,6 +4,7 @@ from common.client.Factory import get_client
 from common.types.asset_types import PortFolioSource, AssetTypes, TransactionType
 from common.types.scan_types import ScanProfile, ScanStatus
 from brCore.models import WatchList, BGTask, PortFolio, ScanEntry, PortFolioUpdate
+from brOrder.models import Order
 from brSetting.models import Configuration
 
 logger = logging.getLogger('django')
@@ -21,6 +22,8 @@ class PFUpdater:
         TransactionType.BUY.value: ScanProfile.BUY_PUT.value,
         TransactionType.SELL.value: ScanProfile.SELL_PUT.value,
     }
+
+    __option_multiplier = 100.0
 
     def __init__(self):
         """ Virtually private constructor. """
@@ -258,6 +261,53 @@ class PFUpdater:
 
         return brine_id_lut
 
+    def __update_open_option_orders_legs(self, client, open_order):
+        watchlist_id_list = []
+        transaction_type_list = []
+        for res_leg in open_order['res_legs_list']:
+            option_data = client.get_option_data(res_leg['instrument_id'])
+            watchlist = self.__update_option_in_watchlist(option_data)
+            watchlist_id_list.append(watchlist.id)
+            transaction_type_list.append(res_leg['brino_transaction_type'])
+
+        return watchlist_id_list, transaction_type_list
+
+    def __update_open_option_orders(self, client):
+        open_option_orders = client.get_open_option_orders()
+
+        for open_order in open_option_orders:
+            try:
+                order = Order.objects.get(
+                    brine_id=open_order['id'])
+                #Order is already in the Db. Nothing to do
+                continue
+            except Order.DoesNotExist:
+                # This is a new order, need that needs to be added to Db
+                logger.info('__update_open_option_orders: Adding new order {}'.format(
+                    open_order))
+            # INTENTIONAL FALL DOWN. Add the entry to portfolio
+
+            # TODO: watchlist could be an array
+            watchlist_id_list, transaction_type_list = self.__update_open_option_orders_legs(client, open_order)
+
+            watchlist_id_list_text = ','.join(map(str, watchlist_id_list))
+            transaction_type_list_text = ','.join(map(str, transaction_type_list))
+
+            # Order
+            order = Order(watchlist_id_list=watchlist_id_list_text,
+                            transaction_type_list=transaction_type_list_text,
+                            entry_datetime=open_order['created_at'],
+                            entry_price=open_order['brino_entry_price'],
+                            units=float(open_order['quantity'])*self.__option_multiplier,
+                            brine_id=open_order['id'],
+                            closing_strategy=open_order['closing_strategy'],
+                            opening_strategy=open_order['opening_strategy'],
+                            source=PortFolioSource.BRINE.value)
+            order.save()
+
+        return
+
+
     def update(self, source):
         # TODO:
         # 1. Need to handle other sources
@@ -266,6 +316,8 @@ class PFUpdater:
 
         configuration = Configuration.objects.first()
         client = get_client(source)
+
+        self.__update_open_option_orders(client)
 
         stock_ids_lut = self.__update_stocks(client, configuration)
         option_ids_lut = self.__update_options(client, configuration)
