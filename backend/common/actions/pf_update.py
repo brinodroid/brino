@@ -1,11 +1,12 @@
 import logging
-
 from common.client.Factory import get_client
 from common.types.asset_types import PortFolioSource, AssetTypes, TransactionType
 from common.types.scan_types import ScanProfile, ScanStatus
 from brCore.models import WatchList, BGTask, PortFolio, ScanEntry, PortFolioUpdate
-from brOrder.models import Order
+from brOrder.models import OpenOrder, ExecutedOrder, CancelledOrder
 from brSetting.models import Configuration
+from django.utils import timezone
+
 
 logger = logging.getLogger('django')
 
@@ -272,16 +273,79 @@ class PFUpdater:
 
         return watchlist_id_list, transaction_type_list
 
+    def __convert_orders_list_to_map(self, open_orders):
+        open_order_ids_list =[d['id'] for d in open_orders]
+        open_orders_map = dict(zip(open_order_ids_list, open_orders))
+        return open_orders_map
+
+
+    def __update_missing_open_option_orders(self, client, open_option_orders):
+        # Get all open orders from the order table
+        open_orders_in_table = OpenOrder.objects.all()
+        open_option_orders_map = self.__convert_orders_list_to_map(open_option_orders)
+
+        for open_order_in_table in open_orders_in_table:
+            if str(open_order_in_table.brine_id) in open_option_orders_map:
+                # Its still an open order, nothing to do
+                logger.info('__update_missing_open_option_orders: Order {} is still open'.format(
+                    open_order_in_table.brine_id))
+                continue
+
+            # The missing order could be either
+            # Case 1: Executed. Add it to portfolio
+            # Case 2: Cancelled. Add it the cancelled table and delete from here
+
+            order_status = client.get_open_option_orders_status(open_order_in_table.brine_id)
+            logger.info('__update_missing_open_option_orders: order_status {} is still open'.format(
+                    order_status))
+
+            if order_status['state'] == 'cancelled':
+                #Order is cancelled
+                cancelled_order = CancelledOrder(watchlist_id_list=open_order_in_table.watchlist_id_list,
+                    transaction_type_list=open_order_in_table.transaction_type_list,
+                    created_datetime=open_order_in_table.created_datetime,
+                    cancelled_datetime=order_status['updated_at'],
+                    price=open_order_in_table.price,
+                    units=open_order_in_table.units,
+                    brine_id=open_order_in_table.brine_id,
+                    closing_strategy=open_order_in_table.closing_strategy,
+                    opening_strategy=open_order_in_table.opening_strategy,
+                    source=open_order_in_table.source)
+                cancelled_order.save()
+            elif order_status['state'] == 'filled':
+                #Should have been filled
+                executed_order = ExecutedOrder(watchlist_id_list=open_order_in_table.watchlist_id_list,
+                    transaction_type_list=open_order_in_table.transaction_type_list,
+                    order_created_datetime=open_order_in_table.created_datetime,
+                    executed_datetime=order_status['updated_at'],
+                    price=open_order_in_table.price,
+                    executed_price=order_status['brino_entry_price'],
+                    units=open_order_in_table.units,
+                    brine_id=open_order_in_table.brine_id,
+                    closing_strategy=open_order_in_table.closing_strategy,
+                    opening_strategy=open_order_in_table.opening_strategy,
+                    source=open_order_in_table.source)
+                executed_order.save()
+            else:
+                logger.error('__update_missing_open_option_orders: Order state {} is unknown. Ignore'
+                    .format(order_status))
+                continue
+
+            #delete the order from openOrders
+            open_order_in_table.delete()
+
     def __update_open_option_orders(self, client):
         open_option_orders = client.get_open_option_orders()
 
+        self.__update_missing_open_option_orders(client, open_option_orders)
+
         for open_order in open_option_orders:
             try:
-                order = Order.objects.get(
+                order = OpenOrder.objects.get(
                     brine_id=open_order['id'])
                 #Order is already in the Db. Nothing to do
                 continue
-            except Order.DoesNotExist:
+            except OpenOrder.DoesNotExist:
                 # This is a new order, need that needs to be added to Db
                 logger.info('__update_open_option_orders: Adding new order {}'.format(
                     open_order))
@@ -294,10 +358,10 @@ class PFUpdater:
             transaction_type_list_text = ','.join(map(str, transaction_type_list))
 
             # Order
-            order = Order(watchlist_id_list=watchlist_id_list_text,
+            order = OpenOrder(watchlist_id_list=watchlist_id_list_text,
                             transaction_type_list=transaction_type_list_text,
-                            entry_datetime=open_order['created_at'],
-                            entry_price=open_order['brino_entry_price'],
+                            created_datetime=open_order['created_at'],
+                            price=open_order['brino_entry_price'],
                             units=float(open_order['quantity'])*self.__option_multiplier,
                             brine_id=open_order['id'],
                             closing_strategy=open_order['closing_strategy'],

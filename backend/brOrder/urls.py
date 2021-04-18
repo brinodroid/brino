@@ -1,7 +1,13 @@
 from django.urls import include, path
-from .views import order_list, order_detail
+from .views import open_order_list, open_order_detail, \
+    executed_order_list, executed_order_detail, \
+    cancelled_order_list, cancelled_order_detail
 
 urlpatterns = [
-    path('order/', order_list),
-    path('order/<int:pk>', order_detail),
+    path('open/', open_order_list),
+    path('open/<int:pk>', open_order_detail),
+    path('executed/', executed_order_list),
+    path('executed/<int:pk>', executed_order_detail),
+    path('cancelled/', cancelled_order_list),
+    path('cancelled/<int:pk>', cancelled_order_detail),
 ]
