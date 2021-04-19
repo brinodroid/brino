@@ -129,38 +129,45 @@ class BrineAdapter:
         # TODO: Investigate why option price is returned as dictionary list
         return brine.options.get_option_market_data(ticker, expiry, strike, type)
 
-    def get_open_stock_orders(self):
-        return brine.orders.get_all_open_stock_orders()
-
     def __convert_order_to_brine(self, order):
         res_order = {}
         res_order['client'] = PortFolioSource.BRINE.value
 
         res_order['brino_entry_price'] = float(order['price'])
         res_order['quantity'] = order['quantity']
-        res_order['pending_quantity'] = order['pending_quantity']
-        res_order['chain_id'] = order['chain_id']
-        res_order['chain_symbol'] = order['chain_symbol']
         res_order['id'] = order['id']
         res_order['state'] = order['state']
         res_order['created_at'] = order['created_at']
         res_order['updated_at'] = order['updated_at']
-        res_order['opening_strategy'] = order['opening_strategy']
-        res_order['closing_strategy'] = order['closing_strategy']
 
-        res_legs_list = []
-        for leg in order['legs']:
-            res_leg = {}
-            res_leg['brino_transaction_type'] = self.__transaction_type_lut[leg['side']]
-            res_leg['id'] = leg['id']
-            res_leg['instrument_url'] = leg['option']
-            # Extract the instrument id from the url
-            res_leg['instrument_id'] = re.search(
-                'https://api.robinhood.com/options/instruments/(.+?)/', leg['option']).group(1)
+        if 'chain_id' in order:
+            # This is an option order
+            res_order['chain_id'] = order['chain_id']
+            res_order['chain_symbol'] = order['chain_symbol']
+            res_order['opening_strategy'] = order['opening_strategy']
+            res_order['closing_strategy'] = order['closing_strategy']
+
+            res_legs_list = []
+            for leg in order['legs']:
+                res_leg = {}
+                res_leg['brino_transaction_type'] = self.__transaction_type_lut[leg['side']]
+                res_leg['id'] = leg['id']
+                res_leg['instrument_url'] = leg['option']
+                # Extract the instrument id from the url
+                res_leg['instrument_id'] = re.search(
+                    'https://api.robinhood.com/options/instruments/(.+?)/', leg['option']).group(1)
 
             res_legs_list.append(res_leg)
+            res_order['res_legs_list'] = res_legs_list
+        else:
+            # This is a stock order
+            res_order['brino_asset_type'] = AssetTypes.STOCK.value
+            res_order['brino_transaction_type'] = self.__transaction_type_lut[order['side']]
+            res_order['instrument_url'] = order['instrument']
+            # Extract the instrument id from the url
+            res_order['instrument_id'] = re.search(
+                'https://api.robinhood.com/instruments/(.+?)/', order['instrument']).group(1)
 
-        res_order['res_legs_list'] = res_legs_list
         return res_order
 
 
@@ -173,6 +180,19 @@ class BrineAdapter:
 
         return res_order_list
 
-    def get_open_option_orders_status(self, order_id):
+    def get_open_option_order_status(self, order_id):
         order = brine.orders.get_option_order_info(order_id)
+        return self.__convert_order_to_brine(order)
+
+    def get_open_stock_orders(self):
+        order_list = brine.orders.get_all_open_stock_orders()
+        res_order_list = []
+
+        for order in order_list:
+            res_order_list.append(self.__convert_order_to_brine(order))
+
+        return res_order_list
+
+    def get_open_stock_order_status(self, order_id):
+        order = brine.orders.get_stock_order_info(order_id)
         return self.__convert_order_to_brine(order)

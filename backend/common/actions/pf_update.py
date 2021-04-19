@@ -278,25 +278,35 @@ class PFUpdater:
         open_orders_map = dict(zip(open_order_ids_list, open_orders))
         return open_orders_map
 
+    def __get_order_asset_type(self, open_order_in_table):
+        watchlist_id_list = open_order_in_table.watchlist_id_list.split(',')
+        first_watchlist_id = watchlist_id_list[0]
+        watchlist = WatchList.objects.get(
+                    pk=int(first_watchlist_id))
+        return watchlist.asset_type
 
-    def __update_missing_open_option_orders(self, client, open_option_orders):
+
+    def __update_missing_open_orders(self, client, open_orders):
         # Get all open orders from the order table
         open_orders_in_table = OpenOrder.objects.all()
-        open_option_orders_map = self.__convert_orders_list_to_map(open_option_orders)
+        open_orders_map = self.__convert_orders_list_to_map(open_orders)
 
         for open_order_in_table in open_orders_in_table:
-            if str(open_order_in_table.brine_id) in open_option_orders_map:
+            if str(open_order_in_table.brine_id) in open_orders_map:
                 # Its still an open order, nothing to do
-                logger.info('__update_missing_open_option_orders: Order {} is still open'.format(
+                logger.info('__update_missing_open_orders: Order {} is still open'.format(
                     open_order_in_table.brine_id))
                 continue
 
             # The missing order could be either
             # Case 1: Executed. Add it to portfolio
             # Case 2: Cancelled. Add it the cancelled table and delete from here
+            if self.__get_order_asset_type(open_order_in_table) == AssetTypes.STOCK.value:
+                order_status = client.get_open_stock_order_status(open_order_in_table.brine_id)
+            else:
+                order_status = client.get_open_option_order_status(open_order_in_table.brine_id)
 
-            order_status = client.get_open_option_orders_status(open_order_in_table.brine_id)
-            logger.info('__update_missing_open_option_orders: order_status {} is still open'.format(
+            logger.info('__update_missing_open_orders: order_status {} is still open'.format(
                     order_status))
 
             if order_status['state'] == 'cancelled':
@@ -327,18 +337,14 @@ class PFUpdater:
                     source=open_order_in_table.source)
                 executed_order.save()
             else:
-                logger.error('__update_missing_open_option_orders: Order state {} is unknown. Ignore'
+                logger.error('__update_missing_open_option_orders: Order state {} is unknown. Ignoring'
                     .format(order_status))
                 continue
 
             #delete the order from openOrders
             open_order_in_table.delete()
 
-    def __update_open_option_orders(self, client):
-        open_option_orders = client.get_open_option_orders()
-
-        self.__update_missing_open_option_orders(client, open_option_orders)
-
+    def __update_open_option_orders(self, client, open_option_orders):
         for open_order in open_option_orders:
             try:
                 order = OpenOrder.objects.get(
@@ -351,7 +357,6 @@ class PFUpdater:
                     open_order))
             # INTENTIONAL FALL DOWN. Add the entry to portfolio
 
-            # TODO: watchlist could be an array
             watchlist_id_list, transaction_type_list = self.__update_open_option_orders_legs(client, open_order)
 
             watchlist_id_list_text = ','.join(map(str, watchlist_id_list))
@@ -371,6 +376,58 @@ class PFUpdater:
 
         return
 
+    def __update_open_stock_orders_legs(self, client, open_order):
+        watchlist_id_list = []
+        transaction_type_list = []
+
+        instrument_data = client.get_stock_instrument_data(open_order['instrument_url'])
+        watchlist = self.__update_stock_in_watchlist(open_order, instrument_data)
+
+        watchlist_id_list.append(watchlist.id)
+        transaction_type_list.append(open_order['brino_transaction_type'])
+
+        return watchlist_id_list, transaction_type_list
+
+    def __update_open_stock_orders(self, client, open_stock_orders):
+        for open_order in open_stock_orders:
+            try:
+                order = OpenOrder.objects.get(
+                    brine_id=open_order['id'])
+                #Order is already in the Db. Nothing to do
+                continue
+            except OpenOrder.DoesNotExist:
+                # This is a new order, need that needs to be added to Db
+                logger.info('__update_open_stock_orders: Adding new order {}'.format(
+                    open_order))
+            # INTENTIONAL FALL DOWN. Add the entry to portfolio
+
+            watchlist_id_list, transaction_type_list = self.__update_open_stock_orders_legs(client, open_order)
+
+            watchlist_id_list_text = ','.join(map(str, watchlist_id_list))
+            transaction_type_list_text = ','.join(map(str, transaction_type_list))
+
+            # Order
+            order = OpenOrder(watchlist_id_list=watchlist_id_list_text,
+                            transaction_type_list=transaction_type_list_text,
+                            created_datetime=open_order['created_at'],
+                            price=open_order['brino_entry_price'],
+                            units=float(open_order['quantity'])*self.__option_multiplier,
+                            brine_id=open_order['id'],
+                            source=PortFolioSource.BRINE.value)
+            order.save()
+
+        return
+
+    def __update_open_orders(self, client):
+        open_option_orders = client.get_open_option_orders()
+        open_stock_orders = client.get_open_stock_orders()
+
+        self.__update_missing_open_orders(client, open_option_orders + open_stock_orders)
+
+        #Before adding the new orders, remove
+        self.__update_open_option_orders(client, open_option_orders)
+        self.__update_open_stock_orders(client, open_stock_orders)
+
 
     def update(self, source):
         # TODO:
@@ -381,7 +438,7 @@ class PFUpdater:
         configuration = Configuration.objects.first()
         client = get_client(source)
 
-        self.__update_open_option_orders(client)
+        self.__update_open_orders(client)
 
         stock_ids_lut = self.__update_stocks(client, configuration)
         option_ids_lut = self.__update_options(client, configuration)
