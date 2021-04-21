@@ -9,6 +9,7 @@ from common.types.scan_types import ScanStatus, ScanProfile
 from common.types.asset_types import AssetTypes, TransactionType
 
 from brCore.models import WatchList, ScanEntry, PortFolio
+from brOrder.models import OpenOrder
 
 logger = logging.getLogger('django')
 
@@ -322,6 +323,7 @@ class Scanner:
         total_sold_calls = 0
         total_bought_calls = 0
         total_stock_units = 0
+        total_open_sell_orders=0
 
         for ticker_watchlist in ticker_watchlist_list:
             portfolio_list = PortFolio.objects.all().filter(
@@ -335,11 +337,27 @@ class Scanner:
                     else:
                         total_sold_calls += portfolio.units
 
-        if int((total_stock_units + total_bought_calls - total_sold_calls)/100) > 0:
+        # Get the list of watchlists with the ticker
+        ticker_watchlist_id_list=[watchlist.id for watchlist in ticker_watchlist_list]
+
+        open_orders_list = OpenOrder.objects.all()
+        # Searching manually as the watchlist is kept as a comma seperated list of strings
+        for open_order in open_orders_list:
+            watchlist_id_list_in_order = open_order.watchlist_id_list.split(',')
+            transaction_type_list_in_order = open_order.transaction_type_list.split(',')
+            for (watchlist_id, transaction_type) in zip(watchlist_id_list_in_order, transaction_type_list_in_order):
+                if int(watchlist_id) in ticker_watchlist_id_list:
+                    # The list contains the same ticker
+                    if transaction_type == TransactionType.SELL.value:
+                        total_open_sell_orders += open_order.units
+                    else:
+                        total_open_sell_orders -= open_order.units
+
+        if int((total_stock_units + total_bought_calls - total_sold_calls - total_open_sell_orders)/100) > 0:
             self.__addAlertDetails(
                 scan_entry, self.__SCAN_ERROR_MSG,
-                'Missed to sell covered call? stocks={}, calls bought={} calls sold={}'
-                .format(total_stock_units, total_bought_calls, total_sold_calls))
+                'Missed to sell covered call? stocks={}, calls bought={}, calls sold={}, open_orders={}'
+                .format(total_stock_units, total_bought_calls, total_sold_calls, total_open_sell_orders))
 
     def __check_support_resistance_alert(self, scan_entry, watchlist, scan_data):
         # current_price contains the latest price for option or stock
