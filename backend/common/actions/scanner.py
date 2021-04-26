@@ -272,7 +272,10 @@ class Scanner:
 
     def __addAlertDetails(self, scan_entry, level, new_detail):
         scan_entry.details += '--> {}: {}'.format(level, new_detail)
-        scan_entry.status = ScanStatus.ATTN.value
+        if level != self.__SCAN_INFO_MSG:
+            #Change the status to ATTN only if the message is either warnings or error
+            scan_entry.status = ScanStatus.ATTN.value
+
         logger.info('__addAlertDetails: added scan_entry=%s', scan_entry)
 
     def __set_default_support_resistance(self, scan_entry):
@@ -357,6 +360,11 @@ class Scanner:
             self.__addAlertDetails(
                 scan_entry, self.__SCAN_ERROR_MSG,
                 'Missed to sell covered call? stocks={}, calls bought={}, calls sold={}, open_orders={}'
+                .format(total_stock_units, total_bought_calls, total_sold_calls, total_open_sell_orders))
+        elif total_open_sell_orders > 0:
+            self.__addAlertDetails(
+                scan_entry, self.__SCAN_INFO_MSG,
+                'Have open covered call orders. stocks={}, calls bought={}, calls sold={}, open_orders={}'
                 .format(total_stock_units, total_bought_calls, total_sold_calls, total_open_sell_orders))
 
     def __check_support_resistance_alert(self, scan_entry, watchlist, scan_data):
