@@ -17,7 +17,7 @@ logger = logging.getLogger('django')
 class Scanner:
     __instance = None
     #5min sleep
-    __sleep_duration = 300
+    __sleep_duration = 60
 
     __SCAN_ERROR_MSG = 'ERROR'
     __SCAN_WARN_MSG = 'WARNING'
@@ -109,6 +109,15 @@ class Scanner:
 
             time.sleep(self.__sleep_duration)
 
+
+    def __compute_reward_2_risk(self, scan_entry):
+        # current_price contains the latest price for option or stock
+        latest_price = scan_entry.current_price
+        risk = latest_price - scan_entry.support
+        reward = scan_entry.resistance - latest_price
+
+        return round(reward/risk, 1)
+
     def __update_scan_entry_values(self, scan_entry, scan_data, client):
         try:
             watchlist = WatchList.objects.get(pk=scan_entry.watchlist_id)
@@ -187,6 +196,9 @@ class Scanner:
                 # Update brifz_target if not present
                 scan_entry.brifz_target = self.__get_brifz_target(
                     scan_entry, watchlist, scan_data)
+
+
+        scan_entry.reward_2_risk = self.__compute_reward_2_risk(scan_entry)
 
         # Call all __scan_profile_check of the given profile
         for scan_profile_check in self.__scan_profile_check_list[scan_entry.profile]:
@@ -306,6 +318,7 @@ class Scanner:
         scan_latest_entry.current_price = scan_entry.current_price
         scan_latest_entry.volatility = scan_entry.volatility
         scan_latest_entry.short_float = scan_entry.short_float
+        scan_latest_entry.reward_2_risk = scan_entry.reward_2_risk
 
         self.__set_default_support_resistance(scan_latest_entry)
 
@@ -367,17 +380,6 @@ class Scanner:
                 scan_entry, self.__SCAN_INFO_MSG,
                 'Have open covered call orders. stocks={}, calls bought={}, calls sold={}, open_orders={}'
                 .format(total_stock_units, total_bought_calls, total_sold_calls, total_open_sell_orders))
-
-    def __check_reward_to_risk_alert(self, scan_entry, watchlist, scan_data):
-        # current_price contains the latest price for option or stock
-        latest_price = scan_entry.current_price
-        risk = latest_price - scan_entry.support
-        reward = scan_entry.resistance - latest_price
-
-        reward_to_risk = round(reward/risk, 1)
-        self.__addAlertDetails(
-            scan_entry, self.__SCAN_INFO_MSG, 'reward to risk {}'.format(reward_to_risk))
-
 
     def __check_support_resistance_alert(self, scan_entry, watchlist, scan_data):
         # current_price contains the latest price for option or stock
@@ -496,7 +498,6 @@ class Scanner:
         ScanProfile.BUY_STOCK.value:
             [
                 __check_support_resistance_alert,
-                __check_reward_to_risk_alert,
                 __check_extended_hours_price_movement_alert,
                 __check_brifz_target_price_update_alert,
                 __check_missed_covered_call_sell_alert
@@ -504,7 +505,6 @@ class Scanner:
         ScanProfile.SELL_CALL.value:
             [
                 __check_support_resistance_alert,
-                __check_reward_to_risk_alert,
                 __check_extended_hours_price_movement_alert,
                 __check_option_above_strike_alert,
                 __check_option_time_to_expiry_alert,
@@ -513,7 +513,6 @@ class Scanner:
         ScanProfile.BUY_CALL.value:
             [
                 __check_support_resistance_alert,
-                __check_reward_to_risk_alert,
                 __check_extended_hours_price_movement_alert,
                 __check_option_below_strike_alert,
                 __check_option_time_to_expiry_alert,
@@ -522,7 +521,6 @@ class Scanner:
         ScanProfile.BUY_PUT.value:
             [
                 __check_support_resistance_alert,
-                __check_reward_to_risk_alert,
                 __check_extended_hours_price_movement_alert,
                 __check_option_above_strike_alert,
                 __check_option_time_to_expiry_alert,
@@ -530,7 +528,6 @@ class Scanner:
         ScanProfile.SELL_PUT.value:
             [
                 __check_support_resistance_alert,
-                __check_reward_to_risk_alert,
                 __check_extended_hours_price_movement_alert,
                 __check_option_below_strike_alert,
                 __check_option_time_to_expiry_alert,

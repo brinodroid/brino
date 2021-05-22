@@ -104,6 +104,7 @@ class ScanEntry(models.Model):
     brate_target = models.FloatField(null=True, blank=True)
     brifz_target = models.FloatField(null=True, blank=True)
     rationale = models.TextField(default="", blank=True)
+    reward_2_risk = models.FloatField(null=True, blank=True)
 
     # Filled by backend
     current_price = models.FloatField(null=True)
@@ -119,10 +120,10 @@ class ScanEntry(models.Model):
 
     def __str__(self):
         return "watchlist_id:%s, portfolio_id:%s, profile:%s, current_price:%s, support:%s, resistance:%s," \
-            " profit_target:%s, stop_loss:%s, brate_target:%s, brifz_target:%s, rationale:%s," \
+            " profit_target:%s, stop_loss:%s, brate_target:%s, brifz_target:%s, rationale:%s, reward_2_risk:%s" \
             " volatility:%s, short_float:%s, status:%s, details:%s, update_timestamp:%s" \
                % (self.watchlist_id, self.portfolio_id, self.profile, self.current_price, self.support, self.resistance,
-                  self.profit_target, self.stop_loss, self.brate_target, self.brifz_target, self.rationale,
+                  self.profit_target, self.stop_loss, self.brate_target, self.brifz_target, self.rationale, self.reward_2_risk,
                   self.volatility, self.short_float, self.status, self.details, self.update_timestamp)
 
 

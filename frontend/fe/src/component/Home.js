@@ -422,9 +422,21 @@ export default class Scan extends React.Component {
 
   getStatusHighlight(rowData) {
     if (rowData.status === "ATTN")
-      return "danger";
+      return (<Alert variant='danger' > {rowData.status} </Alert>);
 
-    return "info"
+    return rowData.status;
+  }
+
+  getRewardHighlight(rowData) {
+    if (rowData.reward_2_risk > 3.0) {
+      return (<Alert variant='success' > {rowData.reward_2_risk} </Alert>);
+    }
+
+    if (rowData.reward_2_risk < 1.5) {
+      return (<Alert variant='danger' > {rowData.reward_2_risk} </Alert>);
+    }
+
+    return rowData.reward_2_risk;
   }
 
   render() {
@@ -449,25 +461,24 @@ export default class Scan extends React.Component {
           </ButtonGroup>
         )
       },
-      { Header: 'ID', accessor: 'id' },
       { Header: 'profile', accessor: 'profile' },
-      { Header: 'WL Id', accessor: 'watchlist_id' },
-      { Header: 'PF Id', accessor: 'portfolio_id' },
       { Header: 'WL ticker', accessor: 'watchListTicker' },
-      { Header: 'Support', accessor: 'support' },
-      { Header: 'Resistance', accessor: 'resistance' },
       { Header: 'Current Price', accessor: 'current_price' },
-      { Header: 'Profit Target', accessor: 'profit_target' },
-      { Header: 'Stop Loss', accessor: 'stop_loss' },
       { Header: 'Brate Target', accessor: 'brate_target' },
       { Header: 'Brifz Target', accessor: 'brifz_target' },
       { Header: 'Rationale', accessor: 'rationale' },
       { Header: 'Volatility', accessor: 'volatility' },
       { Header: 'Short float', accessor: 'short_float' },
       {
+        Header: 'Reward', accessor: 'reward_2_risk',
+        Cell: ({ row }) => (
+          <> {this.getRewardHighlight(row.original)} </>
+        )
+      },
+      {
         Header: 'Status', accessor: 'status',
         Cell: ({ row }) => (
-          <Alert variant={this.getStatusHighlight(row.original)} > {row.original.status} </Alert>
+          <> {this.getStatusHighlight(row.original)} </>
         )
       },
       { Header: 'Details', accessor: 'details' },
