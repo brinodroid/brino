@@ -24,6 +24,10 @@ class Backend {
     this.deletePortFolio = this.deletePortFolio.bind(this);
     this.updatePortFolio = this.updatePortFolio.bind(this);
 
+    this.getOpenOrders = this.getOpenOrders.bind(this);
+    this.createOpenOrder = this.createOpenOrder.bind(this);
+    this.deleteOpenOrder = this.deleteOpenOrder.bind(this);
+
     this.getScan = this.getScan.bind(this);
     this.createScan = this.createScan.bind(this);
     this.deleteScan = this.deleteScan.bind(this);
@@ -147,6 +151,20 @@ class Backend {
   updatePortFolio(portfolio, callback) {
     this.putWithToken('brCore/portfolio/' + portfolio.id, portfolio, callback);
   }
+
+  getOpenOrders(callback) {
+    this.getWithToken('brOrder/open', callback);
+  }
+
+  createOpenOrder(newOrder, callback) {
+    // The below fields are not needed during creation
+    this.postWithToken('brOrder/open', newOrder, callback);
+  }
+
+  deleteOpenOrder(order, callback) {
+    this.deleteWithToken('brOrder/open/' + order.id, callback);
+  }
+
 
   getScan(callback) {
     this.getWithToken('brCore/scan', callback);
