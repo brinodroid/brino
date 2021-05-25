@@ -115,8 +115,23 @@ class Scanner:
         latest_price = scan_entry.current_price
         risk = latest_price - scan_entry.support
         reward = scan_entry.resistance - latest_price
+        if risk == 0:
+            risk = 0.001
 
         return round(reward/risk, 1)
+
+    def __compute_potential(self, scan_entry):
+        target = scan_entry.brifz_target
+        if target is None:
+            if scan_entry.brate_target is None:
+                #Cannot compute the potential
+                return None
+
+            #We have brate target, use it
+            target = scan_entry.brate_target
+
+        potential = target/scan_entry.current_price
+        return round(potential,1)
 
     def __update_scan_entry_values(self, scan_entry, scan_data, client):
         try:
@@ -199,6 +214,7 @@ class Scanner:
 
 
         scan_entry.reward_2_risk = self.__compute_reward_2_risk(scan_entry)
+        scan_entry.potential = self.__compute_potential(scan_entry)
 
         # Call all __scan_profile_check of the given profile
         for scan_profile_check in self.__scan_profile_check_list[scan_entry.profile]:
@@ -319,11 +335,12 @@ class Scanner:
         scan_latest_entry.volatility = scan_entry.volatility
         scan_latest_entry.short_float = scan_entry.short_float
         scan_latest_entry.reward_2_risk = scan_entry.reward_2_risk
+        scan_latest_entry.potential = scan_entry.potential
 
         self.__set_default_support_resistance(scan_latest_entry)
 
         if scan_latest_entry.brifz_target is None:
-            # Update brifz_target if not present
+            # Update brifz_target if not present. This is done to generate the UPGRADE/DOWNGRADE alerts
             scan_latest_entry.brifz_target = scan_entry.brifz_target
 
         scan_latest_entry.save()

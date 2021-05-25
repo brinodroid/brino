@@ -439,6 +439,18 @@ export default class Scan extends React.Component {
     return rowData.reward_2_risk;
   }
 
+  getPotentialHighlight(rowData) {
+    if (rowData.potential > 1.2) {
+      return (<Alert variant='success' > {rowData.potential} </Alert>);
+    }
+
+    if (rowData.potential < 0.8) {
+      return (<Alert variant='danger' > {rowData.potential} </Alert>);
+    }
+
+    return rowData.potential;
+  }
+
   render() {
     if (!this.props.auth.isAuthenticated) {
       console.info('Scan:  not authenticated, redirecting to login page');
@@ -469,6 +481,12 @@ export default class Scan extends React.Component {
       { Header: 'Rationale', accessor: 'rationale' },
       { Header: 'Volatility', accessor: 'volatility' },
       { Header: 'Short float', accessor: 'short_float' },
+      {
+        Header: 'Potential', accessor: 'potential',
+        Cell: ({ row }) => (
+          <> {this.getPotentialHighlight(row.original)} </>
+        )
+      },
       {
         Header: 'Reward', accessor: 'reward_2_risk',
         Cell: ({ row }) => (
