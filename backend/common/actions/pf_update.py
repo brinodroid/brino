@@ -97,6 +97,8 @@ class PFUpdater:
 
         # Check if its already there in scan
         try:
+            logger.info('getting scan: Adding watchlist_id={}, profile={} to ScanEntry'
+                        .format(watchlist.id, profile))
             scan_entry = ScanEntry.objects.get(
                 watchlist_id=watchlist.id, profile=profile)
             # Scan has the entry, nothing to do

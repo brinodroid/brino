@@ -3,11 +3,14 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 import logging
+import json
 
 from common.actions.scanner import Scanner
 from common.actions.bgtask import start_bgtask
 from common.actions.pf_update import PFUpdater
 from common.types.status_types import Status
+from common.types.scan_types import ScanProfile
+from common.types.asset_types import AssetTypes
 
 from .models import WatchList, BGTask, PortFolio, ScanEntry, PortFolioUpdate
 from .serializers.watchlist import WatchListSerializer
@@ -178,6 +181,32 @@ def scan_list(request):
         return Response(serializer.data)
     elif request.method == 'POST':
         # Create a new watchlist
+        if not request.data['watchlist_id']:
+            if request.data['profile'] == ScanProfile.BUY_STOCK.value:
+                # No watchlist Id given for BUY_STOCK profile
+                # Check if we can get the watchlist id from the ticker
+                ticker_watchlist_list = WatchList.objects.filter(ticker=request.data['watchListTicker'].upper()).filter(asset_type=AssetTypes.STOCK.value)
+
+                if len(ticker_watchlist_list) > 1:
+                    return Response({'detail': 'Ticker maps to multiple watchlist'}, status=status.HTTP_400_BAD_REQUEST)
+
+                if not ticker_watchlist_list:
+                    # List is empty, create a new watchlist
+                    newWatchlist = {}
+                    newWatchlist['ticker'] = request.data['watchListTicker'].upper()
+                    newWatchlist['asset_type'] = AssetTypes.STOCK.value
+                    serializer = WatchListSerializer(data=newWatchlist)
+                    if serializer.is_valid() == False:
+                        logger.error(serializer.errors)
+                        return Response({'detail': 'Watchlist data validation failed'}, status=status.HTTP_400_BAD_REQUEST)
+
+                    newWatchlist = serializer.save()
+                    # Take in the new id
+                    request.data['watchlist_id'] = newWatchlist.id
+
+                else:
+                    request.data['watchlist_id'] = ticker_watchlist_list[0].id
+
         serializer = ScanEntrySerializer(data=request.data)
         if serializer.is_valid() == False:
             logger.error(serializer.errors)

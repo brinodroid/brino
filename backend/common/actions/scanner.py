@@ -111,14 +111,19 @@ class Scanner:
 
 
     def __compute_reward_2_risk(self, scan_entry):
+        if scan_entry.support is None:
+            #Some options may not have support price
+            return None
+
         # current_price contains the latest price for option or stock
+
         latest_price = scan_entry.current_price
         risk = latest_price - scan_entry.support
         reward = scan_entry.resistance - latest_price
         if risk == 0:
             risk = 0.001
 
-        return round(reward/risk, 1)
+        return round(reward/risk, 2)
 
     def __compute_potential(self, scan_entry):
         target = scan_entry.brifz_target
@@ -131,7 +136,7 @@ class Scanner:
             target = scan_entry.brate_target
 
         potential = target/scan_entry.current_price
-        return round(potential,1)
+        return round(potential, 2)
 
     def __update_scan_entry_values(self, scan_entry, scan_data, client):
         try:
@@ -387,16 +392,19 @@ class Scanner:
                     else:
                         total_open_sell_orders -= open_order.units
 
-        if int((total_stock_units + total_bought_calls - total_sold_calls - total_open_sell_orders)/100) > 0:
-            self.__addAlertDetails(
-                scan_entry, self.__SCAN_ERROR_MSG,
-                'Missed to sell covered call? stocks={}, calls bought={}, calls sold={}, open_orders={}'
-                .format(total_stock_units, total_bought_calls, total_sold_calls, total_open_sell_orders))
-        elif total_open_sell_orders > 0:
-            self.__addAlertDetails(
-                scan_entry, self.__SCAN_INFO_MSG,
-                'Have open covered call orders. stocks={}, calls bought={}, calls sold={}, open_orders={}'
-                .format(total_stock_units, total_bought_calls, total_sold_calls, total_open_sell_orders))
+        if int(total_stock_units + total_bought_calls) > 0:
+            # If no calls/stocks available, no covered call can be sold.
+            # Check needed to not trigger spurious covered call message with open orders
+            if int((total_stock_units + total_bought_calls - total_sold_calls - total_open_sell_orders)/100) > 0:
+                self.__addAlertDetails(
+                    scan_entry, self.__SCAN_ERROR_MSG,
+                    'Missed to sell covered call? stocks={}, calls bought={}, calls sold={}, open_orders={}'
+                    .format(total_stock_units, total_bought_calls, total_sold_calls, total_open_sell_orders))
+            elif total_open_sell_orders > 0:
+                self.__addAlertDetails(
+                    scan_entry, self.__SCAN_INFO_MSG,
+                    'Have open covered call orders. stocks={}, calls bought={}, calls sold={}, open_orders={}'
+                    .format(total_stock_units, total_bought_calls, total_sold_calls, total_open_sell_orders))
 
     def __check_support_resistance_alert(self, scan_entry, watchlist, scan_data):
         # current_price contains the latest price for option or stock

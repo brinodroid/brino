@@ -19,7 +19,7 @@ export default class Scan extends React.Component {
 
     this.onEditButtonClick = this.onEditButtonClick.bind(this);
     this.onDeleteButtonClick = this.onDeleteButtonClick.bind(this);
-    this.onAddButtonClick = this.onAddButtonClick.bind(this);
+    this.onAddStockButtonClick = this.onAddStockButtonClick.bind(this);
 
     this.loadScan = this.loadScan.bind(this);
     this.removeAllMissing = this.removeAllMissing.bind(this);
@@ -103,8 +103,8 @@ export default class Scan extends React.Component {
     });
   }
 
-  onAddButtonClick() {
-    console.info('onAddButtonClick: ...')
+  onAddStockButtonClick() {
+    console.info('onAddStockButtonClick: ...')
     this.setState({
       showDetailedViewModal: true,
       addToScan: true
@@ -204,6 +204,7 @@ export default class Scan extends React.Component {
 
   addToScan(ScanEntry) {
     console.info('addToScan: adding entry=%o', ScanEntry)
+
     let createScanCallback = function (httpStatus, json) {
       if (httpStatus === 401) {
         this.props.auth.setAuthenticationStatus(false);
@@ -224,6 +225,9 @@ export default class Scan extends React.Component {
       //Reloading the Scan
       this.loadScan();
     }
+
+    // TODO: remove the hardcoding
+    ScanEntry.profile = 'BUY_STOCK';
 
     getBackend().createScan(ScanEntry, createScanCallback.bind(this));
     this.onCloseDetailedViewModal();
@@ -330,28 +334,43 @@ export default class Scan extends React.Component {
     if (this.state.deleteFromScan) readOnly = true;
     console.info('showModalForm: formValues=%o', this.state.formValues);
 
-    return (
-      <Form onSubmit={this.handleSubmit} >
+    if (this.state.addToScan) {
+      // Its called from add stock, just show minimal info
+      return (
+        <Form onSubmit={this.handleSubmit} >
 
-        { this.showModalFormGroup(true, "update_timestamp", "Update Timestamp", this.state.formValues.updateTimestampLocal)}
-        { this.showModalFormGroup(true, "id", "ID", this.state.formValues.id)}
-        { this.showModalFormGroup(readOnly, "profile", "Profile", this.state.formValues.profile)}
-        { this.showModalFormGroup(readOnly, "watchlist_id", "WatchList Id", this.state.formValues.watchlist_id)}
-        { this.showModalFormGroup(readOnly, "support", "Support", this.state.formValues.support)}
-        { this.showModalFormGroup(readOnly, "resistance", "Resistance", this.state.formValues.resistance)}
-        { this.showModalFormGroup(readOnly, "profit_target", "Profit Target", this.state.formValues.profit_target)}
-        { this.showModalFormGroup(readOnly, "stop_loss", "Stop Loss", this.state.formValues.stop_loss)}
-        { this.showModalFormGroup(readOnly, "brate_target", "Brate Target", this.state.formValues.brate_target)}
-        { this.showModalFormGroup(readOnly, "brifz_target", "Brifz Target", this.state.formValues.brifz_target)}
-        { this.showModalFormGroup(readOnly, "rationale", "Rationale", this.state.formValues.rationale)}
-        { this.showModalFormGroup(true, "current_price", "Current Price", this.state.formValues.current_price)}
-        { this.showModalFormGroup(true, "volatility", "Volatility", this.state.formValues.volatility)}
-        { this.showModalFormGroup(true, "short_float", "Short float", this.state.formValues.short_float)}
-        { this.showModalFormGroup(true, "status", "Status", this.state.formValues.status)}
-        { this.showModalFormGroup(true, "details", "Details", this.state.formValues.details)}
+          { this.showModalFormGroup(readOnly, "watchListTicker", "Ticker", this.state.formValues.watchListTicker)}
+          { this.showModalFormGroup(readOnly, "resistance", "Resistance", this.state.formValues.resistance)}
+          { this.showModalFormGroup(readOnly, "support", "Support", this.state.formValues.support)}
 
-      </Form>
-    );
+        </Form>
+      );
+    } else {
+      // Its called from edit or delete, show all parameters
+      return (
+        <Form onSubmit={this.handleSubmit} >
+
+          { this.showModalFormGroup(true, "update_timestamp", "Update Timestamp", this.state.formValues.updateTimestampLocal)}
+          { this.showModalFormGroup(true, "id", "ID", this.state.formValues.id)}
+          { this.showModalFormGroup(readOnly, "profile", "Profile", this.state.formValues.profile)}
+          { this.showModalFormGroup(readOnly, "watchlist_id", "WatchList Id", this.state.formValues.watchlist_id)}
+          { this.showModalFormGroup(readOnly, "watchListTicker", "Ticker", this.state.formValues.watchListTicker)}
+          { this.showModalFormGroup(readOnly, "resistance", "Resistance", this.state.formValues.resistance)}
+          { this.showModalFormGroup(readOnly, "support", "Support", this.state.formValues.support)}
+          { this.showModalFormGroup(readOnly, "stop_loss", "Stop Loss", this.state.formValues.stop_loss)}
+          { this.showModalFormGroup(readOnly, "profit_target", "Profit Target", this.state.formValues.profit_target)}
+          { this.showModalFormGroup(readOnly, "brate_target", "Brate Target", this.state.formValues.brate_target)}
+          { this.showModalFormGroup(readOnly, "brifz_target", "Brifz Target", this.state.formValues.brifz_target)}
+          { this.showModalFormGroup(readOnly, "rationale", "Rationale", this.state.formValues.rationale)}
+          { this.showModalFormGroup(true, "current_price", "Current Price", this.state.formValues.current_price)}
+          { this.showModalFormGroup(true, "volatility", "Volatility", this.state.formValues.volatility)}
+          { this.showModalFormGroup(true, "short_float", "Short float", this.state.formValues.short_float)}
+          { this.showModalFormGroup(true, "status", "Status", this.state.formValues.status)}
+          { this.showModalFormGroup(true, "details", "Details", this.state.formValues.details)}
+
+        </Form>
+      );
+    }
   }
 
   onModalActionButtonClick() {
@@ -428,15 +447,27 @@ export default class Scan extends React.Component {
   }
 
   getRewardHighlight(rowData) {
-    if (rowData.reward_2_risk > 3.0) {
+    if (rowData.reward_2_risk > 2.5) {
       return (<Alert variant='success' > {rowData.reward_2_risk} </Alert>);
     }
 
-    if (rowData.reward_2_risk < 1.5) {
+    if (rowData.reward_2_risk !== null && rowData.reward_2_risk < 1.5) {
+
+      // The null check is needed as null has value 0
       return (<Alert variant='danger' > {rowData.reward_2_risk} </Alert>);
     }
 
     return rowData.reward_2_risk;
+  }
+
+  getShortFloatHighlight(rowData) {
+    let shortFloatNumber = parseFloat(rowData.short_float);
+    if (shortFloatNumber !== null && shortFloatNumber > 15) {
+      // Interesting if the shortfloat is more than 15
+      return (<Alert variant='success' > {rowData.short_float} </Alert>);
+    }
+
+    return rowData.short_float;
   }
 
   getPotentialHighlight(rowData) {
@@ -444,7 +475,8 @@ export default class Scan extends React.Component {
       return (<Alert variant='success' > {rowData.potential} </Alert>);
     }
 
-    if (rowData.potential < 0.8) {
+    if (rowData.potential !== null && rowData.potential < 0.8) {
+      // The null check is needed as null has value 0
       return (<Alert variant='danger' > {rowData.potential} </Alert>);
     }
 
@@ -480,7 +512,12 @@ export default class Scan extends React.Component {
       { Header: 'Brifz Target', accessor: 'brifz_target' },
       { Header: 'Rationale', accessor: 'rationale' },
       { Header: 'Volatility', accessor: 'volatility' },
-      { Header: 'Short float', accessor: 'short_float' },
+      {
+        Header: 'Short float', accessor: 'short_float',
+        Cell: ({ row }) => (
+          <> {this.getShortFloatHighlight(row.original)} </>
+        )
+      },
       {
         Header: 'Potential', accessor: 'potential',
         Cell: ({ row }) => (
@@ -520,7 +557,7 @@ export default class Scan extends React.Component {
 
         <ButtonToolbar aria-label="Toolbar with button groups">
           <ButtonGroup className="mr-2" aria-label="First group">
-            <Button onClick={this.onAddButtonClick}> Add </Button>
+            <Button onClick={this.onAddStockButtonClick}> Add Stock </Button>
           </ButtonGroup>
           <ButtonGroup className="mr-2" aria-label="Second group">
             <Button onClick={this.loadScan}> Refresh </Button>
