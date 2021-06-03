@@ -196,3 +196,35 @@ class BrineAdapter:
     def get_open_stock_order_status(self, order_id):
         order = brine.orders.get_stock_order_info(order_id)
         return self.__convert_order_to_brine(order)
+
+    def order_stock_buy_limit(self, symbol, quantity, limit_price):
+        order = brine.orders.order_buy_limit(symbol, quantity, limit_price, extendedHours=True)
+        return order
+
+    def order_stock_sell_limit(self, symbol, quantity, limit_price):
+        order = brine.orders.order_sell_limit(symbol, quantity, limit_price, extendedHours=True)
+        return order
+
+    def order_stock_buy_market(self, symbol, quantity, limit_price):
+        order = brine.orders.order_buy_market(symbol, quantity, limit_price, extendedHours=True)
+        return order
+
+    def order_stock_sell_market(self, symbol, quantity, limit_price):
+        order = brine.orders.order_sell_market(symbol, quantity, limit_price, extendedHours=True)
+        return order
+
+    def order_option_buy_open_limit_(self, creditOrDebit, price, symbol, quantity, expirationDate, strike, optionType):
+        order = brine.orders.order_buy_option_limit('open', creditOrDebit, price, quantity, expirationDate, strike, optionType)
+        return order
+
+    def order_option_buy_close_limit_(self, creditOrDebit, price, symbol, quantity, expirationDate, strike, optionType):
+        order = brine.orders.order_buy_option_limit('close', creditOrDebit, price, quantity, expirationDate, strike, optionType)
+        return order
+
+    def order_option_sell_open_limit_(self, creditOrDebit, price, symbol, quantity, expirationDate, strike, optionType):
+        order = brine.orders.order_sell_option_limit('open', creditOrDebit, price, quantity, expirationDate, strike, optionType)
+        return order
+
+    def order_option_sell_close_limit_(self, creditOrDebit, price, symbol, quantity, expirationDate, strike, optionType):
+        order = brine.orders.order_sell_option_limit('close', creditOrDebit, price, quantity, expirationDate, strike, optionType)
+        return order
