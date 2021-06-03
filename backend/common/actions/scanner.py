@@ -236,6 +236,10 @@ class Scanner:
 
     def __get_brifz_volatility(self, scan_entry, watchlist, scan_data):
         try:
+            if scan_data[self.__SCAN_DATA_BRIFZ_STAT_DICT_KEY] is None:
+                return "No data"
+
+            # Else get the data
             return scan_data[self.__SCAN_DATA_BRIFZ_STAT_DICT_KEY][watchlist.ticker]['Volatility']
         except Exception as e:
             logger.error(
@@ -246,6 +250,10 @@ class Scanner:
 
     def __get_brifz_shortfloat(self, scan_entry, watchlist, scan_data):
         try:
+            if scan_data[self.__SCAN_DATA_BRIFZ_STAT_DICT_KEY] is None:
+                return "No data"
+
+            # Else get the data
             return scan_data[self.__SCAN_DATA_BRIFZ_STAT_DICT_KEY][watchlist.ticker]['Short Float']
         except Exception as e:
             logger.error(
@@ -256,6 +264,10 @@ class Scanner:
 
     def __get_brifz_target(self, scan_entry, watchlist, scan_data):
         try:
+            if scan_data[self.__SCAN_DATA_BRIFZ_STAT_DICT_KEY] is None:
+                return "No data"
+
+            # Else get the data
             return self.__safe_float(scan_data[self.__SCAN_DATA_BRIFZ_STAT_DICT_KEY][watchlist.ticker]['Target Price'])
         except Exception as e:
             logger.error(
