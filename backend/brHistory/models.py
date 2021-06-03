@@ -35,11 +35,11 @@ class CallOptionData(models.Model):
         return super(CallOptionData, self).save(*args, **kwargs)
 
     def __str__(self):
-        return "date:%s, watchlist_id:%s" \
-               "mark_price:%s, ask_price: %s, bid_price:%s" \
-               "high_price:%s, low_price: %s, last_trade_price:%s" \
-               "open_interest:%s, volume: %s, ask_size:%s, bid_size:%s " \
-               "delta:%s, gamma: %s, implied_volatility:%s, rho:%s, theta:%s, vega:%s" \
+        return "date:%s, watchlist_id:%s," \
+               " mark_price:%s, ask_price: %s, bid_price:%s," \
+               " high_price:%s, low_price: %s, last_trade_price:%s," \
+               " open_interest:%s, volume: %s, ask_size:%s, bid_size:%s," \
+               " delta:%s, gamma: %s, implied_volatility:%s, rho:%s, theta:%s, vega:%s" \
                % (self.date, self.watchlist_id,
                   self.mark_price, self.ask_price, self.bid_price,
                   self.high_price, self.low_price, self.last_trade_price,
@@ -78,11 +78,11 @@ class PutOptionData(models.Model):
         return super(PutOptionData, self).save(*args, **kwargs)
 
     def __str__(self):
-        return "date:%s, watchlist_id:%s" \
-               "mark_price:%s, ask_price: %s, bid_price:%s" \
-               "high_price:%s, low_price: %s, last_trade_price:%s" \
-               "open_interest:%s, volume: %s, ask_size:%s, bid_size:%s " \
-               "delta:%s, gamma: %s, implied_volatility:%s, rho:%s, theta:%s, vega:%s" \
+        return "date:%s, watchlist_id:%s," \
+               " mark_price:%s, ask_price: %s, bid_price:%s," \
+               " high_price:%s, low_price: %s, last_trade_price:%s," \
+               " open_interest:%s, volume: %s, ask_size:%s, bid_size:%s," \
+               " delta:%s, gamma: %s, implied_volatility:%s, rho:%s, theta:%s, vega:%s" \
                % (self.date, self.watchlist_id,
                   self.mark_price, self.ask_price, self.bid_price,
                   self.high_price, self.low_price, self.last_trade_price,
