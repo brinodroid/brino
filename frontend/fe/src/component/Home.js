@@ -361,6 +361,8 @@ export default class Scan extends React.Component {
           { this.showModalFormGroup(readOnly, "profit_target", "Profit Target", this.state.formValues.profit_target)}
           { this.showModalFormGroup(readOnly, "brate_target", "Brate Target", this.state.formValues.brate_target)}
           { this.showModalFormGroup(readOnly, "brifz_target", "Brifz Target", this.state.formValues.brifz_target)}
+          { this.showModalFormGroup(readOnly, "active_track", "Active Track", this.state.formValues.active_track)}
+          { this.showModalFormGroup(readOnly, "order_brine_id", "Brine Order Id", this.state.formValues.order_brine_id)}
           { this.showModalFormGroup(readOnly, "rationale", "Rationale", this.state.formValues.rationale)}
           { this.showModalFormGroup(true, "current_price", "Current Price", this.state.formValues.current_price)}
           { this.showModalFormGroup(true, "volatility", "Volatility", this.state.formValues.volatility)}
