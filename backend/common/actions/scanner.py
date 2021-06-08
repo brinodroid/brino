@@ -10,6 +10,7 @@ from common.types.asset_types import AssetTypes, TransactionType
 
 from brCore.models import WatchList, ScanEntry, PortFolio
 from brOrder.models import OpenOrder
+from common.actions.strategy import Strategy
 
 logger = logging.getLogger('django')
 
@@ -84,7 +85,7 @@ class Scanner:
             scan_entry.details = ""
             scan_entry.status = ScanStatus.NONE.value
 
-            self.__update_scan_entry_values(scan_entry, scan_data, client)
+            self.__process_scan_entry_values(scan_entry, scan_data, client)
 
             self.__update_scan_entry_in_db(scan_entry)
 
@@ -138,7 +139,7 @@ class Scanner:
         potential = target/scan_entry.current_price
         return round(potential, 2)
 
-    def __update_scan_entry_values(self, scan_entry, scan_data, client):
+    def __process_scan_entry_values(self, scan_entry, scan_data, client):
         try:
             watchlist = WatchList.objects.get(pk=scan_entry.watchlist_id)
         except WatchList.DoesNotExist:
@@ -230,6 +231,9 @@ class Scanner:
                     '__update_scan_entry_values: scan_profile_check: {} gave Exception: {}'.format(scan_profile_check, repr(e)))
                 self.__addAlertDetails(scan_entry, self.__SCAN_ERROR_MSG,
                                        'scan_profile_check: {} gave Exception: {}'.format(scan_profile_check, repr(e)))
+
+        # Run the strategy too
+        Strategy.getInstance().run_strategy(scan_entry, watchlist, scan_data, client)
 
         # Reset the option data to not use stale info
         scan_data[self.__SCAN_DATA_LOCAL_OPTION_DATA_KEY] = None
