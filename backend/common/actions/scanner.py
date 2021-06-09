@@ -357,6 +357,8 @@ class Scanner:
         scan_latest_entry.short_float = scan_entry.short_float
         scan_latest_entry.reward_2_risk = scan_entry.reward_2_risk
         scan_latest_entry.potential = scan_entry.potential
+        scan_latest_entry.active_track = scan_entry.active_track
+        scan_latest_entry.order_id = scan_entry.order_id
 
         self.__set_default_support_resistance(scan_latest_entry)
 

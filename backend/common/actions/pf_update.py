@@ -66,7 +66,7 @@ class PFUpdater:
             # Portfolio already has the entry. Nothing to do
             return portfolio
         except PortFolio.DoesNotExist:
-            logger.info('__update_option_in_portfolio: Adding watchlist_id to portfolio'.format(
+            logger.info('__update_option_in_portfolio: Adding watchlist_id {} to portfolio'.format(
                 watchlist.id))
             # INTENTIONAL FALL DOWN. Add the entry to portfolio
 
@@ -149,7 +149,7 @@ class PFUpdater:
                 watchlist = WatchList.objects.get(id=portfolio.watchlist_id)
             except WatchList.DoesNotExist:
                 # Log error and continue
-                logger.error('__update_options: watchlist_id {} from portfolio.id MISSING'.format(
+                logger.error('__update_options: watchlist_id {} from portfolio.id {} MISSING'.format(
                     portfolio.watchlist_id, portfolio.id))
                 continue
 
@@ -165,7 +165,7 @@ class PFUpdater:
                 except ScanEntry.DoesNotExist:
                     # Log error and continue
                     logger.error('__update_options: scan entry MISSING with portfolio_id {}'.format(
-                        portfolio.watchlist_id, portfolio.id))
+                        portfolio.id))
         return
 
     def __update_options(self, client, configuration):
@@ -221,7 +221,7 @@ class PFUpdater:
             # Portfolio already has the entry. Nothing to do
             return portfolio
         except PortFolio.DoesNotExist:
-            logger.info('__update_stock_in_portfolio: Adding watchlist_id to portfolio'.format(
+            logger.info('__update_stock_in_portfolio: Adding watchlist_id {} to portfolio'.format(
                 watchlist.id))
             # INTENTIONAL FALL DOWN. Add the entry to portfolio
 
