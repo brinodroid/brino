@@ -221,6 +221,10 @@ class BrineAdapter:
         order = brine.orders.order_buy_option_limit('close', creditOrDebit, price, symbol, quantity, expirationDate, strike, optionType)
         return order
 
+    def order_option_buy_stop_limit(self, creditOrDebit, price, symbol, quantity, expirationDate, strike, optionType):
+        order = brine.orders.order_buy_option_stop_limit('close', creditOrDebit, price, price, symbol, quantity, expirationDate, strike, optionType)
+        return order
+
     def order_option_sell_open_limit(self, creditOrDebit, price, symbol, quantity, expirationDate, strike, optionType):
         order = brine.orders.order_sell_option_limit('open', creditOrDebit, price, symbol, quantity, expirationDate, strike, optionType)
         return order

@@ -23,6 +23,7 @@ export default class Scan extends React.Component {
 
     this.loadScan = this.loadScan.bind(this);
     this.removeAllMissing = this.removeAllMissing.bind(this);
+    this.toggleGreenPotential = this.toggleGreenPotential.bind(this);
     this.addToScan = this.addToScan.bind(this);
     this.deleteFromScan = this.deleteFromScan.bind(this);
     this.updateScan = this.updateScan.bind(this);
@@ -43,8 +44,10 @@ export default class Scan extends React.Component {
 
     this.state = {
       isScanLoaded: false,
+      potentialThreshold: 1.2,
       errorMsg: '',
       scan: null,
+      filteredScan: null,
       showDetailedViewModal: false,
       addToScan: false,
       deleteFromScan: false,
@@ -166,32 +169,65 @@ export default class Scan extends React.Component {
     getBackend().getScan(loadScanCallback.bind(this));
   }
 
-  removeAllMissing() {
-    console.info('removeAllMissing: remove all missing...');
+  toggleGreenPotential() {
+    console.info('toggleGreenPotential: show only green potential...');
+    if (this.state.scan == null) {
+      // Nothing to filter
+      console.info('toggleGreenPotential: Nothing to filter');
+      return;
+    }
 
-    let iterFunction = function (scanEntry, index, scanArray) {
-      if (scanEntry.status === "MISSING" ) {
-        let deleteMissingScanCallback = function (httpStatus, json) {
-          console.info("deleteMissingScanCallback: remove scanEntry:%o, httpStatus:%o, index:%o", scanEntry, httpStatus, index);
+    if (this.state.filteredScan != null) {
+      // Just make the filtered scan null
+      console.info('toggleGreenPotential: revert to normal view');
+      this.setState({
+        filteredScan: null
+      });
+      return;
+    }
 
-          if (httpStatus === 401) {
-            this.props.auth.setAuthenticationStatus(false);
-            console.error("deleteMissingScanCallback: authentication expired?");
-            return;
-          }
-
-          if (httpStatus !== 204) {
-            console.error("deleteMissingScanCallback: failure: http:%o", httpStatus);
-            this.setState({
-              errorMsg: "Failed to delete to Scan"
-            })
-            return;
-          }
-        }
-
-        getBackend().deleteScan(scanEntry, deleteMissingScanCallback.bind(this));
+    // filteredScan is null. Fill it with the filtered potential
+    let filteredScan = [];
+    let potentialThreshold = this.state.potentialThreshold;
+    let filterScanGreaterThanPotentialThreshold = function (scanEntry) {
+      if (scanEntry.potential > potentialThreshold) {
+        // Add to the filtered scan
+        filteredScan.push(scanEntry);
       }
     }
+    this.state.scan.forEach(filterScanGreaterThanPotentialThreshold);
+    this.setState({
+      filteredScan: filteredScan
+    });
+    console.info('toggleGreenPotential: showing filtered view');
+  }
+
+  removeAllMissing() {
+      console.info('removeAllMissing: remove all missing...');
+
+      let iterFunction = function (scanEntry, index, scanArray) {
+        if (scanEntry.status === "MISSING" ) {
+          let deleteMissingScanCallback = function (httpStatus, json) {
+            console.info("deleteMissingScanCallback: remove scanEntry:%o, httpStatus:%o, index:%o", scanEntry, httpStatus, index);
+
+            if (httpStatus === 401) {
+              this.props.auth.setAuthenticationStatus(false);
+              console.error("deleteMissingScanCallback: authentication expired?");
+              return;
+            }
+
+            if (httpStatus !== 204) {
+              console.error("deleteMissingScanCallback: failure: http:%o", httpStatus);
+              this.setState({
+                errorMsg: "Failed to delete to Scan"
+              })
+              return;
+            }
+          }
+
+          getBackend().deleteScan(scanEntry, deleteMissingScanCallback.bind(this));
+        }
+      }
 
     if (this.state.scan !== null) {
       this.state.scan.forEach(iterFunction)
@@ -474,7 +510,7 @@ export default class Scan extends React.Component {
   }
 
   getPotentialHighlight(rowData) {
-    if (rowData.potential > 1.2) {
+    if (rowData.potential > this.state.potentialThreshold) {
       return (<Alert variant='success' > {rowData.potential} </Alert>);
     }
 
@@ -510,6 +546,7 @@ export default class Scan extends React.Component {
       },
       { Header: 'profile', accessor: 'profile' },
       { Header: 'WL ticker', accessor: 'watchListTicker' },
+      { Header: 'Active Track', accessor: 'active_track' },
       { Header: 'Current Price', accessor: 'current_price' },
       { Header: 'Brate Target', accessor: 'brate_target' },
       { Header: 'Brifz Target', accessor: 'brifz_target' },
@@ -569,12 +606,15 @@ export default class Scan extends React.Component {
             <Button onClick={this.removeAllMissing}> Remove Missing </Button>
           </ButtonGroup>
           <ButtonGroup className="mr-2" aria-label="Second group">
+            <Button onClick={this.toggleGreenPotential}> {this.state.filteredScan? "Show all": "Passing Potential"} </Button>
+          </ButtonGroup>
+          <ButtonGroup className="mr-2" aria-label="Second group">
             <Button onClick={this.onAutoRefreshButtonPress}> {this.state.enableAutoRefresh ? "Disable Auto Refresh" : "Enable Auto Refresh"} </Button>
           </ButtonGroup>
         </ButtonToolbar>
         { this.showErrorMsg()}
 
-        <Table columns={columns} data={this.state.scan} getTrProps={onRowClick} />
+        <Table columns={columns} data={this.state.filteredScan? this.state.filteredScan:this.state.scan} getTrProps={onRowClick} />
 
         { this.showModal()}
 

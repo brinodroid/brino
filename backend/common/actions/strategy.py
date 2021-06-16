@@ -62,7 +62,7 @@ class Strategy:
                     .format(strategy, repr(e)))
 
 
-    def __buy_stoploss(self, scan_entry, scan_data, watchlist, portfolio, client):
+    def __sell_stoploss(self, scan_entry, scan_data, watchlist, portfolio, client):
         #This applies to stocks and call option buys
         # current_price is below stop_loss
         if scan_entry.stop_loss > scan_entry.current_price:
@@ -73,7 +73,7 @@ class Strategy:
 
         return
 
-    def __sell_call_stoploss(self, scan_entry, scan_data, watchlist, portfolio, client):
+    def __buy_call_stoploss(self, scan_entry, scan_data, watchlist, portfolio, client):
         if watchlist.asset_type != AssetTypes.CALL_OPTION.value:
             logger.error('__sell_call_stoploss: {} wrong scan profile?'.format(scan_entry))
             return
@@ -89,7 +89,7 @@ class Strategy:
 
         if not scan_entry.order_id:
             # No order placed, put in an order
-            order = client.order_option_buy_close_limit('debit', scan_entry.current_price,
+            order = client.order_option_buy_stop_limit('debit', scan_entry.current_price,
                 watchlist.ticker, portfolio.units/100, watchlist.option_expiry.strftime('%Y-%m-%d'), watchlist.option_strike, 'call')
             if 'id' not in order:
                 logger.error('__sell_call_stoploss: {} close order failed with {}'
@@ -170,15 +170,15 @@ class Strategy:
     __strategy_list = {
         ScanProfile.BUY_STOCK.value:
             [
-                __buy_stoploss
+                __sell_stoploss
             ],
         ScanProfile.SELL_CALL.value:
             [
-                __sell_call_stoploss
+                __buy_call_stoploss
             ],
         ScanProfile.BUY_CALL.value:
             [
-                __buy_stoploss
+                __sell_stoploss
             ],
         ScanProfile.BUY_PUT.value:
             [
