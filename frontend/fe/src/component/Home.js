@@ -522,6 +522,10 @@ export default class Scan extends React.Component {
     return rowData.potential;
   }
 
+  getActiveTrack(rowData) {
+    return rowData.active_track.toString();
+  }
+
   render() {
     if (!this.props.auth.isAuthenticated) {
       console.info('Scan:  not authenticated, redirecting to login page');
@@ -546,7 +550,12 @@ export default class Scan extends React.Component {
       },
       { Header: 'profile', accessor: 'profile' },
       { Header: 'WL ticker', accessor: 'watchListTicker' },
-      { Header: 'Active Track', accessor: 'active_track' },
+      {
+        Header: 'Active Track', accessor: 'active_track',
+        Cell: ({ row }) => (
+          <> {this.getActiveTrack(row.original)} </>
+        )
+      },
       { Header: 'Current Price', accessor: 'current_price' },
       { Header: 'Brate Target', accessor: 'brate_target' },
       { Header: 'Brifz Target', accessor: 'brifz_target' },

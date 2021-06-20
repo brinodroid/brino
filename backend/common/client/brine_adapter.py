@@ -129,11 +129,19 @@ class BrineAdapter:
         # TODO: Investigate why option price is returned as dictionary list
         return brine.options.get_option_market_data(ticker, expiry, strike, type)
 
+    def __safe_float(self, float_string):
+        try:
+            f = float(float_string)
+            return f
+        except:
+            logger.info('__safe_float: Not valid number =%s', float_string)
+        return 0
+
     def __convert_order_to_brine(self, order):
         res_order = {}
         res_order['client'] = PortFolioSource.BRINE.value
 
-        res_order['brino_entry_price'] = float(order['price'])
+        res_order['brino_entry_price'] = self.__safe_float(order['price'])
         res_order['quantity'] = order['quantity']
         res_order['id'] = order['id']
         res_order['state'] = order['state']

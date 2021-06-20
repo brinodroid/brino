@@ -62,7 +62,7 @@ class Strategy:
                     .format(strategy, repr(e)))
 
 
-    def __sell_stoploss(self, scan_entry, scan_data, watchlist, portfolio, client):
+    def __buy_stoploss(self, scan_entry, scan_data, watchlist, portfolio, client):
         #This applies to stocks and call option buys
         # current_price is below stop_loss
         if scan_entry.stop_loss > scan_entry.current_price:
@@ -170,7 +170,7 @@ class Strategy:
     __strategy_list = {
         ScanProfile.BUY_STOCK.value:
             [
-                __sell_stoploss
+                __buy_stoploss,
             ],
         ScanProfile.SELL_CALL.value:
             [
@@ -178,7 +178,7 @@ class Strategy:
             ],
         ScanProfile.BUY_CALL.value:
             [
-                __sell_stoploss
+                __buy_stoploss
             ],
         ScanProfile.BUY_PUT.value:
             [
