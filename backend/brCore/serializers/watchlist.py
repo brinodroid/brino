@@ -7,4 +7,4 @@ class WatchListSerializer(serializers.ModelSerializer):
         model = WatchList
         fields = ('id', 'creation_timestamp', 'update_timestamp',
                   'asset_type', 'ticker', 'option_strike', 'option_expiry',
-                  'brine_id', 'comment')
+                  'brine_id', 'comment', 'sector')

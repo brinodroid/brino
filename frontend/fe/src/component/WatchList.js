@@ -243,6 +243,7 @@ export default class WatchList extends React.Component {
         { this.showModalFormGroup(readOnly, "ticker", "Ticker", this.state.formValues.ticker)}
         { this.showModalFormGroup(readOnly, "option_strike", "Strike", this.state.formValues.option_strike ? this.state.formValues.option_strike : "")}
         { this.showModalFormGroup(readOnly, "option_expiry", "Expiry", this.state.formValues.option_expiry ? this.state.formValues.option_expiry : "")}
+        { this.showModalFormGroup(readOnly, "sector", "Sector", this.state.formValues.sector)}
         { this.showModalFormGroup(readOnly, "comment", "Comment", this.state.formValues.comment)}
 
       </Form>
@@ -338,6 +339,7 @@ export default class WatchList extends React.Component {
       { Header: 'Ticker', accessor: 'ticker' },
       { Header: 'Strike', accessor: 'option_strike' },
       { Header: 'Expiry', accessor: 'option_expiry' },
+      { Header: 'Sector', accessor: 'sector' },
       { Header: 'Comment', accessor: 'comment' },
       { Header: 'Brine Id', accessor: 'brine_id' },
       { Header: 'Update Time', accessor: 'update_timestamp' },

@@ -22,6 +22,7 @@ class WatchList(models.Model):
     option_strike = models.FloatField(null=True)
     option_expiry = models.DateField(null=True)
     brine_id = models.UUIDField(null=True)
+    sector = models.TextField(blank=True)
 
     # Optional comments field
     comment = models.TextField(blank=True)
@@ -34,9 +35,9 @@ class WatchList(models.Model):
 
     def __str__(self):
         return "asset_type:%s, ticker:%s, option_strike:%s, option_expiry:%s, comment:%s," \
-               "brine_id:%s, creation_timestamp: %s, update_timestamp:%s" \
-               % (self.asset_type, self.ticker, self.option_strike, self.option_expiry,
-                  self.comment, self.brine_id, self.creation_timestamp, self.update_timestamp)
+               "sector:%s, brine_id:%s, creation_timestamp: %s, update_timestamp:%s" \
+               % (self.asset_type, self.ticker, self.option_strike, self.option_expiry, self.comment,
+                self.sector, self.brine_id, self.creation_timestamp, self.update_timestamp)
 
 
 class BGTask(models.Model):
@@ -92,6 +93,10 @@ class PortFolio(models.Model):
 
 
 class ScanEntry(models.Model):
+    def __init__(self, *args, **kwargs):
+        super(ScanEntry, self).__init__(*args, **kwargs)
+        self.initial_brifz_target = self.brifz_target
+
     update_timestamp = models.DateTimeField(default=timezone.now)
     watchlist_id = models.IntegerField()
     portfolio_id = models.IntegerField(default=0)
@@ -108,7 +113,8 @@ class ScanEntry(models.Model):
     potential = models.FloatField(null=True, blank=True)
     active_track = models.BooleanField(default=False)
     order_id = models.IntegerField(null=True, blank=True)
-
+    target_history = models.TextField(default="", blank=True);
+    
     # Filled by backend
     current_price = models.FloatField(null=True)
     volatility = models.TextField(null=True, blank=True)
@@ -117,18 +123,43 @@ class ScanEntry(models.Model):
                               default=ScanStatus.NONE.value, null=True)
     details = models.TextField(blank=True)
 
+    def __update_target_history(self):
+        if self.initial_brifz_target == self.brifz_target:
+            # No change
+            return
+
+        latest_brifz_target = self.brifz_target
+        initial_brifz_target = self.initial_brifz_target
+
+       # There is a change. Calculate percentage of change
+        change_percent = round(((latest_brifz_target - initial_brifz_target)*100/initial_brifz_target), 2)
+
+        change_direction = 'UPGRADE'
+        if initial_brifz_target > latest_brifz_target:
+            # Update in brifz target price
+            change_direction = 'DOWNGRADE'
+        
+        # Brifz target has changed. Update to the target_history
+        change_info = '{}: brifz_target {} {}% to {} from {}'.format(timezone.now().date(), change_direction, change_percent, latest_brifz_target, initial_brifz_target)
+
+        #Update the target_history field
+        self.target_history = '{}.\n{}'.format(change_info, self.target_history)
+
+
     def save(self, *args, **kwargs):
         self.update_timestamp = timezone.now()
+        self.__update_target_history()
+
         return super(ScanEntry, self).save(*args, **kwargs)
 
     def __str__(self):
         return "watchlist_id:%s, portfolio_id:%s, profile:%s, current_price:%s, support:%s, resistance:%s," \
-            " profit_target:%s, stop_loss:%s, brate_target:%s, brifz_target:%s, rationale:%s, reward_2_risk:%s," \
-            " potential:%s, active_track:%s, order_id:%s" \
+            " profit_target:%s, stop_loss:%s, brate_target:%s, brifz_target:%s, target_history:%s, rationale:%s,"\
+            " reward_2_risk:%s,  potential:%s, active_track:%s, order_id:%s" \
             " volatility:%s, short_float:%s, status:%s, details:%s, update_timestamp:%s" \
                % (self.watchlist_id, self.portfolio_id, self.profile, self.current_price, self.support, self.resistance,
-                  self.profit_target, self.stop_loss, self.brate_target, self.brifz_target, self.rationale, self.reward_2_risk,
-                  self.potential, self.active_track, self.order_id,
+                  self.profit_target, self.stop_loss, self.brate_target, self.brifz_target, self.target_history,
+                  self.rationale, self.reward_2_risk, self.potential, self.active_track, self.order_id,
                   self.volatility, self.short_float, self.status, self.details, self.update_timestamp)
 
 

@@ -213,9 +213,9 @@ class Scanner:
                 scan_entry, watchlist, scan_data)
             scan_entry.short_float = self.__get_brifz_shortfloat(
                 scan_entry, watchlist, scan_data)
-            if scan_entry.brifz_target is None:
-                # Update brifz_target if not present
-                scan_entry.brifz_target = self.__get_brifz_target(
+            #if scan_entry.brifz_target is None:
+            # Update brifz_target always as it will be noted in the history
+            scan_entry.brifz_target = self.__get_brifz_target(
                     scan_entry, watchlist, scan_data)
 
 
@@ -450,37 +450,13 @@ class Scanner:
         latest_price = scan_data[self.__SCAN_DATA_LATEST_TICKER_PRICE_DICT_KEY][watchlist.ticker]
         market_hours_price = scan_data[self.__SCAN_DATA_MARKET_HOURS_TICKER_PRICE_DICT_KEY][watchlist.ticker]
 
-        if abs(latest_price - market_hours_price) >= market_hours_price * 1 / 100:
+        extended_hours_price_change = round((latest_price - market_hours_price)*100/market_hours_price, 2)
+
+        if abs(extended_hours_price_change) >= 1:
             # Change in price more than 1% during after hours
             self.__addAlertDetails(scan_entry, self.__SCAN_WARN_MSG,
-                                   '1% change in price during extended hours. regular price={}'
-                                   .format(market_hours_price))
-
-    def __check_brifz_target_price_update_alert(self, scan_entry, watchlist, scan_data):
-        if scan_entry.brifz_target is None or scan_entry.brifz_target == 0:
-            self.__addAlertDetails(
-                scan_entry, self.__SCAN_ERROR_MSG, 'Brifz target missing.')
-            return
-
-        latest_brifz_target = self.__get_brifz_target(
-            scan_entry, watchlist, scan_data)
-
-        if scan_entry.brifz_target == latest_brifz_target:
-            # No update
-            return
-
-        # There is a change. Calculate percentage of change
-        change_percent = round(((latest_brifz_target -
-                                 scan_entry.brifz_target)*100/scan_entry.brifz_target), 2)
-
-        change_direction = 'UPGRADE'
-        if scan_entry.brifz_target > latest_brifz_target:
-            # Update in brifz target price
-            change_direction = 'DOWNGRADE'
-
-        self.__addAlertDetails(scan_entry, self.__SCAN_WARN_MSG,
-                               'brifz_target {} {}% to {} from {}'
-                               .format(change_direction, change_percent, latest_brifz_target, scan_entry.brifz_target, change_percent))
+                                   '{}% change in price during extended hours. regular price={}'
+                                   .format(extended_hours_price_change, market_hours_price))
 
     def __check_option_time_to_expiry_alert(self, scan_entry, watchlist, scan_data):
         time_to_expiry = watchlist.option_expiry - datetime.now().date()
@@ -542,7 +518,6 @@ class Scanner:
             [
                 __check_support_resistance_alert,
                 __check_extended_hours_price_movement_alert,
-                __check_brifz_target_price_update_alert,
                 __check_missed_covered_call_sell_alert
             ],
         ScanProfile.SELL_CALL.value:
