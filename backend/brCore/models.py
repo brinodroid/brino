@@ -131,13 +131,17 @@ class ScanEntry(models.Model):
         latest_brifz_target = self.brifz_target
         initial_brifz_target = self.initial_brifz_target
 
-       # There is a change. Calculate percentage of change
-        change_percent = round(((latest_brifz_target - initial_brifz_target)*100/initial_brifz_target), 2)
+        change_direction = 'STARTED'
+        change_percent = 0
 
-        change_direction = 'UPGRADE'
-        if initial_brifz_target > latest_brifz_target:
-            # Update in brifz target price
-            change_direction = 'DOWNGRADE'
+        if initial_brifz_target:
+            # There is a change. Calculate percentage of change
+            change_percent = round(((latest_brifz_target - initial_brifz_target)*100/initial_brifz_target), 2)
+
+            change_direction = 'UPGRADE'
+            if initial_brifz_target > latest_brifz_target:
+                # Update in brifz target price
+                change_direction = 'DOWNGRADE'
         
         # Brifz target has changed. Update to the target_history
         change_info = '{}: brifz_target {} {}% to {} from {}'.format(timezone.now().date(), change_direction, change_percent, latest_brifz_target, initial_brifz_target)
