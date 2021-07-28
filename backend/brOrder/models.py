@@ -18,6 +18,8 @@ class OpenOrder(models.Model):
     brine_id = models.UUIDField(null=True)
     source = models.CharField(max_length=16, choices=PortFolioSource.choices(),
                               default=PortFolioSource.BRINE.value)
+    submit = models.BooleanField(default=False)
+    #We need to refer to historical data too
 
     def save(self, *args, **kwargs):
         self.update_timestamp = timezone.now()
@@ -25,10 +27,10 @@ class OpenOrder(models.Model):
 
     def __str__(self):
         return "watchlist_id_list:%s, transaction_type_list:%s, created_datetime:%s,"\
-               " price:%s, units:%s, brine_id:%s, source:%s, opening_strategy:%s,"\
+               " price:%s, units:%s, brine_id:%s, source:%s, submit:%s, opening_strategy:%s,"\
                " closing_strategy:%s, update_timestamp:%s" \
                % (self.watchlist_id_list, self.transaction_type_list, self.created_datetime,
-                  self.price, self.units, self.brine_id, self.source, self.opening_strategy,
+                  self.price, self.units, self.brine_id, self.source, self.submit, self.opening_strategy,
                   self.closing_strategy, self.update_timestamp)
 
 # Model presenting a executed order
