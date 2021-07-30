@@ -3,9 +3,49 @@ from rest_framework.response import Response
 from rest_framework import status
 import logging
 from .models import OpenOrder, ExecutedOrder, CancelledOrder
+import brOrder.order_bll as order_bll
+
+from brCore.models import WatchList, ScanEntry
 from .serializer import OpenOrderSerializer, ExecutedOrderSerializer, CancelledOrderSerializer
 
 logger = logging.getLogger('django')
+
+
+@api_view(['POST'])
+# Input request contains:
+# request.data.order: Mandatory
+# request.data.strategy: Optional
+def create_order_strategy(request):
+    logger.debug("request data: %s", request.data)
+    if request.method == 'POST':
+        # Create a new orders
+        serializer = OpenOrderSerializer(data=request.data['order'])
+        if serializer.is_valid() == False:
+            logger.error(serializer.errors)
+            return Response({'detail': 'Data validation failed'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Check if the watch list contains the watchlist_id_list       
+        watchlist_id = serializer.validated_data['watchlist_id_list']
+        try:
+            watchlist = WatchList.objects.get(pk=int(watchlist_id))
+        except WatchList.DoesNotExist:
+            logger.error('create_order_strategy: WatchList not found {}'.format(
+                serializer.Meta.model))
+            return Response({'detail': 'Watchlist id unknown'}, status=status.HTTP_400_BAD_REQUEST)
+
+        strategy = None
+        if request.data['strategy']:
+            #TODO: Serialize the strategy to get params
+            logger.info('create_order_strategy: strategy {}'.format(
+                request.data['strategy']))
+
+        order_bll.submit_order(serializer.validated_data, strategy, watchlist)
+
+        # Successfully submited the order. Save it in DB
+        serializer.save()
+        return Response(serializer.data)
+
+    return Response({'detail': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
 @api_view(['GET'])
@@ -15,15 +55,6 @@ def open_order_list(request):
         # Get the list of orders
         order = OpenOrder.objects.all()
         serializer = OpenOrderSerializer(order, many=True)
-        return Response(serializer.data)
-    elif request.method == 'POST':
-        # Create a new orders
-        serializer = OpenOrderSerializer(data=request.data)
-        if serializer.is_valid() == False:
-            logger.error(serializer.errors)
-            return Response({'detail': 'Data validation failed'}, status=status.HTTP_400_BAD_REQUEST)
-
-        serializer.save()
         return Response(serializer.data)
 
     return Response({'detail': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)

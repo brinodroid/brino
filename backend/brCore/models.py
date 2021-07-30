@@ -26,7 +26,7 @@ class WatchList(models.Model):
 
     # Optional comments field
     comment = models.TextField(blank=True)
-
+    
     def save(self, *args, **kwargs):
         if not self.id:
             self.creation_timestamp = timezone.now()
