@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework import status
 import logging
 from .models import OpenOrder, ExecutedOrder, CancelledOrder
-import brOrder.order_bll as order_bll
+import brOrder.order_bll as
 
 from brCore.models import WatchList, ScanEntry
 from .serializer import OpenOrderSerializer, ExecutedOrderSerializer, CancelledOrderSerializer
@@ -39,7 +39,7 @@ def create_order_strategy(request):
             logger.info('create_order_strategy: strategy {}'.format(
                 request.data['strategy']))
 
-        order_bll.submit_order(serializer.validated_data, strategy, watchlist)
+        order_bll.submit_limit_order(serializer.validated_data, strategy, watchlist)
 
         # Successfully submited the order. Save it in DB
         serializer.save()
