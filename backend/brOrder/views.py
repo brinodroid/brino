@@ -35,8 +35,9 @@ def create_order_strategy(request):
                 serializer.Meta.model))
             return Response({'detail': 'Watchlist id unknown'}, status=status.HTTP_400_BAD_REQUEST)
 
-        order_bll.submit_limit_order(serializer, request.data['strategy'], watchlist)
+        submitted_order = order_bll.submit_limit_order(serializer, request.data['strategy'], watchlist)
 
+        serializer = OpenOrderSerializer(submitted_order)
         return Response(serializer.data)
 
     return Response({'detail': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)

@@ -4,8 +4,8 @@ import brCore.watchlist_bll as watchlist_bll
 import brCore.scanentry_bll as scanentry_bll
 import brHistory.history_bll as history_bll
 import brStrategy.strategy_bll as strategy_bll
-from brCore.models import ScanEntry
-from common.types.asset_types import AssetTypes, TransactionType
+from brOrder.models import OpenOrder
+from common.types.asset_types import AssetTypes, TransactionType, PortFolioSource
 from common.client.Factory import get_client
 
 logger = logging.getLogger('django')
@@ -23,37 +23,62 @@ def submit_limit_order(serializer, strategy, watchlist):
     strategy = strategy_bll.create_strategy(strategy, scan_entry)
 
     if serializer.validated_data['submit']:
-        #Submit the call to client
-        _submit_limit_order_to_client(serializer.validated_data, watchlist)
+        #Submit the call to client.
+        return _submit_limit_order_to_client(watchlist,
+            serializer.validated_data['transaction_type_list'],
+            serializer.validated_data['units'],
+            serializer.validated_data['price'])
 
     # Successfully submited the order. Save it in DB
-    serializer.save()
+    return serializer.save()
 
-    return 
 
-def _submit_limit_order_to_client(order_validated_data, watchlist):
+def _update_open_stock_orders_legs(watchlist, submitted_order, client):
+    watchlist_id_list = []
+    transaction_type_list = []
+
+    instrument_data = client.get_stock_instrument_data(submitted_order['instrument_url'])
+
+    watchlist_id_list.append(watchlist.id)
+    transaction_type_list.append(submitted_order['brino_transaction_type'])
+
+    return watchlist_id_list, transaction_type_list
+
+def _save_submitted_stock_order(watchlist, submitted_order, client):
+    watchlist_id_list, transaction_type_list = _update_open_stock_orders_legs(watchlist, submitted_order, client)
+
+    open_order = OpenOrder(watchlist_id_list=watchlist_id_list,
+                    transaction_type_list=transaction_type_list,
+                    created_datetime=submitted_order['created_at'],
+                    price=submitted_order['brino_entry_price'],
+                    units=float(submitted_order['quantity']),
+                    brine_id=submitted_order['id'],
+                    source=PortFolioSource.BRINE.value)
+    open_order.save()
+    return open_order
+
+
+def _submit_limit_order_to_client(watchlist, transaction_type, units, price):
     client = get_client()
 
     if watchlist_bll.is_option(watchlist):
-        return _submit_option_limit_order_to_client(order_validated_data, watchlist, client)
+        return _submit_option_limit_order_to_client(watchlist, units, price, client)
 
     # Its a stock
-    return _submit_stock_limit_order_to_client(order_validated_data, watchlist, client)
+    submitted_order = _submit_stock_limit_order_to_client(watchlist, transaction_type, units, price, client)
+
+    return _save_submitted_stock_order(watchlist, submitted_order, client)
 
 
 def _submit_option_limit_order_to_client(order_validated_data, watchlist, client):
 
     return
 
-def _submit_stock_limit_order_to_client(order_validated_data, watchlist, client):
-    if order_validated_data['transaction_type_list'] == TransactionType.BUY.value:
+def _submit_stock_limit_order_to_client(watchlist, transaction_type, units, price, client):
+    if transaction_type == TransactionType.BUY.value:
         #Its a buy order
-        return client.order_stock_buy_limit(watchlist.ticker, 
-                        order_validated_data['units'],
-                        order_validated_data['price'])
+        return client.order_stock_buy_limit(watchlist.ticker, units, price)
     
     #Its a sell order
-    return client.order_stock_sell_limit(watchlist.ticker,
-                    order_validated_data['units'],
-                    order_validated_data['price'])
+    return client.order_stock_sell_limit(watchlist.ticker, units, price)
 

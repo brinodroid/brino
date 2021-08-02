@@ -413,7 +413,7 @@ class PFUpdater:
                             transaction_type_list=transaction_type_list_text,
                             created_datetime=open_order['created_at'],
                             price=open_order['brino_entry_price'],
-                            units=float(open_order['quantity'])*self.__option_multiplier,
+                            units=float(open_order['quantity']),
                             brine_id=open_order['id'],
                             source=PortFolioSource.BRINE.value)
             order.save()
