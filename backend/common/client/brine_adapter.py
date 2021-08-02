@@ -142,7 +142,7 @@ class BrineAdapter:
         if 'price' not in order.keys():
             # The order has failed. Get error message
             logger.error('__convert_order_to_brine: order: {}'.format(order))
-            raise ValueError(order['detail'])
+            raise ValueError(order)
 
         res_order = {}
         res_order['client'] = PortFolioSource.BRINE.value
@@ -221,28 +221,20 @@ class BrineAdapter:
 
     def order_stock_buy_market(self, symbol, quantity, limit_price):
         order = brine.orders.order_buy_market(symbol, quantity, limit_price, extendedHours=True)
-        return order
+        return self.__convert_order_to_brine(order)
 
     def order_stock_sell_market(self, symbol, quantity, limit_price):
         order = brine.orders.order_sell_market(symbol, quantity, limit_price, extendedHours=True)
-        return order
+        return self.__convert_order_to_brine(order)
 
-    def order_option_buy_open_limit(self, creditOrDebit, price, symbol, quantity, expirationDate, strike, optionType):
-        order = brine.orders.order_buy_option_limit('open', creditOrDebit, price, symbol, quantity, expirationDate, strike, optionType)
-        return order
+    def order_option_buy_open_limit(self, action_effect, credit_or_debit, price, symbol, option_unit, expiration_date, strike, option_type):
+        order = brine.orders.order_buy_option_limit(action_effect, credit_or_debit, price, symbol, option_unit, expiration_date, strike, option_type)
+        return self.__convert_order_to_brine(order)
 
-    def order_option_buy_close_limit(self, creditOrDebit, price, symbol, quantity, expirationDate, strike, optionType):
-        order = brine.orders.order_buy_option_limit('close', creditOrDebit, price, symbol, quantity, expirationDate, strike, optionType)
-        return order
+    def order_option_buy_stop_limit(self, action_effect, credit_or_debit, price, symbol, quantity, expiration_date, strike, option_type):
+        order = brine.orders.order_buy_option_stop_limit(action_effect, credit_or_debit, price, price, symbol, quantity, expiration_date, strike, option_type)
+        return self.__convert_order_to_brine(order)
 
-    def order_option_buy_stop_limit(self, creditOrDebit, price, symbol, quantity, expirationDate, strike, optionType):
-        order = brine.orders.order_buy_option_stop_limit('close', creditOrDebit, price, price, symbol, quantity, expirationDate, strike, optionType)
-        return order
-
-    def order_option_sell_open_limit(self, creditOrDebit, price, symbol, quantity, expirationDate, strike, optionType):
-        order = brine.orders.order_sell_option_limit('open', creditOrDebit, price, symbol, quantity, expirationDate, strike, optionType)
-        return order
-
-    def order_option_sell_close_limit(self, creditOrDebit, price, symbol, quantity, expirationDate, strike, optionType):
-        order = brine.orders.order_sell_option_limit('close', creditOrDebit, price, symbol, quantity, expirationDate, strike, optionType)
-        return order
+    def order_option_sell_open_limit(self, action_effect, credit_or_debit, price, symbol, option_unit, expiration_date, strike, option_type):
+        order = brine.orders.order_sell_option_limit(action_effect, credit_or_debit, price, symbol, option_unit, expiration_date, strike, option_type)
+        return self.__convert_order_to_brine(order)

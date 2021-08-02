@@ -31,7 +31,7 @@ class OpenOrder(models.Model):
         return super(OpenOrder, self).save(*args, **kwargs)
 
     def __str__(self):
-        return "watchlist_id_list:%s, transaction_type_list:%s, strategy_id:%d"\
+        return "watchlist_id_list:%s, transaction_type_list:%s, strategy_id:%s, " \
                " price:%s, units:%s, action:%s, brine_id:%s, source:%s, submit:%s,"\
                " opening_strategy:%s, closing_strategy:%s, created_datetime:%s, update_timestamp:%s" \
                % (self.watchlist_id_list, self.transaction_type_list, self.strategy_id,
