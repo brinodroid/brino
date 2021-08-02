@@ -1,16 +1,18 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
+from django.db import transaction
+
 import logging
 from .models import OpenOrder, ExecutedOrder, CancelledOrder
-import brOrder.order_bll as
+import brOrder.order_bll as order_bll
 
 from brCore.models import WatchList, ScanEntry
 from .serializer import OpenOrderSerializer, ExecutedOrderSerializer, CancelledOrderSerializer
 
 logger = logging.getLogger('django')
 
-
+@transaction.atomic
 @api_view(['POST'])
 # Input request contains:
 # request.data.order: Mandatory
@@ -33,16 +35,8 @@ def create_order_strategy(request):
                 serializer.Meta.model))
             return Response({'detail': 'Watchlist id unknown'}, status=status.HTTP_400_BAD_REQUEST)
 
-        strategy = None
-        if request.data['strategy']:
-            #TODO: Serialize the strategy to get params
-            logger.info('create_order_strategy: strategy {}'.format(
-                request.data['strategy']))
+        order_bll.submit_limit_order(serializer, request.data['strategy'], watchlist)
 
-        order_bll.submit_limit_order(serializer.validated_data, strategy, watchlist)
-
-        # Successfully submited the order. Save it in DB
-        serializer.save()
         return Response(serializer.data)
 
     return Response({'detail': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)

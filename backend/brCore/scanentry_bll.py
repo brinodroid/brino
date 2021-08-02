@@ -45,8 +45,7 @@ def create_if_not_exists(watchlist, entry_price, transaction_type):
                             profit_target=round(profit_target, 2),
                             stop_loss=round(stop_loss, 2))
 
-    # TODO: Uncomment
-    # scan_entry.save()
+    scan_entry.save()
     return scan_entry
 
 

@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'brCore.apps.BrcoreConfig',
     'brHistory.apps.BrhistoryConfig',
     'brOrder.apps.BrorderConfig',
+    'brStrategy.apps.BrstrategyConfig',
 ]
 
 MIDDLEWARE = [
