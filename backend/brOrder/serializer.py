@@ -5,8 +5,8 @@ class OpenOrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = OpenOrder
         fields = ('id', 'update_timestamp', 'watchlist_id_list', 'transaction_type_list',
-         'created_datetime', 'price', 'units', 'opening_strategy', 'closing_strategy',
-         'brine_id', 'source', 'submit')
+         'created_datetime', 'price', 'units', 'action', 'opening_strategy', 'closing_strategy',
+         'brine_id', 'source', 'submit', 'strategy_id')
 
 class ExecutedOrderSerializer(serializers.ModelSerializer):
     class Meta:

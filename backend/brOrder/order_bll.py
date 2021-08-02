@@ -24,10 +24,17 @@ def submit_limit_order(serializer, strategy, watchlist):
 
     if serializer.validated_data['submit']:
         #Submit the call to client.
-        return _submit_limit_order_to_client(watchlist,
+        open_order = _submit_limit_order_to_client(watchlist,
             serializer.validated_data['transaction_type_list'],
             serializer.validated_data['units'],
             serializer.validated_data['price'])
+    else:
+        open_order = serializer.save()
+
+    if strategy:
+        # Connect order with strategy
+        open_order.strategy_id = strategy.id
+        open_order.save()
 
     # Successfully submited the order. Save it in DB
     return serializer.save()
@@ -69,16 +76,28 @@ def _submit_limit_order_to_client(watchlist, transaction_type, units, price):
 
     return _save_submitted_stock_order(watchlist, submitted_order, client)
 
-
-def _submit_option_limit_order_to_client(order_validated_data, watchlist, client):
-
-    return
-
 def _submit_stock_limit_order_to_client(watchlist, transaction_type, units, price, client):
     if transaction_type == TransactionType.BUY.value:
         #Its a buy order
         return client.order_stock_buy_limit(watchlist.ticker, units, price)
+
+    #Its a sell order
+    return client.order_stock_sell_limit(watchlist.ticker, units, price)
+
+def _submit_option_limit_order_to_client(watchlist, transaction_type, units, price, client):
+    if watchlist.asset_type == AssetTypes.CALL_OPTION.value:
+        option_type = 'call'
+    else:
+        option_type = 'put'
+
+    if transaction_type == TransactionType.BUY.value:
+        #Its a buy order
+        # TODO: Have a field for effect: open/close
+        return client.order_option_buy_open_limit('open', creditOrDebit, price, watchlist.ticker,
+            units, watchlist.option_expiry, watchlist.option_strike, option_type)
     
     #Its a sell order
     return client.order_stock_sell_limit(watchlist.ticker, units, price)
 
+def _submit_put_option_limit_order_to_client(watchlist, transaction_type, units, price, client):
+    return

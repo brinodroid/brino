@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils import timezone
 from common.types.asset_types import PortFolioSource, TransactionType
+from brOrder.order_types import OrderAction
 
 # Model presenting a open order
 class OpenOrder(models.Model):
@@ -9,9 +10,11 @@ class OpenOrder(models.Model):
 
     watchlist_id_list = models.TextField(default=None)
     transaction_type_list = models.TextField(default=None)
+    strategy_id = models.IntegerField(blank=True, null=True)
 
     price = models.FloatField()
     units = models.FloatField()
+    action = models.CharField(max_length=16, choices=OrderAction.choices(), default=OrderAction.OPEN.value)
 
     opening_strategy = models.TextField(null=True, blank=True, default=None)
     closing_strategy = models.TextField(null=True, blank=True, default=None)
@@ -28,12 +31,12 @@ class OpenOrder(models.Model):
         return super(OpenOrder, self).save(*args, **kwargs)
 
     def __str__(self):
-        return "watchlist_id_list:%s, transaction_type_list:%s, created_datetime:%s,"\
-               " price:%s, units:%s, brine_id:%s, source:%s, submit:%s, opening_strategy:%s,"\
-               " closing_strategy:%s, update_timestamp:%s" \
-               % (self.watchlist_id_list, self.transaction_type_list, self.created_datetime,
-                  self.price, self.units, self.brine_id, self.source, self.submit, self.opening_strategy,
-                  self.closing_strategy, self.update_timestamp)
+        return "watchlist_id_list:%s, transaction_type_list:%s, strategy_id:%d"\
+               " price:%s, units:%s, action:%s, brine_id:%s, source:%s, submit:%s,"\
+               " opening_strategy:%s, closing_strategy:%s, created_datetime:%s, update_timestamp:%s" \
+               % (self.watchlist_id_list, self.transaction_type_list, self.strategy_id,
+                  self.price, self.units, self.action, self.brine_id, self.source, self.submit,
+                  self.opening_strategy, self.closing_strategy, self.created_datetime, self.update_timestamp)
 
 # Model presenting a executed order
 class ExecutedOrder(models.Model):
