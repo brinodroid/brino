@@ -4,12 +4,12 @@ from common.types.asset_types import PortFolioSource, TransactionType
 
 # Model presenting a open order
 class OpenOrder(models.Model):
+    created_datetime = models.DateTimeField(editable=False, default=timezone.now)
     update_timestamp = models.DateTimeField(default=timezone.now)
 
     watchlist_id_list = models.TextField(default=None)
     transaction_type_list = models.TextField(default=None)
 
-    created_datetime = models.DateTimeField(null=False, blank=False, default=None)
     price = models.FloatField()
     units = models.FloatField()
 
@@ -22,6 +22,8 @@ class OpenOrder(models.Model):
     #We need to refer to historical data too
 
     def save(self, *args, **kwargs):
+        if not self.id:
+            self.created_datetime = timezone.now()
         self.update_timestamp = timezone.now()
         return super(OpenOrder, self).save(*args, **kwargs)
 

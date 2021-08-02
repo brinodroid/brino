@@ -138,6 +138,12 @@ class BrineAdapter:
         return 0
 
     def __convert_order_to_brine(self, order):
+
+        if 'price' not in order.keys():
+            # The order has failed. Get error message
+            logger.error('__convert_order_to_brine: order: {}'.format(order))
+            raise ValueError(order['detail'])
+
         res_order = {}
         res_order['client'] = PortFolioSource.BRINE.value
 
