@@ -447,6 +447,15 @@ class Scanner:
                 scan_entry, self.__SCAN_INFO_MSG, '{}% below support. Buy?'.format(change_percent))
 
     def __check_extended_hours_price_movement_alert(self, scan_entry, watchlist, scan_data):
+        if scan_data[self.__SCAN_DATA_LATEST_TICKER_PRICE_DICT_KEY] is None:
+            logger.error('__check_extended_hours_price_movement_alert: latest price date missing. Skipping {}'
+                .format(watchlist))
+            return
+        if scan_data[self.__SCAN_DATA_MARKET_HOURS_TICKER_PRICE_DICT_KEY] is None:
+            logger.error('__check_extended_hours_price_movement_alert: latest market hours price data missing. Skipping {}'
+                .format(watchlist))
+            return
+
         latest_price = scan_data[self.__SCAN_DATA_LATEST_TICKER_PRICE_DICT_KEY][watchlist.ticker]
         market_hours_price = scan_data[self.__SCAN_DATA_MARKET_HOURS_TICKER_PRICE_DICT_KEY][watchlist.ticker]
 
