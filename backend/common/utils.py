@@ -3,6 +3,8 @@ from datetime import datetime, timedelta
 
 logger = logging.getLogger('django')
 
+option_unit_multiplier = 100.0
+
 def safe_float(float_string):
     try:
         f = float(float_string)

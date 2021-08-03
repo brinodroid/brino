@@ -238,3 +238,11 @@ class BrineAdapter:
     def order_option_sell_open_limit(self, action_effect, credit_or_debit, price, symbol, option_unit, expiration_date, strike, option_type):
         order = brine.orders.order_sell_option_limit(action_effect, credit_or_debit, price, symbol, option_unit, expiration_date, strike, option_type)
         return self.__convert_order_to_brine(order)
+
+    def cancel_stock_order(self, order_id):
+        order = brine.orders.cancel_stock_order(order_id)
+        return order
+
+    def cancel_option_order(self, order_id):
+        order = brine.orders.cancel_option_order(order_id)
+        return order

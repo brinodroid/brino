@@ -4,12 +4,64 @@ import brCore.watchlist_bll as watchlist_bll
 import brCore.scanentry_bll as scanentry_bll
 import brHistory.history_bll as history_bll
 import brStrategy.strategy_bll as strategy_bll
-from brOrder.models import OpenOrder
+from brOrder.models import OpenOrder, CancelledOrder
 from brOrder.order_types import OrderAction
 from common.types.asset_types import AssetTypes, TransactionType, PortFolioSource
 from common.client.Factory import get_client
+import common.utils as utils
 
 logger = logging.getLogger('django')
+
+def delete_order(order):
+    # Delete really means mvoing the order to CancelledOrder or ExecutedOrder
+
+    order_cancelled = True
+    order_terminated_time = datetime.now()
+
+    # This order has been submitted
+    order_status = _get_order_status(order)
+    if order_status and order_status['state'] != 'cancelled':
+        # Order status is valid. Check to see if it needs to be cancelled
+        if order_status['state'] == 'filled' :
+            order_cancelled = False
+            order_terminated_time = order_status['updated_at']
+        else :
+            # Cancel the order
+            _cancel_order(order)
+
+    if order_cancelled:
+        # Move to CancelledOrder if the order is cancelled.
+        cancelled_order = CancelledOrder(watchlist_id_list=order.watchlist_id_list,
+                transaction_type_list=order.transaction_type_list,
+                created_datetime=order.created_datetime,
+                cancelled_datetime=order_terminated_time,
+                price=order.price,
+                units=order.units,
+                brine_id=order.brine_id,
+                closing_strategy=order.closing_strategy,
+                opening_strategy=order.opening_strategy,
+                source=order.source)
+        cancelled_order.save()
+    else:
+        # Move to ExecutedOrder if the order is executed
+        # Move to CancelledOrder if the order is cancelled.
+
+        # TODO: Update portfolio too
+        executed_order = ExecutedOrder(watchlist_id_list=order.watchlist_id_list,
+                transaction_type_list=order.transaction_type_list,
+                created_datetime=order.created_datetime,
+                cancelled_datetime=order_terminated_time,
+                price=order.price,
+                units=order.units,
+                brine_id=order.brine_id,
+                closing_strategy=order.closing_strategy,
+                opening_strategy=order.opening_strategy,
+                source=order.source)
+        executed_order.save()
+
+    order.delete()
+
+    return order
 
 
 def submit_limit_order(serializer, strategy, watchlist):
@@ -47,6 +99,65 @@ def submit_limit_order(serializer, strategy, watchlist):
     return open_order
 
 
+
+#########################################################################
+## Private functions
+#########################################################################
+def _cancel_order(order):
+    if not order.brine_id:
+        logger.error('_cancel_order: No brine_id in order. Not submitted?: {}'
+                        .format(order))
+        return None
+    # We have a valid brine_id
+
+    watchlist_list = order.watchlist_id_list
+
+    # TODO: Needs to handle multiple watchlist in the order
+    watchlist = watchlist_bll.get_watchlist(int(watchlist_list))
+
+    client = get_client()
+
+    if watchlist_bll.is_option(watchlist):
+        # This is an option order
+        option_order = client.cancel_option_order(order.brine_id)
+        return option_order
+
+    # This is a stock order
+    stock_order = client.cancel_stock_order(order.brine_id)
+
+    return stock_order
+
+def _get_order_status(order):
+    if not order.brine_id:
+        logger.error('_get_order_status: No brine_id in order. Not submitted?: {}'
+                        .format(order))
+        return None
+
+    # We have a valid brine_id
+
+    watchlist_list = order.watchlist_id_list
+
+    # TODO: Needs to handle multiple watchlist in the order
+    watchlist = watchlist_bll.get_watchlist(int(watchlist_list))
+
+    client = get_client()
+
+    if watchlist_bll.is_option(watchlist):
+        # This is an option order
+        option_order = client.get_open_option_order_status(order.brine_id)
+        return option_order
+
+    # This is a stock order
+    stock_order = client.get_open_stock_order_status(order.brine_id)
+
+    return stock_order
+
+def _convert_string_to_list(string_as_list):
+    # Remove the square brackets[] in the string
+    trimmed_string = string_as_list[1:-1]
+    li = list(string_as_list.split(','))
+    return li
+
 def _update_open_stock_orders_legs(watchlist, submitted_order, client):
     watchlist_id_list = []
     transaction_type_list = []
@@ -61,8 +172,9 @@ def _update_open_stock_orders_legs(watchlist, submitted_order, client):
 def _save_submitted_stock_order(watchlist, submitted_order, client):
     watchlist_id_list, transaction_type_list = _update_open_stock_orders_legs(watchlist, submitted_order, client)
 
-    open_order = OpenOrder(watchlist_id_list=watchlist_id_list,
-                    transaction_type_list=transaction_type_list,
+    #TODO: Handle watchlist and transaction being a list
+    open_order = OpenOrder(watchlist_id_list=watchlist.id,
+                    transaction_type_list=submitted_order['brino_transaction_type'],
                     created_datetime=submitted_order['created_at'],
                     price=submitted_order['brino_entry_price'],
                     units=float(submitted_order['quantity']),
@@ -108,15 +220,16 @@ def _update_open_option_orders_legs(watchlist, open_order, client):
 def _save_submitted_option_order(watchlist, submitted_order, client):
     watchlist_id_list, transaction_type_list = _update_open_option_orders_legs(watchlist, submitted_order, client)
 
-    watchlist_id_list_text = ','.join(map(str, watchlist_id_list))
-    transaction_type_list_text = ','.join(map(str, transaction_type_list))
+    # TODO: Handle list of watchlist and transaction type
+    watchlist_id_list_text = watchlist_id_list[0].id
+    transaction_type_list_text = transaction_type_list[0]
 
     # Order
     open_order = OpenOrder(watchlist_id_list=watchlist_id_list_text,
                     transaction_type_list=transaction_type_list_text,
                     created_datetime=submitted_order['created_at'],
                     price=submitted_order['brino_entry_price'],
-                    units=float(submitted_order['quantity'])*100,
+                    units=float(submitted_order['quantity'])*utils.option_unit_multiplier,
                     brine_id=submitted_order['id'],
                     closing_strategy=submitted_order['closing_strategy'],
                     opening_strategy=submitted_order['opening_strategy'],
@@ -136,7 +249,7 @@ def _submit_option_limit_order_to_client(watchlist, transaction_type, units, pri
     else:
         action_effect = 'close'
 
-    option_unit = units/100
+    option_unit = units/utils.option_unit_multiplier
 
     if transaction_type == TransactionType.BUY.value:
         #Its a buy order

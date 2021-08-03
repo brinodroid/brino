@@ -17,3 +17,8 @@ def get_watchlist(asset_type, ticker, option_strike, option_expiry):
                     option_strike=option_strike,
                     option_expiry=option_expiry)
     return watchlist
+
+def get_watchlist(watchlist_id):
+    watchlist = WatchList.objects.get(pk=int(watchlist_id))
+    return watchlist
+

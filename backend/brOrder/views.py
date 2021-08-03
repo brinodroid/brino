@@ -77,8 +77,10 @@ def open_order_detail(request, pk):
         return Response(serializer.data)
 
     elif request.method == 'DELETE':
-        order.delete()
-        return Response({'detail': 'Deleted'}, status=status.HTTP_204_NO_CONTENT)
+        order_bll.delete_order(order)
+        serializer = OpenOrderSerializer(order)
+        #Send back the content which has been deleted
+        return Response(serializer.data)
 
     return Response({'detail': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
