@@ -66,7 +66,7 @@ def watchlist_detail(request, pk):
 
     elif request.method == 'DELETE':
         watchlist.delete()
-        return Response({'detail': 'Deleted'}, status=status.HTTP_204_NO_CONTENT)
+        return Response({'detail': 'Deleted'}, status=status.HTTP_200_OK)
 
     return Response({'detail': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
@@ -117,7 +117,7 @@ def bgtask_detail(request, pk):
 
     elif request.method == 'DELETE':
         bgtask.delete()
-        return Response({'detail': 'Deleted'}, status=status.HTTP_204_NO_CONTENT)
+        return Response({'detail': 'Deleted'}, status=status.HTTP_200_OK)
 
     return Response({'detail': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
@@ -166,7 +166,7 @@ def portfolio_detail(request, pk):
 
     elif request.method == 'DELETE':
         portfolio.delete()
-        return Response({'detail': 'Deleted'}, status=status.HTTP_204_NO_CONTENT)
+        return Response({'detail': 'Deleted'}, status=status.HTTP_200_OK)
 
     return Response({'detail': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
@@ -319,7 +319,7 @@ def scan_detail(request, pk):
         finally:
             Scanner.getInstance().get_lock().release()
 
-        return Response({'detail': 'Deleted'}, status=status.HTTP_204_NO_CONTENT)
+        return Response({'detail': 'Deleted'}, status=status.HTTP_200_OK)
 
     return Response({'detail': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
