@@ -12,6 +12,24 @@ import common.utils as utils
 
 logger = logging.getLogger('django')
 
+def poll_order_status():
+    # get all openOrders
+    try:
+        open_orders_list = OpenOrder.objects.all()
+    except OpenOrder.DoesNotExist:
+        # Nothing to scan
+        logger.info('poll_order_status: No open orders')
+        return
+
+    # check its status in brine
+    for open_order in open_orders_list:
+        logger.info('poll_order_status: checking {}'.format(open_order))
+        if not _open_order_check(open_order):
+            # Order is either cancelled or executed.
+            open_order.delete()
+
+    return
+
 def delete_order(order):
     # Delete really means mvoing the order to CancelledOrder or ExecutedOrder
 
@@ -47,6 +65,7 @@ def delete_order(order):
         # Move to CancelledOrder if the order is cancelled.
 
         # TODO: Update portfolio too
+
         executed_order = ExecutedOrder(watchlist_id_list=order.watchlist_id_list,
                 transaction_type_list=order.transaction_type_list,
                 created_datetime=order.created_datetime,
@@ -103,6 +122,70 @@ def submit_limit_order(serializer, strategy, watchlist):
 #########################################################################
 ## Private functions
 #########################################################################
+
+def _open_order_check(open_order):
+    order_pending = True
+    if not open_order.brine_id:
+        logger.error('_check_and_update_order: brine_id missing. Cannot check order status: {}'
+                        .format(open_order))
+        return order_pending
+
+    # We have a valid brine_id
+
+    # This order has been submitted
+    order_status = _get_order_status(open_order)
+    if order_status:
+        if order_status['state'] == 'cancelled':
+            logger.info('_check_and_update_order: cancelled order: {}'
+                        .format(open_order))
+
+            # Order cancelled
+            cancelled_order = CancelledOrder(watchlist_id_list=open_order.watchlist_id_list,
+                transaction_type_list=open_order.transaction_type_list,
+                created_datetime=open_order.created_datetime,
+                cancelled_datetime=order_status['updated_at'],
+                price=open_order.price,
+                units=open_order.units,
+                brine_id=open_order.brine_id,
+                closing_strategy=open_order.closing_strategy,
+                opening_strategy=open_order.opening_strategy,
+                source=open_order.source)
+            cancelled_order.save()
+
+            # Order is not pending
+            order_pending = True
+
+        elif order_status['state'] == 'filled':
+            logger.info('_check_and_update_order: filled order: {}'
+                        .format(open_order))
+
+            # Order executed
+            executed_order = ExecutedOrder(watchlist_id_list=open_order.watchlist_id_list,
+                transaction_type_list=open_order.transaction_type_list,
+                order_created_datetime=open_order.created_datetime,
+                executed_datetime=order_status['updated_at'],
+                price=open_order.price,
+                executed_price=order_status['brino_entry_price'],
+                units=open_order.units,
+                brine_id=open_order.brine_id,
+                closing_strategy=open_order.closing_strategy,
+                opening_strategy=open_order.opening_strategy,
+                source=open_order.source)
+            executed_order.save()
+
+            # Create portolio entry
+
+            # Order is not pending
+            order_pending = True
+        else:
+            logger.info('_check_and_update_order: Order state is {}. Ignoring'
+                .format(order_status))
+
+    return order_pending
+
+
+
+
 def _cancel_order(order):
     if not order.brine_id:
         logger.error('_cancel_order: No brine_id in order. Not submitted?: {}'
