@@ -4,7 +4,7 @@ import brCore.watchlist_bll as watchlist_bll
 import brCore.scanentry_bll as scanentry_bll
 import brHistory.history_bll as history_bll
 import brStrategy.strategy_bll as strategy_bll
-from brOrder.models import OpenOrder, CancelledOrder
+from brOrder.models import OpenOrder, ExecutedOrder, CancelledOrder
 from brOrder.order_types import OrderAction
 from common.types.asset_types import AssetTypes, TransactionType, PortFolioSource
 from common.client.Factory import get_client
@@ -153,7 +153,7 @@ def _open_order_check(open_order):
             cancelled_order.save()
 
             # Order is not pending
-            order_pending = True
+            order_pending = False
 
         elif order_status['state'] == 'filled':
             logger.info('_check_and_update_order: filled order: {}'
@@ -176,7 +176,7 @@ def _open_order_check(open_order):
             # Create portolio entry
 
             # Order is not pending
-            order_pending = True
+            order_pending = False
         else:
             logger.info('_check_and_update_order: Order state is {}. Ignoring'
                 .format(order_status))
