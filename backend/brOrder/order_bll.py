@@ -2,6 +2,7 @@ import logging
 from datetime import datetime, timedelta
 import brCore.watchlist_bll as watchlist_bll
 import brCore.scanentry_bll as scanentry_bll
+import brCore.portfolio_bll as portfolio_bll
 import brHistory.history_bll as history_bll
 import brStrategy.strategy_bll as strategy_bll
 from brOrder.models import OpenOrder, ExecutedOrder, CancelledOrder
@@ -62,10 +63,6 @@ def delete_order(order):
         cancelled_order.save()
     else:
         # Move to ExecutedOrder if the order is executed
-        # Move to CancelledOrder if the order is cancelled.
-
-        # TODO: Update portfolio too
-
         executed_order = ExecutedOrder(watchlist_id_list=order.watchlist_id_list,
                 transaction_type_list=order.transaction_type_list,
                 created_datetime=order.created_datetime,
@@ -77,6 +74,8 @@ def delete_order(order):
                 opening_strategy=order.opening_strategy,
                 source=order.source)
         executed_order.save()
+
+        portfolio_bll.create_if_not_exists(executed_order)
 
     order.delete()
 
@@ -174,6 +173,7 @@ def _open_order_check(open_order):
             executed_order.save()
 
             # Create portolio entry
+            portfolio_bll.create_if_not_exists(executed_order)
 
             # Order is not pending
             order_pending = False
