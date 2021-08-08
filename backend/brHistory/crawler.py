@@ -210,6 +210,15 @@ class Crawler:
         }
     }
 
+    def save_history(self):
+        # This saving is done independently of the scanner as watchlist
+
+        client = get_client()
+
+        self.__option_history_update(client, AssetTypes.CALL_OPTION.value)
+        self.__option_history_update(client, AssetTypes.PUT_OPTION.value)
+
+
     def __save_data(self):
         # This saving is done independently of the scanner as watchlist
         # could be different from scanner

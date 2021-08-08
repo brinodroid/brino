@@ -110,6 +110,16 @@ class Scanner:
 
             time.sleep(self.__sleep_duration)
 
+    def scan(self):
+        # Get the default client
+        client = get_client()
+
+        self.__lock.acquire()
+        try:
+            self.__scanner_run_with_lock(client)
+        finally:
+            self.__lock.release()
+
 
     def __compute_reward_2_risk(self, scan_entry):
         if scan_entry.support is None:
