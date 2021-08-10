@@ -125,6 +125,9 @@ class BrineAdapter:
                 'get_stock_current_price: Exception: {}'.format(repr(e)))
             return None
 
+    def get_stock_data(self, ticker, interval, span):
+        return brine.get_stock_historicals(ticker, interval, span)
+
     def get_option_price(self, ticker, expiry, strike, type):
         # TODO: Investigate why option price is returned as dictionary list
         return brine.options.get_option_market_data(ticker, expiry, strike, type)

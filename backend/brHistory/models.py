@@ -88,3 +88,26 @@ class PutOptionData(models.Model):
                   self.high_price, self.low_price, self.last_trade_price,
                   self.open_interest, self.volume, self.ask_size, self.bid_size,
                   self.delta, self.gamma, self.implied_volatility, self.rho, self.theta, self.vega)
+
+# StockData: This is the list of assets actively tracked
+class StockData(models.Model):
+    date = models.DateField(null=True)
+    watchlist_id = models.IntegerField()
+
+    high_price = models.FloatField()
+    low_price = models.FloatField()
+    open_price = models.FloatField()
+    close_price = models.FloatField()
+
+    volume = models.FloatField()
+
+    def save(self, *args, **kwargs):
+        if not self.id:
+            self.date = timezone.now().date()
+        return super(CallOptionData, self).save(*args, **kwargs)
+
+    def __str__(self):
+        return "date:%s, watchlist_id:%s," \
+               " high_price:%s, low_price: %s, open_price:%s, close_price:%s, volume: %s" \
+               % (self.date, self.watchlist_id,
+                  self.high_price, self.low_price, self.open_price, self.close_price, self.volume)

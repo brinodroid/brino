@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import CallOptionData, PutOptionData
+from brHistory.models import CallOptionData, PutOptionData, StockData
 
 class CallOptionDataSerializer(serializers.ModelSerializer):
     class Meta:
@@ -19,3 +19,10 @@ class PutOptionDataSerializer(serializers.ModelSerializer):
                   'high_price', 'low_price', 'last_trade_price',
                   'open_interest', 'volume', 'ask_size', 'bid_size',
                   'delta', 'gamma', 'implied_volatility', 'rho', 'theta', 'vega')
+
+class StockDataSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StockData
+        fields = ('id', 'date', 'watchlist_id',
+                  'high_price', 'low_price', 'open_price', 'close_price',
+                  'volume')

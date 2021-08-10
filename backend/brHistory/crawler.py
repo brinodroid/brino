@@ -7,6 +7,7 @@ from common.types.asset_types import AssetTypes
 from common.client.Factory import get_client
 from brHistory.models import CallOptionData, PutOptionData
 from brCore.models import WatchList
+import brHistory.history_bll as history_bll
 
 logger = logging.getLogger('django')
 
@@ -217,6 +218,7 @@ class Crawler:
 
         self.__option_history_update(client, AssetTypes.CALL_OPTION.value)
         self.__option_history_update(client, AssetTypes.PUT_OPTION.value)
+        history_bll.stock_history_update()
 
 
     def __save_data(self):

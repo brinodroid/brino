@@ -2,7 +2,7 @@ import logging
 from datetime import datetime, timedelta
 from common.types.asset_types import AssetTypes
 from brCore.models import WatchList
-from brHistory.models import CallOptionData, PutOptionData
+from brHistory.models import CallOptionData, PutOptionData, StockData
 import common.utils as utils
 from common.client.Factory import get_client
 from django.utils import timezone
@@ -10,12 +10,64 @@ from django.utils import timezone
 
 logger = logging.getLogger('django')
 
+def create_stock_history(watchlist):
+    if watchlist.asset_type != AssetTypes.STOCK.value:
+        logger.error('create_stock_history: Wrong assettype. Ignoring watchlist {}'.format(watchlist))
+        return None
+
+    date = timezone.now().date()
+
+    try:
+        stock_data = StockData.objects.filter(date=date, watchlist_id=watchlist.id)
+        # stock_data exists for the same date
+        return stock_data
+    except StockData.DoesNotExist:
+        # StockData history does not exist. Add a new entry for th date
+        logger.info('create_stock_history: stock_data not found for watchlist_id {}'.format(
+            watchlist.id))
+
+
+    # Try adding the data
+    client = get_client()
+    stock_raw_data = client.get_stock_data(watchlist.ticker,
+                        interval='day',
+                        span='day')
+
+    stock_data = stock_raw_data[0]
+    if not stock_data:
+        logger.info('create_stock_history: stock_raw_data not found for watchlist_id {}'.format(
+            watchlist.id))
+        return None
+
+    return _update_stockdata_table(watchlist_id, stock_data)
+
+def stock_history_update():
+    try:
+        watchlist_list = WatchList.objects.filter(
+            asset_type=AssetTypes.STOCK.value)
+    except WatchList.DoesNotExist:
+        # Nothing to scan
+        logger.info('create_daily_stock_history: No watchlist found')
+        return
+
+    date = timezone.now().date()
+    for watchlist in watchlist_list:
+        logger.info('create_daily_stock_history: watchlist {}'.format(watchlist))
+        create_stock_history(watchlist)
+
+    return
+
+
 def create_option_history(watchlist):
     if watchlist.asset_type == AssetTypes.CALL_OPTION.value:
         return create_call_option_history(watchlist)
     
     if watchlist.asset_type == AssetTypes.PUT_OPTION.value:
         return create_put_option_history(watchlist)
+
+    logger.error('create_option_history: Wrong assettype. Ignoring watchlist {}'.format(watchlist))
+    return None
+
 
 
 def create_call_option_history(watchlist):
@@ -110,3 +162,16 @@ def _update_put_option_table(watchlist_id, option_data):
     put_option_data.save()
 
     return put_option_data
+
+
+def _update_stockdata_table(watchlist_id, stock_data_in):
+
+    stock_data = StockData(watchlist_id=watchlist_id,
+        high_price=utils.safe_float(stock_data_in['high_price']),
+        low_price=utils.safe_float(stock_data_in['low_price']),
+        open_price=utils.safe_float(stock_data_in['open_price']),
+        close_price=utils.safe_float(stock_data_in['close_price']),
+        volume=utils.safe_float(stock_data_in['volume'])
+        )
+    stock_data.save()
+    return stock_data
