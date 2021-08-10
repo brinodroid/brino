@@ -91,7 +91,7 @@ class PutOptionData(models.Model):
 
 # StockData: This is the list of assets actively tracked
 class StockData(models.Model):
-    date = models.DateField(null=True)
+    date = models.DateField()
     watchlist_id = models.IntegerField()
 
     high_price = models.FloatField()
@@ -102,12 +102,10 @@ class StockData(models.Model):
     volume = models.FloatField()
 
     def save(self, *args, **kwargs):
-        if not self.id:
-            self.date = timezone.now().date()
-        return super(CallOptionData, self).save(*args, **kwargs)
+        return super(StockData, self).save(*args, **kwargs)
 
     def __str__(self):
         return "date:%s, watchlist_id:%s," \
                " high_price:%s, low_price: %s, open_price:%s, close_price:%s, volume: %s" \
                % (self.date, self.watchlist_id,
-                  self.high_price, self.low_price, self.open_price, self.close_price, self.volume)
+                  self.high_price, self.low_price, self.open_price, self.open_price, self.volume)

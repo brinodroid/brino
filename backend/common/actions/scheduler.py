@@ -16,15 +16,19 @@ logger = logging.getLogger('django')
 def _daily_weekday_10pm_task():
     logger.info('_daily_weekday_10pm_task: starting {}'.format(timezone.now()))
 
-    order_bll.poll_order_status()
-    Crawler.getInstance().save_history()
+    try:
+        Scanner.getInstance().get_lock().acquire()
+
+        order_bll.poll_order_status()
+        Crawler.getInstance().save_history()
+    finally:
+        Scanner.getInstance().get_lock().release()
 
     logger.info('_daily_weekday_10pm_task: ending {}'.format(timezone.now()))
     return
 
 def _one_minute_task():
     logger.info('_one_minute_task: starting {}'.format(timezone.now()))
-
     logger.info('_one_minute_task: ending {}'.format(timezone.now()))
     return
 
@@ -32,7 +36,11 @@ def _one_minute_task():
 def _five_minute_task():
     logger.info('_five_minute_task: starting {}'.format(timezone.now()))
 
-    Scanner.getInstance().scan()
+    try:
+        Scanner.getInstance().get_lock().acquire()
+        Scanner.getInstance().scan()
+    finally:
+        Scanner.getInstance().get_lock().release()
 
     logger.info('_five_minute_task: ending {}'.format(timezone.now()))
     return

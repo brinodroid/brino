@@ -7,7 +7,6 @@ import common.utils as utils
 from common.client.Factory import get_client
 from django.utils import timezone
 
-
 logger = logging.getLogger('django')
 
 def create_stock_history(watchlist):
@@ -18,9 +17,12 @@ def create_stock_history(watchlist):
     date = timezone.now().date()
 
     try:
-        stock_data = StockData.objects.filter(date=date, watchlist_id=watchlist.id)
-        # stock_data exists for the same date
-        return stock_data
+        stock_data_list = StockData.objects.filter(date=date, watchlist_id=watchlist.id)
+        if len(stock_data_list)>0:
+            # stock_data exists for the same date
+            return stock_data_list[0]
+
+        # If the stock_data does not exists, continue
     except StockData.DoesNotExist:
         # StockData history does not exist. Add a new entry for th date
         logger.info('create_stock_history: stock_data not found for watchlist_id {}'.format(
@@ -31,15 +33,19 @@ def create_stock_history(watchlist):
     client = get_client()
     stock_raw_data = client.get_stock_data(watchlist.ticker,
                         interval='day',
-                        span='day')
+                        span='week')
+    if len(stock_raw_data) < 5:
+        logger.info('create_stock_history: stock_raw_data not found for watchlist_id {}'.format(
+            watchlist.id))
+        return None
 
-    stock_data = stock_raw_data[0]
+    stock_data = stock_raw_data[4]
     if not stock_data:
         logger.info('create_stock_history: stock_raw_data not found for watchlist_id {}'.format(
             watchlist.id))
         return None
 
-    return _update_stockdata_table(watchlist_id, stock_data)
+    return _update_stockdata_table(watchlist.id, stock_data)
 
 def stock_history_update():
     try:
@@ -47,12 +53,12 @@ def stock_history_update():
             asset_type=AssetTypes.STOCK.value)
     except WatchList.DoesNotExist:
         # Nothing to scan
-        logger.info('create_daily_stock_history: No watchlist found')
+        logger.info('stock_history_update: No watchlist found')
         return
 
     date = timezone.now().date()
     for watchlist in watchlist_list:
-        logger.info('create_daily_stock_history: watchlist {}'.format(watchlist))
+        logger.info('stock_history_update: watchlist {}'.format(watchlist))
         create_stock_history(watchlist)
 
     return
@@ -165,13 +171,13 @@ def _update_put_option_table(watchlist_id, option_data):
 
 
 def _update_stockdata_table(watchlist_id, stock_data_in):
-
     stock_data = StockData(watchlist_id=watchlist_id,
         high_price=utils.safe_float(stock_data_in['high_price']),
         low_price=utils.safe_float(stock_data_in['low_price']),
         open_price=utils.safe_float(stock_data_in['open_price']),
         close_price=utils.safe_float(stock_data_in['close_price']),
-        volume=utils.safe_float(stock_data_in['volume'])
+        volume=utils.safe_float(stock_data_in['volume']),
+        date=utils.convert_datetime_string_to_django_time(stock_data_in['begins_at'])
         )
     stock_data.save()
     return stock_data

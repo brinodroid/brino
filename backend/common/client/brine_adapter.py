@@ -2,6 +2,7 @@ import re
 import logging
 import brine
 from common.types.asset_types import PortFolioSource, AssetTypes, TransactionType
+import common.utils as utils
 
 logger = logging.getLogger('django')
 
@@ -100,30 +101,30 @@ class BrineAdapter:
         return stock_data
 
     def get_ticker_price_dict(self, uniq_ticker_list, includeExtendedHours):
-        try:
-            current_price_list = brine.get_latest_price(
-                uniq_ticker_list, includeExtendedHours=includeExtendedHours)
+        # return as a dictionary for easy lookup
+        ticker_price_dict = {}
 
-            if len(uniq_ticker_list) != len(current_price_list):
-                # Something is wrong as the lists size are mismatching
-                logger.error('get_stock_current_price: list size mismatch uniq_ticker_list: {}, current_price_list: {}'
-                             .format(len(uniq_ticker_list), len(current_price_list)))
-                return None
+        for ticker in uniq_ticker_list:
+            try:
+                current_price_list = brine.get_latest_price(
+                    ticker, includeExtendedHours=includeExtendedHours)
 
-            # return as a dictionary for easy lookup
-            ticker_price_dict = {}
-            i = 0
-            while i < len(current_price_list):
-                ticker_price_dict[uniq_ticker_list[i]
-                                  ] = float(current_price_list[i])
-                i += 1
+                if (len(current_price_list) < 1) or (len(current_price_list) >= 1 and current_price_list[0] == None):
+                    # Something is wrong, ignore the ticker
+                    logger.error('get_stock_current_price: failed to get price for ticker {}'
+                                .format(ticker))
+                    # fill with 0
+                    ticker_price_dict[ticker] = 0
+                    continue
+            except Exception as e:
+                logger.error(
+                    'get_stock_current_price: Exception: {}'.format(repr(e)))
+                continue
 
-            return ticker_price_dict
+            ticker_price_dict[ticker] = utils.safe_float(current_price_list[0])
 
-        except Exception as e:
-            logger.error(
-                'get_stock_current_price: Exception: {}'.format(repr(e)))
-            return None
+        return ticker_price_dict
+
 
     def get_stock_data(self, ticker, interval, span):
         return brine.get_stock_historicals(ticker, interval, span)

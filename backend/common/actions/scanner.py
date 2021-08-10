@@ -114,11 +114,7 @@ class Scanner:
         # Get the default client
         client = get_client()
 
-        self.__lock.acquire()
-        try:
-            self.__scanner_run_with_lock(client)
-        finally:
-            self.__lock.release()
+        self.__scanner_run_with_lock(client)
 
 
     def __compute_reward_2_risk(self, scan_entry):
@@ -146,7 +142,11 @@ class Scanner:
             #We have brate target, use it
             target = scan_entry.brate_target
 
-        potential = target/scan_entry.current_price
+        if scan_entry.current_price == 0:
+            # Avoid division by 0
+            potential = 0
+        else:
+            potential = target/scan_entry.current_price
         return round(potential, 2)
 
     def __process_scan_entry_values(self, scan_entry, scan_data, client):
