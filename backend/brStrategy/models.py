@@ -15,6 +15,7 @@ class Strategy(models.Model):
     portfolio_id = models.ForeignKey(PortFolio, default=None, blank=True, null=True, on_delete=models.SET_NULL)
     stop_loss = models.FloatField(blank=True, null=True)
     profit_target = models.FloatField(blank=True, null=True)
+    active_track = models.BooleanField(default=False)
     creation_timestamp = models.DateTimeField(editable=False, default=timezone.now)
 
     def save(self, *args, **kwargs):
@@ -23,5 +24,5 @@ class Strategy(models.Model):
         return super(Strategy, self).save(*args, **kwargs)
 
     def __str__(self):
-        return "strategy_type:%s, portfolio_id:%s, stop_loss:%s, profit_target:%s" \
-               % (self.strategy_type, self.portfolio_id, self.stop_loss, self.profit_target)
+        return "strategy_type:%s, portfolio_id:%s, stop_loss:%s, profit_target:%s, active_track:%s" \
+               % (self.strategy_type, self.portfolio_id, self.stop_loss, self.profit_target, self.active_track)
