@@ -28,3 +28,12 @@ def create_if_not_exists(executed_order):
                             source=executed_order.source)
     portfolio.save()
     return portfolio
+
+def get_portfolio(portfolio_id):
+    try:
+        portfolio = PortFolio.objects.get(pk=portfolio_id)
+        return portfolio
+    except PortFolio.DoesNotExist:
+        logger.error('get_portfolio: portfolio_id {} missing'.format(portfolio_id))
+
+    return None
