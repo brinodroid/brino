@@ -25,8 +25,8 @@ export default class Orders extends React.Component {
     this.loadCancelledOrders = this.loadCancelledOrders.bind(this);
 
     this.loadOpenOrders = this.loadOpenOrders.bind(this);
-    this.addToPortFolio = this.addToPortFolio.bind(this);
-    this.deleteFromPortFolio = this.deleteFromPortFolio.bind(this);
+    this.openNewOrder = this.openNewOrder.bind(this);
+    this.deleteOrder = this.deleteOrder.bind(this);
 
     this.onCloseDetailedViewModal = this.onCloseDetailedViewModal.bind(this);
     this.onModalActionButtonClick = this.onModalActionButtonClick.bind(this);
@@ -42,15 +42,15 @@ export default class Orders extends React.Component {
       OPEN_ORDER_STRING: openOrderString,
       EXECUTED_ORDER_STRING: 'Executed Order',
       CANCELLED_ORDER_STRING: 'Cancelled Order',
-
       isOrdersLoaded: false,
       errorMsg: '',
       orders: null,
       viewType: openOrderString,
       showDetailedViewModal: false,
-      addToPortFolio: false,
-      deleteFromPortFolio: false,
-      formValues: { id: "", update_timestamp: "", watchlist_id: "", source: "", transaction_type: "", entry_datetime: "", entry_price: "", units: "", exit_price: "", exit_datetime: "" }
+
+      openNewOrder: false,
+      deleteOrder: false,
+      formValues: {}
     }
   }
 
@@ -58,9 +58,9 @@ export default class Orders extends React.Component {
     console.info('onCloseDetailedViewModal: ...')
     this.setState({
       showDetailedViewModal: false,
-      deleteFromPortFolio: false,
-      addToPortFolio: false,
-      formValues: { id: "", update_timestamp: "", watchlist_id: "", source: "", transaction_type: "", entry_datetime: "", entry_price: "", units: "", exit_price: "", exit_datetime: "" }
+      deleteOrder: false,
+      openNewOrder: false,
+      formValues: {}
     });
   }
 
@@ -76,7 +76,7 @@ export default class Orders extends React.Component {
     console.info('onAddButtonClick: ...')
     this.setState({
       showDetailedViewModal: true,
-      addToPortFolio: true
+      openNewOrder: true
     });
   }
 
@@ -84,7 +84,7 @@ export default class Orders extends React.Component {
     console.info('onDeleteButtonClick: rowData=%o', rowData);
     this.setState({
       showDetailedViewModal: true,
-      deleteFromPortFolio: true,
+      deleteOrder: true,
       formValues: rowData
     });
   }
@@ -207,85 +207,12 @@ export default class Orders extends React.Component {
   }
 
 
-  addToPortFolio(PortFolioEntry) {
-    console.info('addToPortFolio: adding entry=%o', PortFolioEntry)
-    let createPortFolioCallback = function (httpStatus, json) {
-      if (httpStatus === 401) {
-        this.props.auth.setAuthenticationStatus(false);
-        console.error("createPortFolioCallback: authentication expired?");
-        return;
-      }
-
-      if (httpStatus !== 200) {
-        console.error("createPortFolioCallback: failure: http:%o", httpStatus);
-        this.setState({
-          errorMsg: "Failed to add to PortFolio"
-        })
-        return;
-      }
-
-      console.info("createPortFolioCallback: json: %o", json);
-
-      //Reloading the Orders
-      this.loadOpenOrders();
-    }
-
-    getBackend().createPortFolio(PortFolioEntry, createPortFolioCallback.bind(this));
-    this.onCloseDetailedViewModal();
+  openNewOrder(newOrder) {
+    console.info('openNewOrder: adding entry=%o', newOrder)
   }
 
-  updatePortFolio(PortFolioEntry) {
-    console.info('updatePortFolio: adding entry=%o', PortFolioEntry)
-    let updatePortFolioCallback = function (httpStatus, json) {
-      if (httpStatus === 401) {
-        this.props.auth.setAuthenticationStatus(false);
-        console.error("updatePortFolioCallback: authentication expired?");
-        return;
-      }
-
-      if (httpStatus !== 200) {
-        console.error("updatePortFolioCallback: failure: http:%o", httpStatus);
-        this.setState({
-          errorMsg: "Failed to update PortFolio"
-        })
-        return;
-      }
-
-      console.info("updatePortFolioCallback: json: %o", json);
-
-      //Reloading the PortFolio
-      this.loadOpenOrders();
-    }
-
-    getBackend().updatePortFolio(PortFolioEntry, updatePortFolioCallback.bind(this));
-    this.onCloseDetailedViewModal();
-  }
-
-  deleteFromPortFolio(PortFolioEntry) {
-    console.info('deleteFromPortFolio: adding entry=%o', PortFolioEntry)
-    let deleteFromPortFolioCallback = function (httpStatus, json) {
-      if (httpStatus === 401) {
-        this.props.auth.setAuthenticationStatus(false);
-        console.error("deleteFromPortFolioCallback: authentication expired?");
-        return;
-      }
-
-      if (httpStatus !== 204) {
-        console.error("deleteFromPortFolioCallback: failure: http:%o", httpStatus);
-        this.setState({
-          errorMsg: "Failed to delete to PortFolio"
-        })
-        return;
-      }
-
-      console.info("deleteFromPortFolioCallback: json: %o", json);
-
-      //Reloading the PortFolio
-      this.loadOpenOrders();
-    }
-
-    getBackend().deletePortFolio(PortFolioEntry, deleteFromPortFolioCallback.bind(this));
-    this.onCloseDetailedViewModal();
+  deleteOrder(order) {
+    console.info('deleteOrder: adding entry=%o', order)
   }
 
   componentDidMount() {
@@ -319,27 +246,26 @@ export default class Orders extends React.Component {
   }
 
   showModalForm() {
-    /*if (!this.state.formValues) {
-      return <Alert variant={'danger'} > No row selected? </Alert>
-    }*/
-    let readOnly = false;
-    if (this.state.deleteFromPortFolio) readOnly = true;
     console.info('showModalForm: formValues=%o', this.state.formValues);
+    let readOnly = true;
+    if (this.state.openNewOrder) {
+      readOnly = false;
+    }
 
     return (
       <Form onSubmit={this.handleSubmit} >
-
-        { this.showModalFormGroup(true, "update_timestamp", "Update Timestamp", this.state.formValues.update_timestamp)}
-        { this.showModalFormGroup(true, "id", "ID", this.state.formValues.id)}
-        { this.showModalFormGroup(readOnly, "watchlist_id", "WatchList Id", this.state.formValues.watchlist_id)}
+        { this.showModalFormGroup(readOnly, "watchlist_id", "WatchList Id", this.state.formValues.watchlist_id_list)}
+        { this.showModalFormGroup(readOnly, "transaction_type", "Units", this.state.formValues.transaction_type_list)}
         { this.showModalFormGroup(readOnly, "source", "Source", this.state.formValues.source)}
-        { this.showModalFormGroup(readOnly, "transaction_type", "Units", this.state.formValues.transaction_type)}
-        { this.showModalFormGroup(readOnly, "entry_datetime", "Entry Date", this.state.formValues.entry_datetime)}
-        { this.showModalFormGroup(readOnly, "entry_price", "Entry Price", this.state.formValues.entry_price)}
+        { this.showModalFormGroup(readOnly, "price", "Entry Price", this.state.formValues.price)}
         { this.showModalFormGroup(readOnly, "units", "Units", this.state.formValues.units)}
-        { this.showModalFormGroup(readOnly, "exit_datetime", "Exit Date", this.state.formValues.exit_datetime)}
-        { this.showModalFormGroup(readOnly, "exit_price", "Exit Price", this.state.formValues.exit_price)}
+        { this.showModalFormGroup(readOnly, "action", "Action", this.state.formValues.action)}
+        { this.showModalFormGroup(readOnly, "submit", "Submit", this.state.formValues.submit)}
+        { this.showModalFormGroup(true, "id", "ID", this.state.formValues.id)}
+        { this.showModalFormGroup(true, "strategy_id", "Strategy Id", this.state.formValues.strategy_id)}
         { this.showModalFormGroup(true, "brine_id", "Brine Id", this.state.formValues.brine_id)}
+        { this.showModalFormGroup(true, "created_timestamp", "Create Timestamp", this.state.formValues.created_datetime)}
+        { this.showModalFormGroup(true, "update_timestamp", "Update Timestamp", this.state.formValues.update_timestamp)}
 
       </Form>
     );
@@ -352,15 +278,15 @@ export default class Orders extends React.Component {
     formValues.optionExpiry = null;
     formValues.optionStrike = null;
 
-    if (this.state.addToPortFolio) {
+    if (this.state.openNewOrder) {
       console.info('onModalActionButtonClick: call add');
-      this.addToPortFolio(this.state.formValues);
+      this.openNewOrder(this.state.formValues);
       return;
     }
 
-    if (this.state.deleteFromPortFolio) {
+    if (this.state.deleteOrder) {
       console.info('onModalActionButtonClick: call delete');
-      this.deleteFromPortFolio(this.state.formValues);
+      this.deleteOrder(this.state.formValues);
       return;
     }
 
@@ -369,25 +295,18 @@ export default class Orders extends React.Component {
   }
 
   showModalActionButton() {
-    if (this.state.addToPortFolio)
+    if (this.state.openNewOrder) {
       return (
-        <Button variant="primary" onClick={this.onModalActionButtonClick}>
-          Add
-        </Button>
-      );
-
-    if (this.state.deleteFromPortFolio) {
-      return (
-        <Button variant="primary" onClick={this.onModalActionButtonClick}>
-          Delete
-        </Button>
+          <Button variant="primary" onClick={this.onModalActionButtonClick}>
+            Create
+          </Button>
       );
     }
 
     return (
-      <Button variant="primary" onClick={this.onModalActionButtonClick}>
-        Update
-      </Button>
+        <Button variant="primary" onClick={this.onModalActionButtonClick}>
+          Update
+        </Button>
     );
   }
 
@@ -396,7 +315,7 @@ export default class Orders extends React.Component {
     return (
       <Modal show={this.state.showDetailedViewModal} onHide={this.onCloseDetailedViewModal} animation={false}>
         <Modal.Header closeButton>
-          <Modal.Title>PortFolio Details</Modal.Title>
+          <Modal.Title>Order details</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           {this.showModalForm()}
@@ -404,7 +323,7 @@ export default class Orders extends React.Component {
         <Modal.Footer>
           <Button variant="secondary" onClick={this.onCloseDetailedViewModal}>
             Close
-          </Button>
+          </Button> 
           {this.showModalActionButton()}
         </Modal.Footer>
       </Modal>
@@ -460,8 +379,11 @@ export default class Orders extends React.Component {
 
     return (
       <div className="Orders">
-
         <ButtonToolbar aria-label="Toolbar with button groups">
+          <ButtonGroup className="mr-2" aria-label="Second group">
+            <Button onClick={this.onAddButtonClick}> Create Order </Button>
+          </ButtonGroup>
+
           <ButtonGroup className="mr-2" aria-label="Second group">
             <Button onClick={this.loadOpenOrders}> Open </Button>
           </ButtonGroup>
