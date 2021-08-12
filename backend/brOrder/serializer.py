@@ -13,11 +13,11 @@ class ExecutedOrderSerializer(serializers.ModelSerializer):
         model = ExecutedOrder
         fields = ('id', 'update_timestamp', 'watchlist_id_list', 'transaction_type_list',
          'order_created_datetime', 'price', 'units', 'executed_datetime','executed_price',
-         'opening_strategy', 'closing_strategy', 'brine_id', 'source', 'submit')
+         'opening_strategy', 'closing_strategy', 'brine_id', 'source')
 
 class CancelledOrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = CancelledOrder
         fields = ('id', 'update_timestamp', 'watchlist_id_list', 'transaction_type_list',
          'created_datetime', 'price', 'units', 'opening_strategy', 'closing_strategy',
-         'cancelled_datetime', 'brine_id', 'source', 'submit')
+         'cancelled_datetime', 'brine_id', 'source')
