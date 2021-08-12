@@ -21,6 +21,9 @@ export default class Orders extends React.Component {
     this.onDeleteButtonClick = this.onDeleteButtonClick.bind(this);
     this.onAddButtonClick = this.onAddButtonClick.bind(this);
 
+    this.loadExecutedOrders = this.loadExecutedOrders.bind(this);
+    this.loadCancelledOrders = this.loadCancelledOrders.bind(this);
+
     this.loadOpenOrders = this.loadOpenOrders.bind(this);
     this.addToPortFolio = this.addToPortFolio.bind(this);
     this.deleteFromPortFolio = this.deleteFromPortFolio.bind(this);
@@ -34,10 +37,16 @@ export default class Orders extends React.Component {
     this.showModalFormGroup = this.showModalFormGroup.bind(this);
     this.onFormValuesChange = this.onFormValuesChange.bind(this);
 
+    let openOrderString = 'Open Order';
     this.state = {
+      OPEN_ORDER_STRING: openOrderString,
+      EXECUTED_ORDER_STRING: 'Executed Order',
+      CANCELLED_ORDER_STRING: 'Cancelled Order',
+
       isOrdersLoaded: false,
       errorMsg: '',
       orders: null,
+      viewType: openOrderString,
       showDetailedViewModal: false,
       addToPortFolio: false,
       deleteFromPortFolio: false,
@@ -115,12 +124,88 @@ export default class Orders extends React.Component {
       this.setState({
         isOrdersLoaded: true,
         orders: json,
+        viewType: this.state.OPEN_ORDER_STRING,
         errorMsg: ""
       });
     }
 
     getBackend().getOpenOrders(loadOpenOrdersCallback.bind(this));
   }
+
+  loadExecutedOrders() {
+    console.info('loadExecutedOrders: Loading executed orders...')
+    let loadExecutedOrdersCallback = function (httpStatus, json) {
+      if (httpStatus === 401) {
+        this.props.auth.setAuthenticationStatus(false);
+        console.error("loadExecutedOrdersCallback: authentication expired?");
+        return;
+      }
+
+      if (httpStatus !== 200) {
+        console.error("loadExecutedOrdersCallback: failure: http:%o", httpStatus);
+        this.setState({
+          errorMsg: "Failed to load Executed Orders"
+        })
+        return;
+      }
+
+      // Update the watchlist ticker to portfolio
+      let updateWatchListTicker = function (openOrders) {
+        // TODO: Handle list of watchlist Ids
+        openOrders.watchListTickerList = watchlistCache.getWatchListTicker(openOrders.watchlist_id_list);
+      }
+
+      json.forEach(updateWatchListTicker);
+
+      console.info("loadExecutedOrdersCallback: json: %o", json);
+      this.setState({
+        isOrdersLoaded: true,
+        orders: json,
+        viewType: this.state.EXECUTED_ORDER_STRING,
+        errorMsg: ""
+      });
+    }
+
+    getBackend().getExecutedOrders(loadExecutedOrdersCallback.bind(this));
+  }
+
+  loadCancelledOrders () {
+    console.info('loadCancelledOrders: Loading cancelled orders...')
+    let loadCancelledOrdersCallback = function (httpStatus, json) {
+      if (httpStatus === 401) {
+        this.props.auth.setAuthenticationStatus(false);
+        console.error("loadCancelledOrdersCallback: authentication expired?");
+        return;
+      }
+
+      if (httpStatus !== 200) {
+        console.error("loadCancelledOrdersCallback: failure: http:%o", httpStatus);
+        this.setState({
+          errorMsg: "Failed to load Executed Orders"
+        })
+        return;
+      }
+
+      // Update the watchlist ticker to portfolio
+      let updateWatchListTicker = function (openOrders) {
+        // TODO: Handle list of watchlist Ids
+        openOrders.watchListTickerList = watchlistCache.getWatchListTicker(openOrders.watchlist_id_list);
+      }
+
+      json.forEach(updateWatchListTicker);
+
+      console.info("loadCancelledOrdersCallback: json: %o", json);
+      this.setState({
+        isOrdersLoaded: true,
+        orders: json,
+        viewType: this.state.CANCELLED_ORDER_STRING,
+        errorMsg: ""
+      });
+    }
+
+    getBackend().getCancelledOrders(loadCancelledOrdersCallback.bind(this));
+  }
+
 
   addToPortFolio(PortFolioEntry) {
     console.info('addToPortFolio: adding entry=%o', PortFolioEntry)
@@ -340,7 +425,7 @@ export default class Orders extends React.Component {
 
     const columns = [
       {
-        Action: 'action', accessor: 'dummy',
+        Header: this.state.viewType, Action: 'action', accessor: 'dummy',
         Cell: ({ row }) => (
           <ButtonGroup className="mr-2" aria-label="First group">
             <Button onClick={(e) => this.onEditButtonClick(row.original)}>Edit</Button>
@@ -381,10 +466,10 @@ export default class Orders extends React.Component {
             <Button onClick={this.loadOpenOrders}> Open </Button>
           </ButtonGroup>
           <ButtonGroup className="mr-2" aria-label="Second group">
-            <Button onClick={this.loadOpenOrders}> Executed </Button>
+            <Button onClick={this.loadExecutedOrders}> Executed </Button>
           </ButtonGroup>
           <ButtonGroup className="mr-2" aria-label="Second group">
-            <Button onClick={this.loadOpenOrders}> Cancelled </Button>
+            <Button onClick={this.loadCancelledOrders}> Cancelled </Button>
           </ButtonGroup>
         </ButtonToolbar>
         { this.showErrorMsg()}

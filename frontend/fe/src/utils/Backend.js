@@ -28,6 +28,9 @@ class Backend {
     this.createOpenOrder = this.createOpenOrder.bind(this);
     this.deleteOpenOrder = this.deleteOpenOrder.bind(this);
 
+    this.getExecutedOrders = this.getExecutedOrders.bind(this);
+    this.getCancelledOrders = this.getCancelledOrders.bind(this);
+
     this.getScan = this.getScan.bind(this);
     this.createScan = this.createScan.bind(this);
     this.deleteScan = this.deleteScan.bind(this);
@@ -150,6 +153,14 @@ class Backend {
 
   updatePortFolio(portfolio, callback) {
     this.putWithToken('brCore/portfolio/' + portfolio.id, portfolio, callback);
+  }
+
+  getExecutedOrders(callback) {
+    this.getWithToken('brOrder/executed', callback);
+  }
+
+  getCancelledOrders(callback) {
+    this.getWithToken('brOrder/cancelled', callback);
   }
 
   getOpenOrders(callback) {
