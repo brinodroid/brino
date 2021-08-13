@@ -176,10 +176,10 @@ def _open_order_check(open_order):
             executed_order.save()
 
             # Create portolio entry
-            portfolio_bll.create_if_not_exists(executed_order)
+            portfolio = portfolio_bll.create_if_not_exists(executed_order)
 
             # Update strategy to point to portfolio
-            strategy_bll.update_portfolio(order.strategy_id, portfolio)
+            strategy_bll.update_portfolio(open_order.strategy_id, portfolio)
 
             # Order is not pending
             order_pending = False

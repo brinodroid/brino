@@ -5,6 +5,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from django_apscheduler.jobstores import DjangoJobStore, register_events
 from common.actions.scanner import Scanner
 from brHistory.crawler import Crawler
+import brStrategy.strategy_bll as strategy_bll
 
 from django.utils import timezone
 
@@ -29,6 +30,8 @@ def _daily_weekday_10pm_task():
 
 def _one_minute_task():
     logger.info('_one_minute_task: starting {}'.format(timezone.now()))
+    #_daily_weekday_10pm_task()
+    strategy_bll.strategy_run()
     logger.info('_one_minute_task: ending {}'.format(timezone.now()))
     return
 
