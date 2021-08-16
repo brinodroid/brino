@@ -62,6 +62,12 @@ class Crawler:
             logger.info(
                 '__option_history_update: watchlist {}'.format(watchlist))
 
+            if self.__is_expired(watchlist, date):
+                watchlist.comment = 'Expired option. Delete'
+                watchlist.save()
+                continue
+
+
             if self.__crawl_option_operation[option_asset_type][self.__OPTION_IS_PRESET_KEY](self, date, watchlist.id):
                 logger.info(
                     '__option_history_update: Found {} for date {} and watchlist id {}. Skipping'
@@ -93,6 +99,16 @@ class Crawler:
                 self, watchlist.id, option_data)
 
         return
+
+    def __is_expired(self, watchlist, now):
+        if watchlist.option_expiry < now:
+            logger.error(
+                    '__is_expired: Expired option watchlist.id {}, now {}'
+                    .format(watchlist.id, now))
+            return True
+
+        return False
+
 
     def __save_call_option_history(self, watchlist_id, option_data):
         call_option_data = CallOptionData(watchlist_id=watchlist_id,
@@ -215,10 +231,11 @@ class Crawler:
         # This saving is done independently of the scanner as watchlist
 
         client = get_client()
-        history_bll.stock_history_update()
 
         self.__option_history_update(client, AssetTypes.CALL_OPTION.value)
         self.__option_history_update(client, AssetTypes.PUT_OPTION.value)
+        history_bll.stock_history_update()
+
 
 
     def __save_data(self):

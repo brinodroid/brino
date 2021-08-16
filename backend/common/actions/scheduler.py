@@ -30,8 +30,15 @@ def _daily_weekday_10pm_task():
 
 def _one_minute_task():
     logger.info('_one_minute_task: starting {}'.format(timezone.now()))
-    #_daily_weekday_10pm_task()
-    strategy_bll.strategy_run()
+
+   # _daily_weekday_10pm_task()
+
+    try:
+        Scanner.getInstance().get_lock().acquire()
+        strategy_bll.strategy_run()
+    finally:
+        Scanner.getInstance().get_lock().release()
+
     logger.info('_one_minute_task: ending {}'.format(timezone.now()))
     return
 
