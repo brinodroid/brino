@@ -24,6 +24,8 @@ class Backend {
     this.deletePortFolio = this.deletePortFolio.bind(this);
     this.updatePortFolio = this.updatePortFolio.bind(this);
 
+    this.submitOrderStrategy = this.submitOrderStrategy.bind(this);
+
     this.getOpenOrders = this.getOpenOrders.bind(this);
     this.createOpenOrder = this.createOpenOrder.bind(this);
     this.deleteOpenOrder = this.deleteOpenOrder.bind(this);
@@ -171,6 +173,16 @@ class Backend {
     // The below fields are not needed during creation
     this.postWithToken('brOrder/open', newOrder, callback);
   }
+
+  submitOrderStrategy(newOrder, strategy, callback) {
+    let body = {};
+    body.order = newOrder;
+    body.strategy = strategy;
+
+    // The below fields are not needed during creation
+    this.postWithToken('brOrder/submit', body, callback);
+  }
+
 
   deleteOpenOrder(order, callback) {
     this.deleteWithToken('brOrder/open/' + order.id, callback);

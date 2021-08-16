@@ -19,13 +19,13 @@ export default class Orders extends React.Component {
 
     this.onEditButtonClick = this.onEditButtonClick.bind(this);
     this.onDeleteButtonClick = this.onDeleteButtonClick.bind(this);
-    this.onAddButtonClick = this.onAddButtonClick.bind(this);
+    this.onCreateOrder = this.onCreateOrder.bind(this);
 
     this.loadExecutedOrders = this.loadExecutedOrders.bind(this);
     this.loadCancelledOrders = this.loadCancelledOrders.bind(this);
 
     this.loadOpenOrders = this.loadOpenOrders.bind(this);
-    this.openNewOrder = this.openNewOrder.bind(this);
+    this.submitNewOrder = this.submitNewOrder.bind(this);
     this.deleteOrder = this.deleteOrder.bind(this);
 
     this.onCloseDetailedViewModal = this.onCloseDetailedViewModal.bind(this);
@@ -48,7 +48,7 @@ export default class Orders extends React.Component {
       viewType: openOrderString,
       showDetailedViewModal: false,
 
-      openNewOrder: false,
+      createNewOrder: false,
       deleteOrder: false,
       formValues: {}
     }
@@ -59,7 +59,7 @@ export default class Orders extends React.Component {
     this.setState({
       showDetailedViewModal: false,
       deleteOrder: false,
-      openNewOrder: false,
+      createNewOrder: false,
       formValues: {}
     });
   }
@@ -72,11 +72,11 @@ export default class Orders extends React.Component {
     });
   }
 
-  onAddButtonClick() {
-    console.info('onAddButtonClick: ...')
+  onCreateOrder() {
+    console.info('onCreateOrder: ...')
     this.setState({
       showDetailedViewModal: true,
-      openNewOrder: true
+      createNewOrder: true
     });
   }
 
@@ -207,12 +207,38 @@ export default class Orders extends React.Component {
   }
 
 
-  openNewOrder(newOrder) {
-    console.info('openNewOrder: adding entry=%o', newOrder)
+  submitNewOrder(newOrder) {
+    console.info('submitNewOrder: adding entry=%o', newOrder);
+    let submitOrderStrategyCallback = function (httpStatus, json) {
+      if (httpStatus === 401) {
+        this.props.auth.setAuthenticationStatus(false);
+        console.error("submitOrderStrategyCallback: authentication expired?");
+        return;
+      }
+
+      if (httpStatus !== 200) {
+        console.error("submitOrderStrategyCallback: failure: http:%o", httpStatus);
+        this.setState({
+          errorMsg: "Failed to submit order"
+        })
+        return;
+      }
+
+      console.info("submitOrderStrategyCallback: json: %o", json);
+      this.setState({
+        isOrdersLoaded: true,
+        orders: json,
+        viewType: this.state.CANCELLED_ORDER_STRING,
+        errorMsg: ""
+      });
+    }
+
+    let strategy = {};
+    getBackend().submitOrderStrategy(newOrder, strategy, submitOrderStrategyCallback.bind(this));
   }
 
   deleteOrder(order) {
-    console.info('deleteOrder: adding entry=%o', order)
+    console.info('deleteOrder: adding entry=%o', order);
   }
 
   componentDidMount() {
@@ -248,7 +274,7 @@ export default class Orders extends React.Component {
   showModalForm() {
     console.info('showModalForm: formValues=%o', this.state.formValues);
     let readOnly = true;
-    if (this.state.openNewOrder) {
+    if (this.state.createNewOrder) {
       readOnly = false;
     }
 
@@ -278,9 +304,9 @@ export default class Orders extends React.Component {
     formValues.optionExpiry = null;
     formValues.optionStrike = null;
 
-    if (this.state.openNewOrder) {
+    if (this.state.createNewOrder) {
       console.info('onModalActionButtonClick: call add');
-      this.openNewOrder(this.state.formValues);
+      this.submitNewOrder(this.state.formValues);
       return;
     }
 
@@ -295,10 +321,10 @@ export default class Orders extends React.Component {
   }
 
   showModalActionButton() {
-    if (this.state.openNewOrder) {
+    if (this.state.createNewOrder) {
       return (
           <Button variant="primary" onClick={this.onModalActionButtonClick}>
-            Create
+            Submit
           </Button>
       );
     }
@@ -381,7 +407,7 @@ export default class Orders extends React.Component {
       <div className="Orders">
         <ButtonToolbar aria-label="Toolbar with button groups">
           <ButtonGroup className="mr-2" aria-label="Second group">
-            <Button onClick={this.onAddButtonClick}> Create Order </Button>
+            <Button onClick={this.onCreateOrder}> Create Order </Button>
           </ButtonGroup>
 
           <ButtonGroup className="mr-2" aria-label="Second group">
