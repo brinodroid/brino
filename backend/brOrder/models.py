@@ -5,24 +5,23 @@ from brOrder.order_types import OrderAction
 
 # Model presenting a open order
 class OpenOrder(models.Model):
-    created_datetime = models.DateTimeField(editable=False, default=timezone.now)
-    update_timestamp = models.DateTimeField(default=timezone.now)
-
     watchlist_id_list = models.TextField(default=None)
     transaction_type_list = models.TextField(default=None)
-    strategy_id = models.IntegerField(blank=True, null=True)
 
     price = models.FloatField()
     units = models.FloatField()
     action = models.CharField(max_length=16, choices=OrderAction.choices(), default=OrderAction.OPEN.value)
-
-    opening_strategy = models.TextField(null=True, blank=True, default=None)
-    closing_strategy = models.TextField(null=True, blank=True, default=None)
-    brine_id = models.UUIDField(null=True)
     source = models.CharField(max_length=16, choices=PortFolioSource.choices(),
                               default=PortFolioSource.BRINE.value)
     submit = models.BooleanField(default=False)
-    #We need to refer to historical data too
+
+    strategy_id = models.IntegerField(blank=True, null=True)
+    opening_strategy = models.TextField(null=True, blank=True, default=None)
+    closing_strategy = models.TextField(null=True, blank=True, default=None)
+    brine_id = models.UUIDField(null=True)
+    created_datetime = models.DateTimeField(editable=False, default=timezone.now)
+    update_timestamp = models.DateTimeField(default=timezone.now)
+
 
     def save(self, *args, **kwargs):
         if not self.id:
