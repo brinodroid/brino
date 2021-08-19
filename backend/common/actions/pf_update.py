@@ -215,11 +215,31 @@ class PFUpdater:
         return watchlist
 
     def __update_stock_in_portfolio(self, watchlist, stock):
+        updated_units = float(stock['quantity'])
+
         # Check if its already there in portfolio
         try:
             portfolio = PortFolio.objects.get(brine_id=stock['instrument_id'])
             # Portfolio already has the entry. Nothing to do
-            return portfolio
+
+            if portfolio.units == updated_units:
+                # No new additions to the portfolio. Just return the portfolio
+                return portfolio
+            elif portfolio.units > updated_units:
+                # This means we have just sold some units. Update the unit count
+                logger.info('__update_stock_in_portfolio: Reducing the number of units of portfolio {} to {}'.format(
+                    portfolio, updated_units))
+
+                portfolio.units = updated_units
+                portfolio.save()
+                return
+            else:
+                # Reduce the number of units
+                updated_units = updated_units - portfolio.units
+
+            # INTENTIONAL FALL DOWN. Add the entry to portfolio
+            # New entry needs to be added as the entry_price, units date etc are different
+
         except PortFolio.DoesNotExist:
             logger.info('__update_stock_in_portfolio: Adding watchlist_id {} to portfolio'.format(
                 watchlist.id))
@@ -229,7 +249,7 @@ class PFUpdater:
         portfolio = PortFolio(watchlist_id=watchlist.id,
                               entry_datetime=stock['created_at'],
                               entry_price=stock['brino_entry_price'],
-                              units=float(stock['quantity']),
+                              units=updated_units,
                               transaction_type=stock['brino_transaction_type'],
                               brine_id=stock['instrument_id'],
                               source=PortFolioSource.BRINE.value)
