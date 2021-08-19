@@ -174,15 +174,15 @@ class Backend {
     this.postWithToken('brOrder/open', newOrder, callback);
   }
 
-  submitOrderStrategy(newOrder, strategy, callback) {
+  submitOrderStrategy(watchlist, newOrder, strategy, callback) {
     let body = {};
+    body.watchlist = watchlist;
     body.order = newOrder;
     body.strategy = strategy;
 
     // The below fields are not needed during creation
-    this.postWithToken('brOrder/submit', body, callback);
+    this.postWithToken('brOrder/submit/', body, callback);
   }
-
 
   deleteOpenOrder(order, callback) {
     this.deleteWithToken('brOrder/open/' + order.id, callback);
