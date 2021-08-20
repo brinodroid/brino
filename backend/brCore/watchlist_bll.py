@@ -44,9 +44,10 @@ def _is_option(asset_type):
 
 def _create_option_watchlist_if_not_exists(option_data):
     watchlist = None
+    ticker = option_data['ticker'].upper()
     try:
         watchlist = WatchList.objects.get(asset_type=option_data['asset_type'],
-                        ticker=option_data['ticker'],
+                        ticker=ticker,
                         option_strike=option_data['option_strike'],
                         option_expiry=option_data['option_expiry'])
         # Already in DB. Just return it
@@ -55,7 +56,7 @@ def _create_option_watchlist_if_not_exists(option_data):
     except WatchList.DoesNotExist:
         # Create a new watchlist
         watchlist = WatchList(asset_type=option_data['asset_type'],
-                        ticker=option_data['ticker'],
+                        ticker=ticker,
                         option_strike=option_data['option_strike'],
                         option_expiry=option_data['option_expiry'])
         watchlist.save()
@@ -64,16 +65,17 @@ def _create_option_watchlist_if_not_exists(option_data):
 
 def _create_stock_watchlist_if_not_exists(stock_data):
     watchlist = None
+    ticker = stock_data['ticker'].upper()
     try:
         watchlist = WatchList.objects.get(asset_type=stock_data['asset_type'],
-                        ticker=stock_data['ticker'])
+                        ticker=ticker)
         # Already in DB. Just return it
         return watchlist
 
     except WatchList.DoesNotExist:
         # Create a new watchlist
         watchlist = WatchList(asset_type=stock_data['asset_type'],
-                        ticker=stock_data['ticker'])
+                        ticker=ticker)
         watchlist.save()
 
     return watchlist

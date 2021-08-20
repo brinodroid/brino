@@ -282,8 +282,15 @@ export default class Orders extends React.Component {
 
     let strategy = {};
     strategy.strategy_type = form_values.strategy_type;
-    strategy.stop_loss = form_values.stop_loss;
-    strategy.profit_target = form_values.profit_target;
+    if (form_values.stop_loss.length) {
+      // Send as float
+      strategy.stop_loss = parseFloat(form_values.stop_loss);
+    }
+
+    if (form_values.profit_target.length) {
+      // Send as float
+      strategy.profit_target = parseFloat(form_values.profit_target);
+    }
     strategy.active_track = form_values.active_track_sel.selected;
 
     let newOrder = {};
@@ -292,7 +299,7 @@ export default class Orders extends React.Component {
     newOrder.units = form_values.units;
     newOrder.action = form_values.action_sel.selected;
     newOrder.source = form_values.source;
-    newOrder.submit = form_values.submit;
+    newOrder.submit = form_values.submit_sel.selected;
 
     getBackend().submitOrderStrategy(watchlist, newOrder, strategy, submitOrderStrategyCallback.bind(this));
   }

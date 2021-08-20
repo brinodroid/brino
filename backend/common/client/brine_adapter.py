@@ -231,7 +231,7 @@ class BrineAdapter:
         order = brine.orders.order_sell_market(symbol, quantity, limit_price, extendedHours=True)
         return self.__convert_order_to_brine(order)
 
-    def order_option_buy_open_limit(self, action_effect, credit_or_debit, price, symbol, option_unit, expiration_date, strike, option_type):
+    def order_option_buy_limit(self, action_effect, credit_or_debit, price, symbol, option_unit, expiration_date, strike, option_type):
         order = brine.orders.order_buy_option_limit(action_effect, credit_or_debit, price, symbol, option_unit, expiration_date, strike, option_type)
         return self.__convert_order_to_brine(order)
 
@@ -239,7 +239,7 @@ class BrineAdapter:
         order = brine.orders.order_buy_option_stop_limit(action_effect, credit_or_debit, price, price, symbol, quantity, expiration_date, strike, option_type)
         return self.__convert_order_to_brine(order)
 
-    def order_option_sell_open_limit(self, action_effect, credit_or_debit, price, symbol, option_unit, expiration_date, strike, option_type):
+    def order_option_sell_limit(self, action_effect, credit_or_debit, price, symbol, option_unit, expiration_date, strike, option_type):
         order = brine.orders.order_sell_option_limit(action_effect, credit_or_debit, price, symbol, option_unit, expiration_date, strike, option_type)
         return self.__convert_order_to_brine(order)
 

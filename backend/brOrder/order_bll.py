@@ -342,11 +342,11 @@ def _submit_option_limit_order_to_client(watchlist, transaction_type, units, pri
 
     if transaction_type == TransactionType.BUY.value:
         #Its a buy order
-        submitted_order = client.order_option_buy_open_limit(action_effect, 'debit', price, watchlist.ticker,
+        submitted_order = client.order_option_buy_limit(action_effect, 'debit', price, watchlist.ticker,
             option_unit, watchlist.option_expiry.strftime('%Y-%m-%d'), watchlist.option_strike, option_type)
     else:
         #Its a sell order
-        submitted_order = client.order_sell_option_limit(action_effect, 'credit', price, watchlist.ticker,
+        submitted_order = client.order_option_sell_limit(action_effect, 'credit', price, watchlist.ticker,
             option_unit, watchlist.option_expiry.strftime('%Y-%m-%d'), watchlist.option_strike, option_type)
     
     return _save_submitted_option_order(watchlist, submitted_order, client)
