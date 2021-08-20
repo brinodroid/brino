@@ -2,6 +2,7 @@ import logging
 from common.client.Factory import get_client
 from common.types.asset_types import PortFolioSource, AssetTypes, TransactionType
 from common.types.scan_types import ScanProfile, ScanStatus
+import brCore.portfolio_bll as portfolio_bll
 from brCore.models import WatchList, BGTask, PortFolio, ScanEntry, PortFolioUpdate
 from brOrder.models import OpenOrder, ExecutedOrder, CancelledOrder
 from brSetting.models import Configuration
@@ -64,6 +65,8 @@ class PFUpdater:
         try:
             portfolio = PortFolio.objects.get(brine_id=option['id'])
             # Portfolio already has the entry. Nothing to do
+
+            #TODO: Update if the units have changed
             return portfolio
         except PortFolio.DoesNotExist:
             logger.info('__update_option_in_portfolio: Adding watchlist_id {} to portfolio'.format(
@@ -141,7 +144,7 @@ class PFUpdater:
 
     def __update_deleted_scan_entries(self, brine_id_lut):
         # Search for deleted options
-        portfolio_list = PortFolio.objects.filter(
+        portfolio_list = portfolio_bll.filter_by_source(
             source=PortFolioSource.BRINE.value)
 
         for portfolio in portfolio_list:
@@ -214,28 +217,30 @@ class PFUpdater:
         watchlist.save()
         return watchlist
 
+
     def __update_stock_in_portfolio(self, watchlist, stock):
         updated_units = float(stock['quantity'])
 
+        portfolio = None
         # Check if its already there in portfolio
         try:
-            portfolio = PortFolio.objects.get(brine_id=stock['instrument_id'])
+            # There could be multiple portfolios
+            portfolio_list = portfolio_bll.filter_by_brine_id(brine_id=stock['instrument_id'])
+            portfolio_list = portfolio_bll.delete_invalid(portfolio_list)
+
             # Portfolio already has the entry. Nothing to do
+            total_units = portfolio_bll.compute_total_units(portfolio_list)
 
-            if portfolio.units == updated_units:
+            if total_units == updated_units:
                 # No new additions to the portfolio. Just return the portfolio
-                return portfolio
-            elif portfolio.units > updated_units:
+                return portfolio_list[0]
+            elif total_units > updated_units:
                 # This means we have just sold some units. Update the unit count
-                logger.info('__update_stock_in_portfolio: Reducing the number of units of portfolio {} to {}'.format(
-                    portfolio, updated_units))
-
-                portfolio.units = updated_units
-                portfolio.save()
-                return
+                portfolio_bll.sell_portfolio_fifo(portfolio_list, total_units-updated_units)
+                return portfolio_list[0]
             else:
-                # Reduce the number of units
-                updated_units = updated_units - portfolio.units
+                # We bought more. Need to create a new portfolio
+                updated_units = updated_units - total_units
 
             # INTENTIONAL FALL DOWN. Add the entry to portfolio
             # New entry needs to be added as the entry_price, units date etc are different

@@ -37,3 +37,55 @@ def get_portfolio(portfolio_id):
         logger.error('get_portfolio: portfolio_id {} missing'.format(portfolio_id))
 
     return None
+
+def filter_by_source(source):
+    portfolio_list = PortFolio.objects.filter(source=source)
+    return portfolio_list
+
+def filter_by_brine_id(brine_id):
+    portfolio_list = PortFolio.objects.filter(brine_id=brine_id)
+    return portfolio_list
+
+def delete_invalid(portfolio_list):
+    new_portfolio_list = []
+    for portfolio in portfolio_list:
+        if portfolio.units > 0:
+            # Portfolio has units. This is a valid portfolio
+            new_portfolio_list.append(portfolio)
+        else:
+            logger.info('delete_invalid: delete {}'.format(portfolio))
+
+            # delete the portfolio. Its invalid
+            portfolio.delete()
+
+    return new_portfolio_list
+
+
+def compute_total_units(portfolio_list):
+    total_units = 0
+    for portfolio in portfolio_list:
+        total_units += portfolio.units
+
+    return total_units
+
+def sell_portfolio_fifo(self, portfolio_list, units_sold):
+    # Assumption, FIFO. Older portfolios are expected to be in the list first
+    for portfolio in portfolio_list:
+        if portfolio.units > units_sold:
+            logger.info('sell_portfolio_fifo: Sold {} units in portfolio. Updating'.format(
+                portfolio, units_sold))
+            portfolio.units -= units_sold
+            portfolio.save()
+            return 0
+        else:
+            units_sold -= portfolio.units
+
+            logger.info('sell_portfolio_fifo: Sold {} completely. Deleting. Updated units {}'.format(
+                portfolio, units_sold))
+
+            portfolio.delete()
+            if units_sold <= 0:
+                return 0
+
+    # Non zero units_sold indicates that portfolio is not updated
+    return units_sold
