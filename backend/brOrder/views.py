@@ -70,6 +70,7 @@ def open_order_list(request):
     return Response({'detail': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
+@transaction.atomic
 @api_view(['GET', 'PUT', 'DELETE'])
 def open_order_detail(request, pk):
     logger.debug("request data: %s, pk: %s", request.data, str(pk))

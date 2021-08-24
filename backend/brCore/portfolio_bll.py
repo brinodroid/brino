@@ -68,7 +68,7 @@ def compute_total_units(portfolio_list):
 
     return total_units
 
-def sell_portfolio_fifo(self, portfolio_list, units_sold):
+def sell_portfolio_fifo(portfolio_list, units_sold):
     # Assumption, FIFO. Older portfolios are expected to be in the list first
     for portfolio in portfolio_list:
         if portfolio.units > units_sold:

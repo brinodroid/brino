@@ -50,6 +50,7 @@ export default class Orders extends React.Component {
       CANCELLED_ORDER_STRING: 'Cancelled Order',
       isOrdersLoaded: false,
       errorMsg: '',
+      successMsg: '',
       orders: null,
       viewType: openOrderString,
       showDetailedViewModal: false,
@@ -267,11 +268,16 @@ export default class Orders extends React.Component {
 
       console.info("submitOrderStrategyCallback: json: %o", json);
       this.setState({
-        isOrdersLoaded: true,
+        isOrdersLoaded: false,
+        showDetailedViewModal: false,
         orders: json,
         viewType: this.state.CANCELLED_ORDER_STRING,
         errorMsg: ""
       });
+
+      // Reload
+      this.loadOpenOrders();
+
     }
 
     let watchlist = {};
@@ -304,8 +310,37 @@ export default class Orders extends React.Component {
     getBackend().submitOrderStrategy(watchlist, newOrder, strategy, submitOrderStrategyCallback.bind(this));
   }
 
-  deleteOrder(order) {
-    console.info('deleteOrder: adding entry=%o', order);
+  deleteOrder(order_to_delete) {
+    console.info('deleteOrder: adding entry=%o', order_to_delete);
+    let deleteOrderCallback = function (httpStatus, json) {
+      if (httpStatus === 401) {
+        this.props.auth.setAuthenticationStatus(false);
+        console.error("deleteOrderCallback: authentication expired?");
+        return;
+      }
+
+      if (httpStatus !== 200) {
+        console.error("deleteOrderCallback: failure: http:%o", httpStatus);
+        this.setState({
+          errorMsg: "Failed to deleted order"
+        })
+        return;
+      }
+
+      console.info("deleteOrderCallback: json: %o", json);
+      this.setState({
+        isOrdersLoaded: false,
+        showDetailedViewModal: false,
+        orders: json,
+        viewType: this.state.CANCELLED_ORDER_STRING,
+        errorMsg: ""
+      });
+
+      // Reload
+      this.loadOpenOrders();
+    }
+
+    getBackend().deleteOpenOrder(order_to_delete, deleteOrderCallback.bind(this));
   }
 
   componentDidMount() {
@@ -434,17 +469,16 @@ export default class Orders extends React.Component {
   }
 
   showModalActionButton() {
+    let buttonString = "Update";
     if (this.state.createNewOrder) {
-      return (
-          <Button variant="primary" onClick={this.onModalActionButtonClick}>
-            Submit
-          </Button>
-      );
+      buttonString = "Submit";
+    } else if (this.state.deleteOrder) {
+      buttonString = "Delete";
     }
 
     return (
         <Button variant="primary" onClick={this.onModalActionButtonClick}>
-          Update
+          {buttonString}
         </Button>
     );
   }

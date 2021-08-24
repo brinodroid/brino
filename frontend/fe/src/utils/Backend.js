@@ -175,10 +175,19 @@ class Backend {
   }
 
   submitOrderStrategy(watchlist, newOrder, strategy, callback) {
+    // Validate the watchlist
+    if (watchlist.asset_type === "STOCK" && (watchlist.option_strike !== "" || watchlist.option_expiry !== "")) {
+      console.error("submitOrderStrategy: watchlist invalid, stock with strike/expiry");
+
+      callback(400, "Bad request");
+      return
+    }
+
     let body = {};
     body.watchlist = watchlist;
     body.order = newOrder;
     body.strategy = strategy;
+
 
     // The below fields are not needed during creation
     this.postWithToken('brOrder/submit/', body, callback);

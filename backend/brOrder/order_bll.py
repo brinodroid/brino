@@ -297,10 +297,6 @@ def _update_open_option_orders_legs(watchlist, open_order, client):
     transaction_type_list = []
     for res_leg in open_order['res_legs_list']:
         option_data = client.get_option_data(res_leg['instrument_id'])
-        watchlist = watchlist_bll.get_watchlist(option_data['brino_asset_type'],
-                        option_data['chain_symbol'],
-                        option_data['strike_price'],
-                        option_data['expiration_date'])
         watchlist_id_list.append(watchlist.id)
         transaction_type_list.append(res_leg['brino_transaction_type'])
 
@@ -310,7 +306,7 @@ def _save_submitted_option_order(watchlist, submitted_order, client):
     watchlist_id_list, transaction_type_list = _update_open_option_orders_legs(watchlist, submitted_order, client)
 
     # TODO: Handle list of watchlist and transaction type
-    watchlist_id_list_text = watchlist_id_list[0].id
+    watchlist_id_list_text = watchlist_id_list[0]
     transaction_type_list_text = transaction_type_list[0]
 
     # Order
