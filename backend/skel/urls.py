@@ -24,5 +24,6 @@ urlpatterns = [
     path('brSetting/', include('brSetting.urls')),
     path('brCore/', include('brCore.urls')),
     path('brHistory/', include('brHistory.urls')),
-    path('brOrder/', include('brOrder.urls'))
+    path('brOrder/', include('brOrder.urls')),
+    path('brStrategy/', include('brStrategy.urls'))
 ]
