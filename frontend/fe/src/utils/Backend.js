@@ -14,6 +14,11 @@ class Backend {
     this.deleteFromWatchList = this.deleteFromWatchList.bind(this);
     this.updateWatchList = this.updateWatchList.bind(this);
 
+    this.getStrategies = this.getStrategies.bind(this);
+    this.createStrategy = this.createStrategy.bind(this);
+    this.deleteStrategy = this.deleteStrategy.bind(this);
+    this.updateStrategy = this.updateStrategy.bind(this);
+
     this.getBgtask = this.getBgtask.bind(this);
     this.createBgtask = this.createBgtask.bind(this);
     this.deleteBgtask = this.deleteBgtask.bind(this);
@@ -93,6 +98,22 @@ class Backend {
 
   getConfiguration(callback) {
     this.getWithToken('brSetting/config', callback);
+  }
+
+  getStrategies(callback) {
+    this.getWithToken('brStrategy/strategy', callback);
+  }
+
+  createStrategy(strategy, callback) {
+    this.postWithToken('brStrategy/strategy/', strategy, callback);
+  }
+
+  deleteStrategy(strategy, callback) {
+    this.deleteWithToken('brStrategy/strategy/' + strategy.id, callback);
+  }
+
+  updateStrategy(strategy, callback) {
+    this.putWithToken('brStrategy/strategy/' + strategy.id, strategy, callback);
   }
 
   getWatchList(callback) {

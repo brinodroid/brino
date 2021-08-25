@@ -10,12 +10,13 @@ logger = logging.getLogger('django')
 # Strategy
 class Strategy(models.Model):
     strategy_type = models.CharField(max_length=32, choices=StrategyType.choices())
+    #Create portfolio_id as a nullable foriegn key
+    portfolio_id = models.ForeignKey(PortFolio, default=None, blank=True, null=True, on_delete=models.SET_NULL)
+
     stop_loss = models.FloatField(blank=True, null=True)
     profit_target = models.FloatField(blank=True, null=True)
     active_track = models.BooleanField(default=False)
 
-    #Create portfolio_id as a nullable foriegn key
-    portfolio_id = models.ForeignKey(PortFolio, default=None, blank=True, null=True, on_delete=models.SET_NULL)
     creation_timestamp = models.DateTimeField(editable=False, default=timezone.now)
 
     def save(self, *args, **kwargs):

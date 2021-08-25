@@ -8,6 +8,7 @@ import Setting from "./component/Setting";
 import NotFound from "./component/NotFound";
 import Home from "./component/Home";
 import WatchList from "./component/WatchList";
+import Strategy from "./component/Strategy";
 import PortFolio from "./component/PortFolio";
 import Orders from "./component/Orders";
 import BGTask from "./component/BGTask";
@@ -62,6 +63,9 @@ export default class App extends React.Component {
               <Nav.Link href="/orders">Orders</Nav.Link>
             </Navbar.Text>
             <Navbar.Text>
+              <Nav.Link href="/strategy">Strategy</Nav.Link>
+            </Navbar.Text>
+            <Navbar.Text>
               <Nav.Link href="/portfolio">Portfolio</Nav.Link>
             </Navbar.Text>
             <Navbar.Text>
@@ -85,6 +89,7 @@ export default class App extends React.Component {
             <Route exact path="/home"> <Home auth={ authProps } /> </Route>
             <Route path="/login"> <Login auth={ authProps } /> </Route>
             <Route path="/orders"> <Orders auth={ authProps } /> </Route>
+            <Route path="/strategy"> <Strategy auth={ authProps } /> </Route>
             <Route path="/portfolio"> <PortFolio auth={ authProps } /> </Route>
             <Route path="/watchlist"> <WatchList auth={ authProps } /> </Route>
             <Route path="/bgtask"> <BGTask auth={ authProps } /> </Route>
