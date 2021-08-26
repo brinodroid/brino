@@ -122,8 +122,8 @@ export default class Strategy extends React.Component {
     getBackend().getStrategies(loadStrategiesCallback.bind(this));
   }
 
-  createNewStrategy(strategy) {
-    console.info('createNewStrategy: adding entry=%o', strategy)
+  createNewStrategy(form_values) {
+    console.info('createNewStrategy: adding entry=%o', form_values)
     let createStrategyCallback = function (httpStatus, json) {
       if (httpStatus === 401) {
         this.props.auth.setAuthenticationStatus(false);
@@ -145,12 +145,30 @@ export default class Strategy extends React.Component {
       this.loadStrategies();
     }
 
+    let strategy = {};
+    strategy.strategy_type = form_values.strategy_type;
+    strategy.active_track = form_values.active_track;
+    // Below are optional values
+    if (form_values.stop_loss.length) {
+      // Send as float
+      strategy.stop_loss = parseFloat(form_values.stop_loss);
+    }
+
+    if (form_values.profit_target.length) {
+      // Send as float
+      strategy.profit_target = parseFloat(form_values.profit_target);
+    }
+    if (form_values.portfolio_id.length) {
+      // Send as int
+      strategy.portfolio_id = parseInt(form_values.portfolio_id);
+    }
+
     getBackend().createStrategy(strategy, createStrategyCallback.bind(this));
     this.onCloseDetailedViewModal();
   }
 
-  updateStrategy(strategy) {
-    console.info('updateStrategy: adding entry=%o', strategy)
+  updateStrategy(form_values) {
+    console.info('updateStrategy: adding entry=%o', form_values)
     let updateStrategyCallback = function (httpStatus, json) {
       if (httpStatus === 401) {
         this.props.auth.setAuthenticationStatus(false);
@@ -172,6 +190,29 @@ export default class Strategy extends React.Component {
       this.loadStrategies();
     }
 
+    let strategy = {};
+    strategy.id = form_values.id;
+    strategy.strategy_type = form_values.strategy_type;
+    strategy.active_track = form_values.active_track;
+
+    // Below are optional values
+    if (form_values.stop_loss.length) {
+      // Send as float
+      strategy.stop_loss = parseFloat(form_values.stop_loss);
+    }
+
+    if (form_values.profit_target.length) {
+      // Send as float
+      strategy.profit_target = parseFloat(form_values.profit_target);
+    }
+    if (form_values.portfolio_id && form_values.portfolio_id.length) {
+      // Send as int
+      strategy.portfolio_id = parseInt(form_values.portfolio_id);
+    } else {
+      strategy.portfolio_id = null;
+    }
+
+
     getBackend().updateStrategy(strategy, updateStrategyCallback.bind(this));
     this.onCloseDetailedViewModal();
   }
@@ -185,7 +226,7 @@ export default class Strategy extends React.Component {
         return;
       }
 
-      if (httpStatus !== 204) {
+      if (httpStatus !== 200) {
         console.error("deleteStrategyCallback: failure: http:%o", httpStatus);
         this.setState({
           errorMsg: "Failed to delete to strategy"
@@ -222,6 +263,8 @@ export default class Strategy extends React.Component {
   }
 
   showModalFormGroup(readOnly, controlId, label, value) {
+    if (!value) value = "";
+
     return (
       <Form.Group as={Row} controlId={controlId}>
         <Form.Label column sm="4"> {label} </Form.Label>

@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime, timedelta
 from brCore.models import ScanEntry
-from brSetting.models import Configuration
+import brSetting.settings_bll as settings_bll
 from common.types.asset_types import AssetTypes, TransactionType
 from common.types.scan_types import ScanProfile
 
@@ -35,10 +35,8 @@ def create_if_not_exists(watchlist, entry_price, transaction_type):
     # 2. stop loss should be more than entry_price
     configuration = Configuration.objects.first()
 
-    profit_target = entry_price * \
-        (100-configuration.profitTargetPercent)/100
-    stop_loss = entry_price * \
-        (100+configuration.stopLossPercent)/100
+    profit_target = settings_bll.compute_profit_target(entry_price, transaction_type)
+    stop_loss = settings_bll.compute_stop_loss(entry_price, transaction_type)
 
     scan_entry = ScanEntry(watchlist_id=watchlist.id,
                             profile=_get_scan_profile(watchlist, transaction_type),

@@ -9,6 +9,7 @@ import json
 
 from brStrategy.models import Strategy
 from brStrategy.serializer import StrategySerializer
+import brStrategy.strategy_bll as strategy_bll
 
 
 logger = logging.getLogger('django')
@@ -24,13 +25,8 @@ def strategy_list(request):
         return Response(serializer.data)
     elif request.method == 'POST':
         # Create a new strategy
-        serializer = StrategySerializer(data=request.data)
-        if serializer.is_valid() == False:
-            logger.error(serializer.errors)
-            return Response({'detail': 'Data validation failed'}, status=status.HTTP_400_BAD_REQUEST)
-
-        serializer.save()
-        return Response(serializer.data)
+        strategy = strategy_bll.create_strategy(request.data)
+        return Response(strategy)
 
     return Response({'detail': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
