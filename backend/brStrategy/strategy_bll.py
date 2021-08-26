@@ -1,8 +1,11 @@
 import logging
 from datetime import datetime, timedelta
 from brStrategy.models import Strategy
+import brCore.watchlist_bll as watchlist_bll
+from brStrategy.strategy_types import StrategyType
 from brStrategy.serializer import StrategySerializer
 import brCore.portfolio_bll as portfolio_bll
+import brCore.watchlist_bll as watchlist_bll
 from common.types.asset_types import AssetTypes, PortFolioSource, TransactionType
 
 
@@ -55,13 +58,21 @@ def create_strategy(strategy_user_request):
 
     # Check if we have a valid portfolio
     if 'portfolio_id' in serializer.validated_data.keys():
-        portfolio_id = serializer.validated_data['portfolio_id']
+        # We are getting the full portfolio here, not portfolio Id.
+        # Likely its because portfolio_id is the foriegn key
+        portfolio = serializer.validated_data['portfolio_id']
+        portfolio_id = portfolio.id
 
         # Get the portfolio from Id
         porfolio = portfolio_bll.get_portfolio(portfolio_id)
         if portfolio == None:
             logger.error("create_strategy: Cannot find portfolio_id {}".format(portfolio_id))
             raise ValueError('Strategy given invalid portfolio_id '+ str(portfolio_id))
+
+        if not _validate_strategy(strategy_type, portfolio):
+            logger.error("create_strategy: strategy_type {} cannot be applied on portfolio {}"
+                .format(strategy_type, portfolio))
+            raise ValueError('Strategy type doesnt apply to portfolio '+ str(portfolio_id))
 
         if 'profit_target' not in serializer.validated_data.keys():
             # User have not provided profit_target. Compute profit target
@@ -139,3 +150,18 @@ def _sell_strategy(strategy, portfolio):
 def _buy_strategy(strategy, portfolio):
     logger.info('_buy_strategy: strategy {}, portfolio {}'.format(strategy, porfolio))
     return
+
+def _validate_strategy(strategy_type, portfolio):
+    watchlist = watchlist_bll.get_watchlist(portfolio.watchlist_id)
+
+    if strategy_type == StrategyType.COVERED_CALL.value:
+        # This strategy can only be applied on sold options
+        if portfolio.transaction_type != TransactionType.SELL.value\
+             or watchlist.asset_type != AssetTypes.CALL_OPTION.value:
+             # Covered call strategy doesnt apply here
+             return False
+
+    # TODO: Add checks for other strategies
+
+
+    return True

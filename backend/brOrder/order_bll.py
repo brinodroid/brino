@@ -4,7 +4,6 @@ import brCore.watchlist_bll as watchlist_bll
 import brCore.scanentry_bll as scanentry_bll
 import brCore.portfolio_bll as portfolio_bll
 import brHistory.history_bll as history_bll
-import brStrategy.strategy_bll as strategy_bll
 from brOrder.models import OpenOrder, ExecutedOrder, CancelledOrder
 from brOrder.order_types import OrderAction
 from common.types.asset_types import AssetTypes, TransactionType, PortFolioSource

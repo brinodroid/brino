@@ -49,6 +49,7 @@ def strategy_detail(request, pk):
             logger.error(serializer.errors)
             return Response({'detail': 'Data validation failed'}, status=status.HTTP_400_BAD_REQUEST)
 
+        # TODO: Need to validate if portfolio supports the strategy_type
         serializer.save()
         return Response(serializer.data)
 
