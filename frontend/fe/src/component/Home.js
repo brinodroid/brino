@@ -205,6 +205,14 @@ export default class Scan extends React.Component {
   removeAllMissing() {
       console.info('removeAllMissing: remove all missing...');
 
+      let updateErrorMessage = (errorMsg) => {
+        // Setting error message with arrow function as this.setState cannot be
+        // accessed from deleteMissingScanCallback
+        this.setState({
+          errorMsg: errorMsg
+        });
+      }
+
       let iterFunction = function (scanEntry, index, scanArray) {
         if (scanEntry.status === "MISSING" ) {
           let deleteMissingScanCallback = function (httpStatus, json) {
@@ -216,11 +224,9 @@ export default class Scan extends React.Component {
               return;
             }
 
-            if (httpStatus !== 204) {
+            if (httpStatus !== 200) {
               console.error("deleteMissingScanCallback: failure: http:%o", httpStatus);
-              this.setState({
-                errorMsg: "Failed to delete to Scan"
-              })
+              updateErrorMessage("Failed to delete to Scan");
               return;
             }
           }
