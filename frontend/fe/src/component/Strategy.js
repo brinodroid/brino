@@ -65,9 +65,13 @@ export default class Strategy extends React.Component {
 
   onEditButtonClick(rowData) {
     console.info('onEditButtonClick: rowData=%o', rowData);
+    let formValues = rowData;
+    if (formValues.portfolio_id) {
+      formValues.portfolio_id = formValues.portfolio_id.toString();
+    }
     this.setState({
       showDetailedViewModal: true,
-      formValues: rowData
+      formValues: formValues
     });
   }
 
@@ -205,6 +209,7 @@ export default class Strategy extends React.Component {
       // Send as float
       strategy.profit_target = parseFloat(form_values.profit_target);
     }
+
     if (form_values.portfolio_id && form_values.portfolio_id.length) {
       // Send as int
       strategy.portfolio_id = parseInt(form_values.portfolio_id);

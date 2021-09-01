@@ -8,10 +8,10 @@ logger = logging.getLogger('django')
 def compute_profit_target(entry_price, transaction_type):
     configuration = Configuration.objects.first()
 
-    if transaction_type == TransactionType.BUY:
+    if transaction_type == TransactionType.BUY.value:
         profit_target = entry_price * \
             (100+configuration.profitTargetPercent)/100
-    elif transaction_type == TransactionType.SELL:
+    elif transaction_type == TransactionType.SELL.value:
         profit_target = entry_price * \
             (100-configuration.profitTargetPercent)/100
     else:
@@ -25,10 +25,10 @@ def compute_profit_target(entry_price, transaction_type):
 def compute_stop_loss(entry_price, transaction_type):
     configuration = Configuration.objects.first()
 
-    if transaction_type == TransactionType.BUY:
+    if transaction_type == TransactionType.BUY.value:
         stop_loss = entry_price * \
             (100-configuration.stopLossPercent)/100
-    elif transaction_type == TransactionType.SELL:
+    elif transaction_type == TransactionType.SELL.value:
         stop_loss = entry_price * \
             (100+configuration.stopLossPercent)/100
     else:

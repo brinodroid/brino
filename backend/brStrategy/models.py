@@ -11,7 +11,7 @@ logger = logging.getLogger('django')
 class Strategy(models.Model):
     strategy_type = models.CharField(max_length=32, choices=StrategyType.choices())
     #Create portfolio_id as a nullable foriegn key
-    portfolio_id = models.ForeignKey(PortFolio, default=None, blank=True, null=True, on_delete=models.SET_NULL)
+    portfolio_id = models.IntegerField(default=None, blank=True, null=True)
 
     stop_loss = models.FloatField(blank=True, null=True)
     profit_target = models.FloatField(blank=True, null=True)

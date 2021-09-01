@@ -1,14 +1,38 @@
 import logging
 from datetime import datetime, timedelta
 from brCore.models import WatchList
-from common.types.asset_types import AssetTypes
 from brCore.serializers.watchlist import WatchListSerializer
+from common.types.asset_types import AssetTypes
+from common.client.Factory import get_client
+import common.utils as utils
 
 logger = logging.getLogger('django')
 
 
 def is_option(watchlist):
     return _is_option(watchlist.asset_type)
+
+def get_watchlist_latest_price(watchlist):
+    client = get_client()
+
+    if not is_option(watchlist):
+        # This has to be a stock
+        latest_ticker_price_dict = client.get_ticker_price_dict([watchlist.ticker], True)
+
+        return latest_ticker_price_dict[watchlist.ticker]
+
+    # This is an option
+    optionType = 'call'
+    if watchlist.asset_type == AssetTypes.PUT_OPTION.value:
+        optionType = 'put'
+
+    option_raw_data = client.get_option_price(watchlist.ticker,
+                        str(watchlist.option_expiry),
+                        str(watchlist.option_strike), optionType)
+
+    option_data = option_raw_data[0][0]
+    return utils.safe_float(option_data['mark_price']), utils.safe_float(option_data['ask_price']), utils.safe_float(option_data['bid_price'])
+
 
 def get_watchlist(asset_type, ticker, option_strike, option_expiry):
     watchlist = WatchList.objects.get(asset_type=asset_type,

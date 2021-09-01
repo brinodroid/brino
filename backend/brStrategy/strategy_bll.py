@@ -6,6 +6,10 @@ from brStrategy.strategy_types import StrategyType
 from brStrategy.serializer import StrategySerializer
 import brCore.portfolio_bll as portfolio_bll
 import brCore.watchlist_bll as watchlist_bll
+import brOrder.order_bll as order_bll
+import brSetting.settings_bll as settings_bll
+from brOrder.order_types import OrderAction
+from common.client.Factory import get_client
 from common.types.asset_types import AssetTypes, PortFolioSource, TransactionType
 
 
@@ -58,13 +62,10 @@ def create_strategy(strategy_user_request):
 
     # Check if we have a valid portfolio
     if 'portfolio_id' in serializer.validated_data.keys():
-        # We are getting the full portfolio here, not portfolio Id.
-        # Likely its because portfolio_id is the foriegn key
-        portfolio = serializer.validated_data['portfolio_id']
-        portfolio_id = portfolio.id
+        portfolio_id = serializer.validated_data['portfolio_id']
 
         # Get the portfolio from Id
-        porfolio = portfolio_bll.get_portfolio(portfolio_id)
+        portfolio = portfolio_bll.get_portfolio(portfolio_id)
         if portfolio == None:
             logger.error("create_strategy: Cannot find portfolio_id {}".format(portfolio_id))
             raise ValueError('Strategy given invalid portfolio_id '+ str(portfolio_id))
@@ -76,10 +77,10 @@ def create_strategy(strategy_user_request):
 
         if 'profit_target' not in serializer.validated_data.keys():
             # User have not provided profit_target. Compute profit target
-            profit_target = settings_bll.compute_profit_target(porfolio.entry_price,
-                     porfolio.transaction_type)
+            profit_target = settings_bll.compute_profit_target(portfolio.entry_price,
+                     portfolio.transaction_type)
 
-        if 'stop_loss' in serializer.validated_data.keys():
+        if 'stop_loss' not in serializer.validated_data.keys():
             # User have not provided stop_loss. Compute it
             stop_loss = settings_bll.compute_stop_loss(portfolio.entry_price,
                      portfolio.transaction_type)
@@ -127,29 +128,70 @@ def strategy_run():
         logger.info('strategy_run: No active strategies')
         return
 
+    # Strategy should go through the below states
+    # 1. Active_track
+    # 2. When conditions met, place closing order
+    # 3. Track order status
+    # 4. Deactivate after order is executed
+
     for active_strategy in active_strategy_list:
         portfolio = portfolio_bll.get_portfolio(active_strategy.portfolio_id)
         if portfolio is None:
             logger.info('strategy_run: Missing portfolio for {}'.format(active_strategy))
             continue
 
+        watchlist = watchlist_bll.get_watchlist(portfolio.watchlist_id)
+        latest_price, ask_price = watchlist_bll.get_watchlist_latest_price(watchlist)
+        if latest_price == 0:
+            logger.info('strategy_run: skipping strategy {} for watchlist {} as price is zero')
+            continue
+
+        deactivate = False
+        # TODO: use strategy type. Assume covered call
         if portfolio.transaction_type == TransactionType.BUY.value:
-            _buy_strategy(active_strategy, portfolio)
+            deactivate = _buy_strategy(active_strategy, portfolio, watchlist, latest_price, ask_price)
         elif portfolio.transaction_type == TransactionType.SELL.value:
-            _sell_strategy(active_strategy, portfolio)
+            deactivate = _sell_strategy(active_strategy, portfolio, watchlist, latest_price, ask_price)
         else:
             logger.error('strategy_run: Invalid trasaction type? {}'.format(portfolio.transaction_type))
 
+        if deactivate:
+            _deactivate_strategy(active_strategy)
 
     return
 
-def _sell_strategy(strategy, portfolio):
-    logger.info('_sell_strategy: strategy {}, portfolio {}'.format(strategy, porfolio))
+def _deactivate_strategy(strategy):
+    strategy.active_track = False
+    logger.info('_deactivate_strategy: strategy {}'.format(strategy))
+
+    strategy.save()
     return
 
-def _buy_strategy(strategy, portfolio):
-    logger.info('_buy_strategy: strategy {}, portfolio {}'.format(strategy, porfolio))
-    return
+def _sell_strategy(strategy, portfolio, watchlist, latest_price, ask_price):
+    logger.info('_sell_strategy: strategy {}, portfolio {}, latest_price {}'.format(strategy, portfolio, latest_price))
+
+    # For sell strategy, we should buy back if
+    # 1. current price is higher than stop_loss
+    # 2. current price is lower than profit_target
+    if latest_price > strategy.stop_loss or latest_price < strategy.profit_target:
+        # Buy back to close at market
+        order_bll.submit_market_order_to_client(watchlist, TransactionType.BUY.value, portfolio.units, OrderAction.CLOSE.value, ask_price)
+        return True
+
+    return False
+
+def _buy_strategy(strategy, portfolio, watchlist, latest_price, ask_price):
+    logger.info('_buy_strategy: strategy {}, portfolio {}, latest_price {}'.format(strategy, portfolio, latest_price))
+    # For buy strategy, we should buy back if
+    # 1. current price is lower than stop_loss
+    # 2. current price is higher than profit_target
+    if latest_price < strategy.stop_loss or latest_price > strategy.profit_target:
+        # Sell to close at market
+        order_bll.submit_market_order_to_client(watchlist, TransactionType.SELL.value, portfolio.units, OrderAction.CLOSE.value, ask_price)
+        return True
+
+    return False
+
 
 def _validate_strategy(strategy_type, portfolio):
     watchlist = watchlist_bll.get_watchlist(portfolio.watchlist_id)

@@ -4,7 +4,7 @@ from .views import open_order_list, open_order_detail, \
     cancelled_order_list, cancelled_order_detail, create_order_strategy
 
 urlpatterns = [
-    path('submit/', create_order_strategy),
+    path('order-strategy/', create_order_strategy),
     path('open/', open_order_list),
     path('open/<int:pk>', open_order_detail),
     path('executed/', executed_order_list),

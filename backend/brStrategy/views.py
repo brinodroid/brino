@@ -26,7 +26,8 @@ def strategy_list(request):
     elif request.method == 'POST':
         # Create a new strategy
         strategy = strategy_bll.create_strategy(request.data)
-        return Response(strategy)
+        serializer = StrategySerializer(strategy)
+        return Response(serializer.data)
 
     return Response({'detail': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 

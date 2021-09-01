@@ -4,6 +4,7 @@ import brCore.watchlist_bll as watchlist_bll
 import brCore.scanentry_bll as scanentry_bll
 import brCore.portfolio_bll as portfolio_bll
 import brHistory.history_bll as history_bll
+import brStrategy.strategy_bll as strategy_bll
 from brOrder.models import OpenOrder, ExecutedOrder, CancelledOrder
 from brOrder.order_types import OrderAction
 from common.types.asset_types import AssetTypes, TransactionType, PortFolioSource
@@ -117,6 +118,21 @@ def submit_limit_order(serializer, strategy, watchlist):
         open_order.save()
 
     return open_order
+
+def submit_market_order_to_client(watchlist, transaction_type, units, action, ask_price):
+    client = get_client()
+
+    if watchlist_bll.is_option(watchlist):
+        # We can only submit limit order for options. Giving the price as 0 to make sure the option is sold
+        price = ask_price
+        if price == 0:
+            price = 0.01
+        return _submit_option_limit_order_to_client(watchlist, transaction_type, units, price, action, client)
+
+    # Its a stock
+    submitted_order = _submit_stock_market_order_to_client(watchlist, transaction_type, units, client)
+
+    return _save_submitted_stock_order(watchlist, submitted_order, client)
 
 
 
@@ -345,3 +361,11 @@ def _submit_option_limit_order_to_client(watchlist, transaction_type, units, pri
             option_unit, watchlist.option_expiry.strftime('%Y-%m-%d'), watchlist.option_strike, option_type)
     
     return _save_submitted_option_order(watchlist, submitted_order, client)
+
+def _submit_stock_market_order_to_client(watchlist, transaction_type, units, client):
+    if transaction_type == TransactionType.BUY.value:
+        #Its a buy order
+        return client.order_stock_buy_market(watchlist.ticker, units)
+
+    #Its a sell order
+    return client.order_stock_sell_market(watchlist.ticker, units)
