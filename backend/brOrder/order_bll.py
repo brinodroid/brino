@@ -119,12 +119,12 @@ def submit_limit_order(serializer, strategy, watchlist):
 
     return open_order
 
-def submit_market_order_to_client(watchlist, transaction_type, units, action, ask_price):
+def submit_market_order_to_client(watchlist, transaction_type, units, action, market_price):
     client = get_client()
 
     if watchlist_bll.is_option(watchlist):
         # We can only submit limit order for options. Giving the price as 0 to make sure the option is sold
-        price = ask_price
+        price = market_price
         if price == 0:
             price = 0.01
         return _submit_option_limit_order_to_client(watchlist, transaction_type, units, price, action, client)
