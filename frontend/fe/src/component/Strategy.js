@@ -34,6 +34,8 @@ export default class Strategy extends React.Component {
     this.showModalForm = this.showModalForm.bind(this);
     this.showModalFormGroup = this.showModalFormGroup.bind(this);
     this.onFormValuesChange = this.onFormValuesChange.bind(this);
+    this.onFormValuesSelection = this.onFormValuesSelection.bind(this);
+
     this.createDefaultFormValues = this.createDefaultFormValues.bind(this);
 
     this.state = {
@@ -47,11 +49,22 @@ export default class Strategy extends React.Component {
     }
   }
 
-  createDefaultFormValues() {
-    return { id: "", strategy_type: "", portfolio_id: "", stop_loss: "", profit_target: "", active_track: "" }
+  createDropDownSelections(options_array) {
+    return {selected:options_array[0], options:options_array};
   }
 
+  createDefaultFormValues() {
+    let binary_array = ["false", "true"];
 
+    return { id: "",
+              strategy_type: "",
+              portfolio_id: "",
+              stop_loss: "",
+              profit_target: "",
+              active_track: false,
+              active_track_sel: this.createDropDownSelections(binary_array)
+            };
+  }
 
   onCloseDetailedViewModal() {
     console.info('onCloseDetailedViewModal: ...')
@@ -63,15 +76,23 @@ export default class Strategy extends React.Component {
     });
   }
 
-  onEditButtonClick(rowData) {
-    console.info('onEditButtonClick: rowData=%o', rowData);
+  updateFormValues(rowData, originalFormValues) {
     let formValues = rowData;
     if (formValues.portfolio_id) {
       formValues.portfolio_id = formValues.portfolio_id.toString();
     }
+
+    // Keep the drop down selections
+    formValues.active_track_sel = originalFormValues.active_track_sel;
+    formValues.active_track_sel.selected = originalFormValues.active_track_sel.options[rowData.active_track?1:0];
+    return formValues;
+  }
+
+  onEditButtonClick(rowData) {
+    console.info('onEditButtonClick: rowData=%o', rowData);
     this.setState({
       showDetailedViewModal: true,
-      formValues: formValues
+      formValues: this.updateFormValues(rowData, this.state.formValues)
     });
   }
 
@@ -85,10 +106,11 @@ export default class Strategy extends React.Component {
 
   onDeleteButtonClick(rowData) {
     console.info('onDeleteButtonClick: rowData=%o', rowData);
+    
     this.setState({
       showDetailedViewModal: true,
       deleteStrategy: true,
-      formValues: rowData
+      formValues: this.updateFormValues(rowData, this.state.formValues)
     });
   }
 
@@ -151,7 +173,8 @@ export default class Strategy extends React.Component {
 
     let strategy = {};
     strategy.strategy_type = form_values.strategy_type;
-    strategy.active_track = form_values.active_track;
+    strategy.active_track = form_values.active_track_sel.selected;
+
     // Below are optional values
     if (form_values.stop_loss.length) {
       // Send as float
@@ -197,7 +220,8 @@ export default class Strategy extends React.Component {
     let strategy = {};
     strategy.id = form_values.id;
     strategy.strategy_type = form_values.strategy_type;
-    strategy.active_track = form_values.active_track;
+    strategy.active_track = form_values.active_track_sel.selected;
+
 
     // Below are optional values
     if (form_values.stop_loss.length) {
@@ -267,6 +291,15 @@ export default class Strategy extends React.Component {
     this.setState({ formValues: updatedFormValues });
   }
 
+  onFormValuesSelection(event) {
+    let updatedSelection = this.state.formValues[event.target.id];
+    updatedSelection.selected = updatedSelection.options[event.target.options.selectedIndex];
+
+    let updatedFormValues = { ...this.state.formValues, [event.target.id]: updatedSelection};
+    console.info('onFormValuesChange: updated_form_values=%o ', updatedFormValues);
+    this.setState({ formValues: updatedFormValues });
+  }
+
   showModalFormGroup(readOnly, controlId, label, value) {
     if (!value) value = "";
 
@@ -277,6 +310,32 @@ export default class Strategy extends React.Component {
           <Form.Control readOnly={readOnly} value={value} onChange={this.onFormValuesChange} />
         </Col>
       </Form.Group>
+    );
+  }
+
+
+  showDropDown(controlId, label, dropdown_selection) {
+    return (
+      <Form.Group as={Row} controlId={controlId}>
+        <Form.Label column sm="4"> {label} </Form.Label>
+        <Col sm="8">
+
+        <Form.Control as="select" selectedIndex={1} onChange={this.onFormValuesSelection}>
+          {dropdown_selection.options.map((item, index) => {
+            if (item === dropdown_selection.selected ) {
+              // Show as the default value
+              return (
+                <option value={index} selected={"selected"}>{item}</option>
+              )
+            }
+
+            return (<option value={index}>{item}</option>);
+          })}
+        </Form.Control>
+
+        </Col>
+      </Form.Group>
+
     );
   }
 
@@ -297,7 +356,8 @@ export default class Strategy extends React.Component {
         { this.showModalFormGroup(readOnly, "portfolio_id", "Portfolio id", this.state.formValues.portfolio_id)}
         { this.showModalFormGroup(readOnly, "stop_loss", "Stop Loss", this.state.formValues.stop_loss)}
         { this.showModalFormGroup(readOnly, "profit_target", "Profit target", this.state.formValues.profit_target)}
-        { this.showModalFormGroup(readOnly, "active_track", "Active track", this.state.formValues.active_track)}
+        { this.showDropDown("active_track_sel", "Active Track", this.state.formValues.active_track_sel)}
+
 
       </Form>
     );
@@ -365,6 +425,13 @@ export default class Strategy extends React.Component {
     );
   }
 
+  getActiveTrackString(rowData) {
+    if (rowData.active_track)
+      return 'true';
+
+    return 'false';
+  }
+
   render() {
     if (!this.props.auth.isAuthenticated) {
       console.info('Strategy:  not authenticated, redirecting to login page');
@@ -390,9 +457,15 @@ export default class Strategy extends React.Component {
       { Header: 'ID', accessor: 'id' },
       { Header: 'Strategy Type', accessor: 'strategy_type' },
       { Header: 'Portfolio Id', accessor: 'portfolio_id' },
+      {
+        Header: 'Active track', accessor: 'active_track',
+        Cell: ({ row }) => (
+          <> {this.getActiveTrackString(row.original)} </>
+        )
+      },
+
       { Header: 'Stop loss', accessor: 'stop_loss' },
       { Header: 'Profit target', accessor: 'profit_target' },
-      { Header: 'Active track', accessor: 'active_track' },
       { Header: 'Create Time', accessor: 'creation_timestamp' },
     ];
 
