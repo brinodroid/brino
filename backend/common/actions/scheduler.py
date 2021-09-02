@@ -6,6 +6,7 @@ from django_apscheduler.jobstores import DjangoJobStore, register_events
 from common.actions.scanner import Scanner
 from brHistory.crawler import Crawler
 import brStrategy.strategy_bll as strategy_bll
+import os
 
 from django.utils import timezone
 
@@ -22,6 +23,10 @@ def _daily_weekday_10pm_task():
 
         order_bll.poll_order_status()
         Crawler.getInstance().save_history()
+
+        #Take a backup of the db
+        ret = os.system('cp db.sqlite3 /tmp/db.sqlite3; rclone copy /tmp/db.sqlite3 gdrive:brino_backup/; rm /tmp/db.sqlite3')
+        logger.info('_daily_weekday_10pm_task: db backup gave  {}'.format(ret))
     finally:
         Scanner.getInstance().get_lock().release()
 
@@ -31,7 +36,8 @@ def _daily_weekday_10pm_task():
 def _one_minute_task():
     logger.info('_one_minute_task: starting {}'.format(timezone.now()))
 
-   # _daily_weekday_10pm_task()
+
+    # _daily_weekday_10pm_task()
 
     try:
         Scanner.getInstance().get_lock().acquire()
