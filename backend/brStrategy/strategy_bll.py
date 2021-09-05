@@ -143,7 +143,7 @@ def strategy_run():
         watchlist = watchlist_bll.get_watchlist(portfolio.watchlist_id)
         latest_price, ask_price, bid_price = watchlist_bll.get_watchlist_latest_price(watchlist)
         if latest_price == 0:
-            logger.info('strategy_run: skipping strategy {} for watchlist {} as price is zero')
+            logger.info('strategy_run: skipping strategy {} for watchlist {} as price is zero'.format(strategy, watchlist))
             continue
 
         deactivate = False
@@ -167,7 +167,7 @@ def _deactivate_strategy(strategy):
     strategy.save()
     return
 
-def _sell_strategy(strategy, portfolio, watchlist, latest_price, bid_price):
+def _sell_strategy(strategy, portfolio, watchlist, latest_price, ask_price):
     logger.info('_sell_strategy: strategy {}, portfolio {}, latest_price {}'.format(strategy, portfolio, latest_price))
 
     # For sell strategy, we should buy back if
@@ -175,19 +175,23 @@ def _sell_strategy(strategy, portfolio, watchlist, latest_price, bid_price):
     # 2. current price is lower than profit_target
     if latest_price > strategy.stop_loss or latest_price < strategy.profit_target:
         # Buy back to close at market
-        order_bll.submit_market_order_to_client(watchlist, TransactionType.BUY.value, portfolio.units, OrderAction.CLOSE.value, bid_price)
+        logger.info('_sell_strategy: buying back to close strategy {}, portfolio {}, latest_price {}'.format(strategy, portfolio, latest_price))
+
+        order_bll.submit_market_order_to_client(watchlist, TransactionType.BUY.value, portfolio.units, OrderAction.CLOSE.value, latest_price)
         return True
 
     return False
 
-def _buy_strategy(strategy, portfolio, watchlist, latest_price, ask_price):
+def _buy_strategy(strategy, portfolio, watchlist, latest_price, bid_price):
     logger.info('_buy_strategy: strategy {}, portfolio {}, latest_price {}'.format(strategy, portfolio, latest_price))
     # For buy strategy, we should buy back if
     # 1. current price is lower than stop_loss
     # 2. current price is higher than profit_target
     if latest_price < strategy.stop_loss or latest_price > strategy.profit_target:
         # Sell to close at market
-        order_bll.submit_market_order_to_client(watchlist, TransactionType.SELL.value, portfolio.units, OrderAction.CLOSE.value, ask_price)
+        logger.info('_buy_strategy: selling close strategy {}, portfolio {}, latest_price {}'.format(strategy, portfolio, latest_price))
+
+        order_bll.submit_market_order_to_client(watchlist, TransactionType.SELL.value, portfolio.units, OrderAction.CLOSE.value, latest_price)
         return True
 
     return False
