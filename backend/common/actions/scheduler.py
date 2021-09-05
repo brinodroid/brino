@@ -25,7 +25,7 @@ def _daily_weekday_10pm_task():
         Crawler.getInstance().save_history()
 
         #Take a backup of the db
-        ret = os.system('cp db.sqlite3 /tmp/db.sqlite3; rclone copy /tmp/db.sqlite3 gdrive:brino_backup/; rm /tmp/db.sqlite3')
+        ret = os.system('cp db.sqlite3 /tmp/db.sqlite3; rclone copy /tmp/db.sqlite3 gdrive:brino_backup/; rm /tmp/db.sqlite3;')
         logger.info('_daily_weekday_10pm_task: db backup gave  {}'.format(ret))
     finally:
         Scanner.getInstance().get_lock().release()
@@ -37,7 +37,7 @@ def _one_minute_task():
     logger.info('_one_minute_task: starting {}'.format(timezone.now()))
 
 
-    # _daily_weekday_10pm_task()
+    #_daily_weekday_10pm_task()
 
     try:
         Scanner.getInstance().get_lock().acquire()
@@ -65,8 +65,8 @@ def _five_minute_task():
 def start():
     scheduler = BackgroundScheduler()
     scheduler.add_jobstore(DjangoJobStore(), "default")
-    # Run the job Monday to Friday 5am IST which is 10pm PDT
-    scheduler.add_job(_daily_weekday_10pm_task, 'cron', day_of_week='mon-fri', hour=5, id='daily_weekday_10pm_task', jobstore='default', replace_existing=True)
+    # Run the job Monday to Friday 5am GMT which is 10pm PDT
+    scheduler.add_job(_daily_weekday_10pm_task, 'cron', day_of_week='mon-sat', hour=5, id='daily_weekday_10pm_task', jobstore='default', replace_existing=True)
 
     scheduler.add_job(_one_minute_task, 'interval', minutes=1, id='one_minute_task', jobstore='default', replace_existing=True)
     scheduler.add_job(_five_minute_task, 'interval', minutes=5, id='five_minute_task', jobstore='default', replace_existing=True)
