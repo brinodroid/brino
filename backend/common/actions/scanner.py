@@ -372,7 +372,7 @@ class Scanner:
 
         self.__set_default_support_resistance(scan_latest_entry)
 
-        if scan_latest_entry.brifz_target is None:
+        if (scan_latest_entry.brifz_target is None) or (scan_latest_entry.brifz_target != scan_entry.brifz_target):
             # Update brifz_target if not present. This is done to generate the UPGRADE/DOWNGRADE alerts
             scan_latest_entry.brifz_target = scan_entry.brifz_target
 
