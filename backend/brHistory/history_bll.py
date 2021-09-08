@@ -31,21 +31,22 @@ def create_stock_history(watchlist):
 
     # Try adding the data
     client = get_client()
-    stock_raw_data = client.get_stock_data(watchlist.ticker,
+    stock_raw_data_list = client.get_stock_data(watchlist.ticker,
                         interval='day',
                         span='week')
-    if len(stock_raw_data) < 5:
-        logger.info('create_stock_history: stock_raw_data not found for watchlist_id {}'.format(
-            watchlist.id))
-        return None
 
-    stock_data = stock_raw_data[4]
-    if not stock_data:
-        logger.info('create_stock_history: stock_raw_data not found for watchlist_id {}'.format(
-            watchlist.id))
-        return None
+    today_string = utils.today_begin_utctime_string()
+    for stock_raw_data in stock_raw_data_list:
+        if today_string == stock_raw_data['begins_at']:
+            logger.info('create_stock_history: saving {} for watchlist.id {}'.format(
+                stock_raw_data, watchlist.id))
 
-    return _update_stockdata_table(watchlist.id, stock_data)
+            return _update_stockdata_table(watchlist.id, stock_raw_data)
+
+    logger.error('create_stock_history: stock_raw_data not found for watchlist_id {}'.format(
+        watchlist.id))
+    return None
+
 
 def stock_history_update():
     try:

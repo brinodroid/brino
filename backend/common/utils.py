@@ -26,13 +26,16 @@ def safe_int(self, int_string):
     return 0
 
 def convert_datetime_string_to_django_time(datetime_string):
-    try:
-        date_in_datetime = datetime.strptime(datetime_string, datetime_strpfmt_string)
-        awaretime = date_in_datetime.replace(tzinfo=pytz.UTC)
+    date_in_datetime = datetime.strptime(datetime_string, datetime_strpfmt_string)
+    awaretime = date_in_datetime.replace(tzinfo=pytz.UTC)
 
-        local_date = localdate(awaretime)
-        return local_date
-    except:
+    local_date = localdate(awaretime)
+    return local_date
 
-        logger.info('__safe_int: Not valid number =%s', int_string)
-    return None
+def today_begin_utctime_string():
+    today_begin_utc=datetime.now().replace(hour=0, minute=0, second=0, microsecond=0).replace(tzinfo=pytz.UTC)
+
+    #yesterday_utc = today_begin_utc - timedelta(1)
+    #return yesterday_utc.strftime(datetime_strpfmt_string)
+
+    return today_begin_utc.strftime(datetime_strpfmt_string)
