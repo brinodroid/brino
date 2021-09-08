@@ -178,7 +178,7 @@ export default class WatchList extends React.Component {
         return;
       }
 
-      if (httpStatus !== 204) {
+      if (httpStatus !== 200) {
         console.error("deleteFromWatchListCallback: failure: http:%o", httpStatus);
         this.setState({
           errorMsg: "Failed to delete to watchlist"

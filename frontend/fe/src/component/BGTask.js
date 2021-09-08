@@ -180,7 +180,7 @@ export default class Home extends React.Component {
         return;
       }
 
-      if ( httpStatus !== 204) {
+      if ( httpStatus !== 200) {
         console.error("deleteBgtaskCallback: failure: http:%o", httpStatus);
         this.setState({
           errorMsg: "Failed to delete to bgtask"

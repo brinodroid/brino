@@ -311,7 +311,7 @@ export default class Scan extends React.Component {
         return;
       }
 
-      if (httpStatus !== 204) {
+      if (httpStatus !== 200) {
         console.error("deleteFromScanCallback: failure: http:%o", httpStatus);
         this.setState({
           errorMsg: "Failed to delete to Scan"
