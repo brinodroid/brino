@@ -33,11 +33,11 @@ def _daily_weekday_10pm_task():
     logger.info('_daily_weekday_10pm_task: ending {}'.format(timezone.now()))
     return
 
-def _one_minute_task():
-    logger.info('_one_minute_task: starting {}'.format(timezone.now()))
+def _minute_task():
+    logger.info('_minute_task: starting {}'.format(timezone.now()))
 
 
-    #_daily_weekday_10pm_task()
+    # _daily_weekday_10pm_task()
 
     try:
         Scanner.getInstance().get_lock().acquire()
@@ -45,12 +45,12 @@ def _one_minute_task():
     finally:
         Scanner.getInstance().get_lock().release()
 
-    logger.info('_one_minute_task: ending {}'.format(timezone.now()))
+    logger.info('_minute_task: ending {}'.format(timezone.now()))
     return
 
 
-def _five_minute_task():
-    logger.info('_five_minute_task: starting {}'.format(timezone.now()))
+def _hourly_task():
+    logger.info('_hourly_task: starting {}'.format(timezone.now()))
 
     try:
         Scanner.getInstance().get_lock().acquire()
@@ -58,7 +58,7 @@ def _five_minute_task():
     finally:
         Scanner.getInstance().get_lock().release()
 
-    logger.info('_five_minute_task: ending {}'.format(timezone.now()))
+    logger.info('_hourly_task: ending {}'.format(timezone.now()))
     return
 
 
@@ -68,8 +68,8 @@ def start():
     # Run the job Monday to Friday 5am GMT which is 10pm PDT
     scheduler.add_job(_daily_weekday_10pm_task, 'cron', day_of_week='mon-sat', hour=5, id='daily_weekday_10pm_task', jobstore='default', replace_existing=True)
 
-    scheduler.add_job(_one_minute_task, 'interval', minutes=1, id='one_minute_task', jobstore='default', replace_existing=True)
-    scheduler.add_job(_five_minute_task, 'interval', minutes=5, id='five_minute_task', jobstore='default', replace_existing=True)
+    scheduler.add_job(_minute_task, 'interval', minutes=1, id='minute_task', jobstore='default', replace_existing=True)
+    scheduler.add_job(_hourly_task, 'interval', minutes=60, id='hourly_task', jobstore='default', replace_existing=True)
 
     register_events(scheduler)
     scheduler.start()
