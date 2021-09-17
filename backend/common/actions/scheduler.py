@@ -39,6 +39,8 @@ def _minute_task():
 
     # _daily_weekday_10pm_task()
 
+    # _hourly_task()
+
     try:
         Scanner.getInstance().get_lock().acquire()
         strategy_bll.strategy_run()

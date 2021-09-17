@@ -44,6 +44,7 @@ export default class Scan extends React.Component {
 
     this.state = {
       isScanLoaded: false,
+      ivDiffThreshold: 0.8,
       potentialThreshold: 1.2,
       errorMsg: '',
       scan: null,
@@ -376,6 +377,7 @@ export default class Scan extends React.Component {
     if (this.state.deleteFromScan) readOnly = true;
     console.info('showModalForm: formValues=%o', this.state.formValues);
 
+
     if (this.state.addToScan) {
       // Its called from add stock, just show minimal info
       return (
@@ -409,6 +411,8 @@ export default class Scan extends React.Component {
           { this.showModalFormGroup(readOnly, "order_id", "Brine Order Id", this.state.formValues.order_id)}
           { this.showModalFormGroup(readOnly, "rationale", "Rationale", this.state.formValues.rationale)}
           { this.showModalFormGroup(true, "current_price", "Current Price", this.state.formValues.current_price)}
+          { this.showModalFormGroup(true, "call_iv_next_month", "Call IV", this.state.formValues.call_iv_next_month)}
+          { this.showModalFormGroup(true, "put_iv_next_month", "Put IV", this.state.formValues.put_iv_next_month)}
           { this.showModalFormGroup(true, "volatility", "Volatility", this.state.formValues.volatility)}
           { this.showModalFormGroup(true, "short_float", "Short float", this.state.formValues.short_float)}
           { this.showModalFormGroup(true, "status", "Status", this.state.formValues.status)}
@@ -529,6 +533,19 @@ export default class Scan extends React.Component {
     return rowData.potential;
   }
 
+  getIVDiffHighlight(rowData) {
+    let iv_diff = Number(rowData.call_iv_next_month - rowData.put_iv_next_month).toFixed(2);
+    if (iv_diff > this.state.ivDiffThreshold) {
+      return (<Alert variant='success' > {iv_diff} </Alert>);
+    }
+
+    if (iv_diff < -this.state.ivDiffThreshold) {
+      return (<Alert variant='danger' > {iv_diff} </Alert>);
+    }
+
+    return iv_diff;
+  }
+
   getActiveTrack(rowData) {
     return rowData.active_track.toString();
   }
@@ -567,6 +584,12 @@ export default class Scan extends React.Component {
       { Header: 'Brate Target', accessor: 'brate_target' },
       { Header: 'Brifz Target', accessor: 'brifz_target' },
       { Header: 'Rationale', accessor: 'rationale' },
+      {
+        Header: 'IV Diff', accessor: 'iv_diff',
+        Cell: ({ row }) => (
+          <> {this.getIVDiffHighlight(row.original)} </>
+        )
+      },
       { Header: 'Volatility', accessor: 'volatility' },
       {
         Header: 'Short float', accessor: 'short_float',

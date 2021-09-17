@@ -1,6 +1,7 @@
 import threading
 import time
 import logging
+import sys
 from datetime import datetime, timedelta
 import brifz
 from django.db.models import Q
@@ -11,6 +12,7 @@ from common.types.asset_types import AssetTypes, TransactionType
 from brCore.models import WatchList, ScanEntry, PortFolio
 from brOrder.models import OpenOrder
 from common.actions.strategy import Strategy
+import common.utils as utils
 
 logger = logging.getLogger('django')
 
@@ -115,6 +117,151 @@ class Scanner:
         client = get_client()
 
         self.__scanner_run_with_lock(client)
+        return
+
+
+    def __get_closest_strike_above_price(self, option_list, price):
+        min=sys.float_info.max
+        closest_option = None
+        for option in option_list:
+            if option is None:
+                logger.error(
+                    '__get_closest_strike_above_price: option {} looks is None'
+                    .format(option))
+                continue
+
+            if 'strike_price' not in option:
+                logger.error(
+                    '__get_closest_strike_above_price: option {} looks invalid'
+                    .format(option))
+                continue
+
+            strike_price = utils.safe_float(option['strike_price'])
+            if strike_price == None:
+                logger.error(
+                    '__get_closest_strike_above_price: option {} looks invalid'
+                    .format(option))
+                continue
+
+            if price >= strike_price:
+                # the strike price is lower, skip it
+                continue
+
+            # Strike price is more than the latest_price
+            if min > (strike_price - price):
+                min = strike_price - price
+                closest_option = option
+        return closest_option
+
+    def __get_closest_strike_below_price(self, option_list, price):
+        min=sys.float_info.max
+        closest_option = None
+        for option in option_list:
+            if option is None:
+                logger.error(
+                    '__get_closest_strike_below_price: option {} looks is None'
+                    .format(option))
+                continue
+
+            if 'strike_price' not in option:
+                logger.error(
+                    '__get_closest_strike_below_price: option {} looks invalid'
+                    .format(option))
+                continue
+
+            strike_price = utils.safe_float(option['strike_price'])
+            if strike_price == None:
+                logger.error(
+                    '__get_closest_strike_below_price: option {} looks invalid'
+                    .format(option))
+                return None
+
+            if price <= strike_price:
+                # the strike price is lower, skip it
+                continue
+
+            # Strike price is more than the latest_price
+            if min > (price - strike_price):
+                min = price - strike_price
+                closest_option = option
+        return closest_option
+
+    def __compute_monthly_call_iv(self, scan_entry, watchlist, client):
+        # current_price contains the latest price for option or stock
+        latest_price = scan_entry.current_price
+
+        # Get call option monthly expiry date after 20days beyond current date.
+        next_monthly_expiry = utils.third_friday_of_next_month()
+
+        # Get call option strike price at 5 levels beyond latest price
+        options_list = client.get_all_options_on_expiry_date(watchlist.ticker, next_monthly_expiry, 'call')
+        if options_list == None:
+            logger.error(
+                '__compute_monthly_call_iv: get_all_options_on_expiry_date() for watchlist.id {} didnt get any data'
+                .format(watchlist.id))
+            return None
+
+        closest_option = self.__get_closest_strike_above_price(options_list, latest_price)
+        if closest_option == None:
+            logger.error(
+                '__compute_monthly_call_iv: __get_closest_strike_above_price() for watchlist.id {} didnt get any data'
+                .format(watchlist.id))
+            return None
+
+        option_raw_data = client.get_option_price(watchlist.ticker,
+                                next_monthly_expiry.strftime(utils.option_expiry_date_strpfmt_string),
+                                closest_option['strike_price'], 'call')
+
+        # Sometimes option data seems empty
+        if len(option_raw_data) == 0 or len(option_raw_data[0]) == 0:
+            logger.error(
+                '__compute_monthly_call_iv: get_option_price() for watchlist.id {} didnt get any data'
+                .format(watchlist.id))
+            return None
+
+        option_data = option_raw_data[0][0]
+
+        # Get the iv and updadte it
+        return round(utils.safe_float(option_data['implied_volatility'])*100, 2)
+
+    def __compute_monthly_put_iv(self, scan_entry, watchlist, client):
+        # current_price contains the latest price for option or stock
+        latest_price = scan_entry.current_price
+
+        # Get call option monthly expiry date after 20days beyond current date.
+        next_monthly_expiry = utils.third_friday_of_next_month()
+
+        # Get call option strike price at 5 levels beyond latest price
+        options_list = client.get_all_options_on_expiry_date(watchlist.ticker, next_monthly_expiry, 'put')
+        if options_list == None:
+            logger.error(
+                '__compute_monthly_put_iv: get_all_options_on_expiry_date() for watchlist.id {} didnt get any data'
+                .format(watchlist.id))
+            return None
+
+        closest_option = self.__get_closest_strike_below_price(options_list, latest_price)
+        if closest_option == None:
+            logger.error(
+                '__compute_monthly_put_iv: get_all_options_on_expiry_date() for watchlist.id {} didnt get any data'
+                .format(watchlist.id))
+            return None
+
+        option_raw_data = client.get_option_price(watchlist.ticker,
+                                next_monthly_expiry.strftime(utils.option_expiry_date_strpfmt_string),
+                                closest_option['strike_price'], 'put')
+
+        # Sometimes option data seems empty
+        if len(option_raw_data) == 0 or len(option_raw_data[0]) == 0:
+            logger.error(
+                '__compute_monthly_put_iv: get_option_price() for watchlist.id {} didnt get any data'
+                .format(watchlist.id))
+            return None
+
+        option_data = option_raw_data[0][0]
+
+        # Get the iv and updadte it
+        return round(utils.safe_float(option_data['implied_volatility'])*100, 2)
+
 
 
     def __compute_reward_2_risk(self, scan_entry):
@@ -227,6 +374,10 @@ class Scanner:
             # Update brifz_target always as it will be noted in the history
             scan_entry.brifz_target = self.__get_brifz_target(
                     scan_entry, watchlist, scan_data)
+
+            scan_entry.call_iv_next_month = self.__compute_monthly_call_iv(scan_entry, watchlist, client)
+            scan_entry.put_iv_next_month = self.__compute_monthly_put_iv(scan_entry, watchlist, client)
+
 
 
         scan_entry.reward_2_risk = self.__compute_reward_2_risk(scan_entry)
@@ -369,6 +520,8 @@ class Scanner:
         scan_latest_entry.potential = scan_entry.potential
         scan_latest_entry.active_track = scan_entry.active_track
         scan_latest_entry.order_id = scan_entry.order_id
+        scan_latest_entry.put_iv_next_month = scan_entry.put_iv_next_month
+        scan_latest_entry.call_iv_next_month = scan_entry.call_iv_next_month
 
         self.__set_default_support_resistance(scan_latest_entry)
 
@@ -433,6 +586,7 @@ class Scanner:
                     scan_entry, self.__SCAN_INFO_MSG,
                     'Have open covered call orders. stocks={}, calls bought={}, calls sold={}, open_orders={}'
                     .format(total_stock_units, total_bought_calls, total_sold_calls, total_open_sell_orders))
+
 
     def __check_support_resistance_alert(self, scan_entry, watchlist, scan_data):
         # current_price contains the latest price for option or stock
@@ -537,7 +691,7 @@ class Scanner:
             [
                 __check_support_resistance_alert,
                 __check_extended_hours_price_movement_alert,
-                __check_missed_covered_call_sell_alert
+                __check_missed_covered_call_sell_alert,
             ],
         ScanProfile.SELL_CALL.value:
             [

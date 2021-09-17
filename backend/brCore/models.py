@@ -114,6 +114,10 @@ class ScanEntry(models.Model):
     active_track = models.BooleanField(default=False)
     order_id = models.IntegerField(null=True, blank=True)
     target_history = models.TextField(default="", blank=True);
+
+    call_iv_next_month = models.FloatField(null=True, blank=True)
+    put_iv_next_month = models.FloatField(null=True, blank=True)
+    target_history = models.TextField(default="", blank=True);
     
     # Filled by backend
     current_price = models.FloatField(null=True)
@@ -159,12 +163,12 @@ class ScanEntry(models.Model):
     def __str__(self):
         return "watchlist_id:%s, portfolio_id:%s, profile:%s, current_price:%s, support:%s, resistance:%s," \
             " profit_target:%s, stop_loss:%s, brate_target:%s, brifz_target:%s, target_history:%s, rationale:%s,"\
-            " reward_2_risk:%s,  potential:%s, active_track:%s, order_id:%s" \
-            " volatility:%s, short_float:%s, status:%s, details:%s, update_timestamp:%s" \
+            " reward_2_risk:%s,  potential:%s, active_track:%s, order_id:%s, short_float:%s, status:%s, details:%s,"\
+            " call_iv_next_month:%s, put_iv_next_month:%s, volatility:%s, update_timestamp:%s" \
                % (self.watchlist_id, self.portfolio_id, self.profile, self.current_price, self.support, self.resistance,
-                  self.profit_target, self.stop_loss, self.brate_target, self.brifz_target, self.target_history,
-                  self.rationale, self.reward_2_risk, self.potential, self.active_track, self.order_id,
-                  self.volatility, self.short_float, self.status, self.details, self.update_timestamp)
+                  self.profit_target, self.stop_loss, self.brate_target, self.brifz_target, self.target_history, self.rationale,
+                  self.reward_2_risk, self.potential, self.active_track, self.order_id, self.short_float, self.status, self.details,
+                  self.call_iv_next_month, self.put_iv_next_month, self.volatility, self.update_timestamp)
 
 
 class PortFolioUpdate(models.Model):

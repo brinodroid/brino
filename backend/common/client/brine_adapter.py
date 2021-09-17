@@ -38,30 +38,33 @@ class BrineAdapter:
     def __init__(self):
         brine.login()
 
+    def _convert_option_data(self, option):
+        res_option = {}
+        res_option['client'] = PortFolioSource.BRINE.value
+        res_option['average_price'] = option['average_price']
+        res_option['created_at'] = option['created_at']
+        res_option['chain_id'] = option['chain_id']
+        res_option['chain_symbol'] = option['chain_symbol']
+        res_option['id'] = option['id']
+        res_option['type'] = option['type']
+        res_option['quantity'] = option['quantity']
+        res_option['trade_value_multiplier'] = option['trade_value_multiplier']
+        res_option['option_id'] = option['option_id']
+        res_option['brino_transaction_type'] = self.__transaction_type_lut[option['type']]
+        if res_option['brino_transaction_type'] == TransactionType.BUY.value:
+            res_option['brino_entry_price'] = float(
+                res_option['average_price'])
+        else:
+            # Gives negative value for price for selling transactions. Make it positve
+            res_option['brino_entry_price'] = - \
+                float(res_option['average_price'])
+        return res_option
+
     def get_my_options_list(self):
         res_option_list = []
         option_list = brine.options.get_open_option_positions()
         for option in option_list:
-            res_option = {}
-            res_option['client'] = PortFolioSource.BRINE.value
-            res_option['average_price'] = option['average_price']
-            res_option['created_at'] = option['created_at']
-            res_option['chain_id'] = option['chain_id']
-            res_option['chain_symbol'] = option['chain_symbol']
-            res_option['id'] = option['id']
-            res_option['type'] = option['type']
-            res_option['quantity'] = option['quantity']
-            res_option['trade_value_multiplier'] = option['trade_value_multiplier']
-            res_option['option_id'] = option['option_id']
-            res_option['brino_transaction_type'] = self.__transaction_type_lut[option['type']]
-            if res_option['brino_transaction_type'] == TransactionType.BUY.value:
-                res_option['brino_entry_price'] = float(
-                    res_option['average_price'])
-            else:
-                # Gives negative value for price for selling transactions. Make it positve
-                res_option['brino_entry_price'] = - \
-                    float(res_option['average_price'])
-
+            res_option = self._convert_option_data(option)
             res_option_list.append(res_option)
 
         return res_option_list
@@ -128,6 +131,10 @@ class BrineAdapter:
 
     def get_stock_data(self, ticker, interval, span):
         return brine.get_stock_historicals(ticker, interval, span)
+
+    def get_all_options_on_expiry_date(self, ticker, expiry, type):
+        option_list = brine.find_tradable_options(ticker, expiry, optionType=type)
+        return option_list
 
     def get_option_price(self, ticker, expiry, strike, type):
         # TODO: Investigate why option price is returned as dictionary list
