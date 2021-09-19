@@ -53,12 +53,7 @@ def _minute_task():
 
 def _hourly_task():
     logger.info('_hourly_task: starting {}'.format(timezone.now()))
-
-    try:
-        Scanner.getInstance().get_lock().acquire()
-        Scanner.getInstance().scan()
-    finally:
-        Scanner.getInstance().get_lock().release()
+    Scanner.getInstance().scan()
 
     logger.info('_hourly_task: ending {}'.format(timezone.now()))
     return

@@ -99,16 +99,9 @@ class Scanner:
         t.start()
 
     def __scanner_thread(self):
-        # Get the default client
-        client = get_client()
-
         while True:
 
-            self.__lock.acquire()
-            try:
-                self.__scanner_run_with_lock(client)
-            finally:
-                self.__lock.release()
+            self.scan()
 
             time.sleep(self.__sleep_duration)
 
@@ -116,7 +109,15 @@ class Scanner:
         # Get the default client
         client = get_client()
 
-        self.__scanner_run_with_lock(client)
+        self.__lock.acquire()
+        try:
+            logger.info('Starting scan')
+
+            self.__scanner_run_with_lock(client)
+        finally:
+            self.__lock.release()
+        logger.info('Done scan')
+
         return
 
 

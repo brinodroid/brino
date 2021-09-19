@@ -17,6 +17,7 @@ from .serializers.watchlist import WatchListSerializer
 from .serializers.bgtask import BGTaskSerializer
 from .serializers.portfolio import PortFolioSerializer, PortFolioUpdateSerializer
 from .serializers.scan import ScanEntrySerializer
+from django.utils import timezone
 
 
 logger = logging.getLogger('django')
@@ -87,7 +88,7 @@ def bgtask_list(request):
             return Response({'detail': 'Data validation failed'}, status=status.HTTP_400_BAD_REQUEST)
 
         serializer.save()
-        start_bgtask(bgtask)
+        # start_bgtask(bgtask)
         return Response(serializer.data)
 
     return Response({'detail': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
@@ -171,7 +172,7 @@ def portfolio_detail(request, pk):
     return Response({'detail': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
-@api_view(['GET', 'POST'])
+@api_view(['GET', 'PUT', 'POST'])
 def scan_list(request):
     logger.debug("request data: %s", request.data)
     if request.method == 'GET':
@@ -219,6 +220,13 @@ def scan_list(request):
             Scanner.getInstance().get_lock().release()
 
         return Response(serializer.data)
+
+    elif request.method == 'PUT':
+        logger.info('scan_task: starting {}'.format(timezone.now()))
+
+        Scanner.getInstance().scan()
+        logger.info('scan_task: done {}'.format(timezone.now()))
+        return Response({'detail': 'scanned'}, status=status.HTTP_200_OK)
 
     return Response({'detail': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
@@ -322,7 +330,6 @@ def scan_detail(request, pk):
         return Response({'detail': 'Deleted'}, status=status.HTTP_200_OK)
 
     return Response({'detail': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
 
 @api_view(['GET', 'POST'])
 def portfolioupdate_list(request):

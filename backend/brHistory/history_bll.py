@@ -97,7 +97,7 @@ def create_call_option_history(watchlist):
                         'call')
     option_data = option_raw_data[0][0]
 
-    return _update_call_option_table(watchlist_id, option_data)
+    return _update_call_option_table(watchlist.id, option_data)
 
 def _update_call_option_table(watchlist_id, option_data):
     call_option_data = CallOptionData(watchlist_id=watchlist_id,
@@ -143,7 +143,7 @@ def create_put_option_history(watchlist):
                         'put')
     option_data = option_raw_data[0][0]
 
-    return _update_put_option_table(watchlist_id, option_data)
+    return _update_put_option_table(watchlist.id, option_data)
 
 def _update_put_option_table(watchlist_id, option_data):
     put_option_data = PutOptionData(watchlist_id=watchlist_id,

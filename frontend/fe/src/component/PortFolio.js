@@ -185,7 +185,7 @@ export default class PortFolio extends React.Component {
         return;
       }
 
-      if (httpStatus !== 204) {
+      if (httpStatus !== 200) {
         console.error("deleteFromPortFolioCallback: failure: http:%o", httpStatus);
         this.setState({
           errorMsg: "Failed to delete to PortFolio"

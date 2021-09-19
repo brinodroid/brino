@@ -143,7 +143,7 @@ def strategy_run():
         watchlist = watchlist_bll.get_watchlist(portfolio.watchlist_id)
         latest_price, ask_price, bid_price = watchlist_bll.get_watchlist_latest_price(watchlist)
         if latest_price == 0:
-            logger.info('strategy_run: skipping strategy {} for watchlist {} as price is zero'.format(strategy, watchlist))
+            logger.info('strategy_run: skipping strategy {} for watchlist {} as price is zero'.format(active_strategy, watchlist))
             continue
 
         deactivate = False
