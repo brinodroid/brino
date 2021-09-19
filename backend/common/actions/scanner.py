@@ -212,15 +212,15 @@ class Scanner:
         options_list = client.get_all_options_on_expiry_date(watchlist.ticker, next_monthly_expiry, 'call')
         if options_list == None:
             logger.error(
-                '__compute_monthly_call_iv: get_all_options_on_expiry_date() for watchlist.id {} didnt get any data'
-                .format(watchlist.id))
+                '__compute_monthly_call_iv: get_all_options_on_expiry_date() for watchlist {} didnt get any data'
+                .format(watchlist))
             return None
 
         closest_option = self.__get_closest_strike_above_price(options_list, latest_price)
         if closest_option == None:
             logger.error(
-                '__compute_monthly_call_iv: __get_closest_strike_above_price() for watchlist.id {} didnt get any data'
-                .format(watchlist.id))
+                '__compute_monthly_call_iv: __get_closest_strike_above_price() for watchlist {} didnt get any data'
+                .format(watchlist))
             return None
 
         option_raw_data = client.get_option_price(watchlist.ticker,
@@ -230,8 +230,8 @@ class Scanner:
         # Sometimes option data seems empty
         if len(option_raw_data) == 0 or len(option_raw_data[0]) == 0:
             logger.error(
-                '__compute_monthly_call_iv: get_option_price() for watchlist.id {} didnt get any data'
-                .format(watchlist.id))
+                '__compute_monthly_call_iv: get_option_price() for watchlist {} didnt get any data'
+                .format(watchlist))
             return None
 
         option_data = option_raw_data[0][0]
@@ -250,15 +250,15 @@ class Scanner:
         options_list = client.get_all_options_on_expiry_date(watchlist.ticker, next_monthly_expiry, 'put')
         if options_list == None:
             logger.error(
-                '__compute_monthly_put_iv: get_all_options_on_expiry_date() for watchlist.id {} didnt get any data'
-                .format(watchlist.id))
+                '__compute_monthly_put_iv: get_all_options_on_expiry_date() for watchlist {} didnt get any data'
+                .format(watchlist))
             return None
 
         closest_option = self.__get_closest_strike_below_price(options_list, latest_price)
         if closest_option == None:
             logger.error(
-                '__compute_monthly_put_iv: get_all_options_on_expiry_date() for watchlist.id {} didnt get any data'
-                .format(watchlist.id))
+                '__compute_monthly_put_iv: get_all_options_on_expiry_date() for watchlist {} didnt get any data'
+                .format(watchlist))
             return None
 
         option_raw_data = client.get_option_price(watchlist.ticker,
@@ -268,8 +268,8 @@ class Scanner:
         # Sometimes option data seems empty
         if len(option_raw_data) == 0 or len(option_raw_data[0]) == 0:
             logger.error(
-                '__compute_monthly_put_iv: get_option_price() for watchlist.id {} didnt get any data'
-                .format(watchlist.id))
+                '__compute_monthly_put_iv: get_option_price() for watchlist {} didnt get any data'
+                .format(watchlist))
             return None
 
         option_data = option_raw_data[0][0]
