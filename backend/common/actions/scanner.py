@@ -2,7 +2,7 @@ import threading
 import time
 import logging
 import sys
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 import brifz
 from django.db.models import Q
 from common.client.Factory import get_client
@@ -150,8 +150,15 @@ class Scanner:
 
             # Strike price is more than the latest_price
             if min > (strike_price - price):
-                min = strike_price - price
-                closest_option = option
+                issue_date = datetime.strptime(option['issue_date'], utils.option_expiry_date_strpfmt_string).date()
+                if issue_date < date.today():
+                    min = strike_price - price
+                    closest_option = option
+                else:
+                    logger.error(
+                        '__get_closest_strike_above_price: option {} is untradable'
+                        .format(option))
+
         return closest_option
 
     def __get_closest_strike_below_price(self, option_list, price):
@@ -183,8 +190,15 @@ class Scanner:
 
             # Strike price is more than the latest_price
             if min > (price - strike_price):
-                min = price - strike_price
-                closest_option = option
+                issue_date = datetime.strptime(option['issue_date'], utils.option_expiry_date_strpfmt_string).date()
+                if issue_date < date.today():
+                    min = price - strike_price
+                    closest_option = option
+                else:
+                    logger.error(
+                        '__get_closest_strike_below_price: option {} is not tradable yet'
+                        .format(option))
+
         return closest_option
 
     def __compute_monthly_call_iv(self, scan_entry, watchlist, client):

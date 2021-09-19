@@ -1,6 +1,7 @@
 import re
 import logging
 import brine
+import time
 from common.types.asset_types import PortFolioSource, AssetTypes, TransactionType
 import common.utils as utils
 
@@ -137,8 +138,16 @@ class BrineAdapter:
         return option_list
 
     def get_option_price(self, ticker, expiry, strike, type):
-        # TODO: Investigate why option price is returned as dictionary list
-        return brine.options.get_option_market_data(ticker, expiry, strike, type)
+        option_raw_data = brine.options.get_option_market_data(ticker, expiry, strike, type)
+        if len(option_raw_data) == 0 or len(option_raw_data[0]) == 0:
+            logger.error(
+                'get_option_price: for ticker {}, expiry {}, type {} didnt get any data'
+                .format(ticker, expiry, type))
+            # This can happen due to rate control. Sleep and try again
+            # time.sleep(30)
+            # option_raw_data = brine.options.get_option_market_data(ticker, expiry, strike, type)
+
+        return option_raw_data
 
     def __safe_float(self, float_string):
         try:
