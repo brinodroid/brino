@@ -508,7 +508,7 @@ export default class Orders extends React.Component {
   getPercentagePriceDiff(rowData) {
     let price_diff = rowData.price - rowData.current_price;
     let percent_price_diff = (100 * price_diff)/rowData.price;
-    if (percent_price_diff > 60) {
+    if (percent_price_diff > 50) {
       // This indicate that the price is way off
       return (<Alert variant='danger' > {Number((percent_price_diff).toFixed(2))} </Alert>);
     }
