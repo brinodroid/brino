@@ -141,6 +141,7 @@ export default class Orders extends React.Component {
       if (httpStatus !== 200) {
         console.error("loadOpenOrdersCallback: failure: http:%o", httpStatus);
         this.setState({
+          isOrdersLoaded: true,
           errorMsg: "Failed to load Open Orders"
         })
         return;
@@ -149,6 +150,7 @@ export default class Orders extends React.Component {
       if (!json) {
         console.error("loadOpenOrdersCallback: empty json: http:%o", httpStatus);
         this.setState({
+          isOrdersLoaded: true,
           errorMsg: "Got empty json"
         })
         return;
@@ -503,6 +505,16 @@ export default class Orders extends React.Component {
     );
   }
 
+  getPercentagePriceDiff(rowData) {
+    let price_diff = rowData.price - rowData.current_price;
+    let percent_price_diff = (100 * price_diff)/rowData.price;
+    if (percent_price_diff > 60) {
+      // This indicate that the price is way off
+      return (<Alert variant='danger' > {Number((percent_price_diff).toFixed(2))} </Alert>);
+    }
+    return Number((percent_price_diff).toFixed(2));
+  }
+
   render() {
     if (!this.props.auth.isAuthenticated) {
       console.info('PortFolio:  not authenticated, redirecting to login page');
@@ -529,7 +541,14 @@ export default class Orders extends React.Component {
       { Header: 'WatchList Id list', accessor: 'watchlist_id_list' },
       { Header: 'WL ticker list', accessor: 'watchListTickerList' },
       { Header: 'Type list', accessor: 'transaction_type_list' },
-      { Header: 'Price', accessor: 'price' },
+      { Header: 'Ask Price', accessor: 'price' },
+      { Header: 'Current Price', accessor: 'current_price' },
+      {
+        Header: '% diff', accessor: 'price_diff',
+        Cell: ({ row }) => (
+          <> {this.getPercentagePriceDiff(row.original)} </>
+        )
+      },
       { Header: 'Units', accessor: 'units' },
       { Header: 'Opening strategy', accessor: 'opening_strategy' },
       { Header: 'Closing strategy', accessor: 'closing_strategy' },

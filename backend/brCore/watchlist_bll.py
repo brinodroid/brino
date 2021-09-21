@@ -12,7 +12,7 @@ logger = logging.getLogger('django')
 def is_option(watchlist):
     return _is_option(watchlist.asset_type)
 
-def get_watchlist_latest_price(watchlist):
+def get_watchlist_latest_price(watchlist, only_mark_price=False):
     client = get_client()
 
     if not is_option(watchlist):
@@ -31,6 +31,9 @@ def get_watchlist_latest_price(watchlist):
                         str(watchlist.option_strike), optionType)
 
     option_data = option_raw_data[0][0]
+    if only_mark_price:
+        return utils.safe_float(option_data['mark_price'])
+
     return utils.safe_float(option_data['mark_price']), utils.safe_float(option_data['ask_price']), utils.safe_float(option_data['bid_price'])
 
 
