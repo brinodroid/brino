@@ -210,7 +210,7 @@ class Scanner:
 
         # Get call option strike price at 5 levels beyond latest price
         options_list = client.get_all_options_on_expiry_date(watchlist.ticker, next_monthly_expiry, 'call')
-        if options_list == None:
+        if options_list == None or len(options_list) == 0:
             logger.error(
                 '__compute_monthly_call_iv: get_all_options_on_expiry_date() for watchlist {} didnt get any data'
                 .format(watchlist))
@@ -248,7 +248,7 @@ class Scanner:
 
         # Get call option strike price at 5 levels beyond latest price
         options_list = client.get_all_options_on_expiry_date(watchlist.ticker, next_monthly_expiry, 'put')
-        if options_list == None:
+        if options_list == None or len(options_list) == 0:
             logger.error(
                 '__compute_monthly_put_iv: get_all_options_on_expiry_date() for watchlist {} didnt get any data'
                 .format(watchlist))
