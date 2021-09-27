@@ -12,6 +12,10 @@ logger = logging.getLogger('django')
 def is_option(watchlist):
     return _is_option(watchlist.asset_type)
 
+def get_all_watchlists_for_ticker(ticker):
+    watchlists_for_ticker = WatchList.objects.filter(ticker=ticker)
+    return watchlists_for_ticker
+
 def get_watchlist_latest_price(watchlist, only_mark_price=False):
     client = get_client()
 

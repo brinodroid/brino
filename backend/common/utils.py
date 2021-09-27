@@ -20,7 +20,7 @@ def safe_float(float_string):
         logger.info('__safe_float: Not valid number =%s', float_string)
     return 0
 
-def safe_int(self, int_string):
+def safe_int(int_string):
     try:
         f = int(int_string)
         return f

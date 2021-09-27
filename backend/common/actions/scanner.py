@@ -312,6 +312,8 @@ class Scanner:
         return round(potential, 2)
 
     def __process_scan_entry_values(self, scan_entry, scan_data, client):
+        logger.error('__process_scan_entry_values: scan_entry {}'.format(scan_entry))
+
         try:
             watchlist = WatchList.objects.get(pk=scan_entry.watchlist_id)
         except WatchList.DoesNotExist:

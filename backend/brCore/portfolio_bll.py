@@ -6,6 +6,14 @@ from brOrder.models import ExecutedOrder
 
 logger = logging.getLogger('django')
 
+def get_all_portfolios_for_ticker(watchlists):
+    res_portfolio_list = []
+    for watchlist in watchlists:
+        portfolio_list = PortFolio.objects.filter(watchlist_id=watchlist.id)
+        res_portfolio_list += portfolio_list
+
+    return res_portfolio_list
+
 def create_if_not_exists(executed_order):
     # Check if its already there in portfolio
     try:
