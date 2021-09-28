@@ -584,6 +584,7 @@ export default class Scan extends React.Component {
       { Header: 'Brate Target', accessor: 'brate_target' },
       { Header: 'Brifz Target', accessor: 'brifz_target' },
       { Header: 'Rationale', accessor: 'rationale' },
+      { Header: 'Call IV', accessor: 'call_iv_next_month' },
       {
         Header: 'IV Diff', accessor: 'iv_diff',
         Cell: ({ row }) => (
