@@ -1,6 +1,7 @@
 .App {
   text-align: center;
-  background-color: #616161
+  background-color: #616161;
+  min-height: 2000px
 }
 
 .Home {

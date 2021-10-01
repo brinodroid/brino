@@ -53,7 +53,8 @@ def _minute_task():
 
 def _hourly_task():
     logger.info('_hourly_task: starting {}'.format(timezone.now()))
-    Scanner.getInstance().scan()
+    # Changing to run it ondemand
+    # Scanner.getInstance().scan()
 
     logger.info('_hourly_task: ending {}'.format(timezone.now()))
     return
