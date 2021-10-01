@@ -10,7 +10,6 @@ import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 
 import { getBackend } from '../utils/Backend';
-import watchlistCache from '../utils/WatchListCache';
 import Table from '../utils/Table';
 
 export default class Orders extends React.Component {
@@ -159,10 +158,12 @@ export default class Orders extends React.Component {
       // Update the watchlist ticker to portfolio
       let updateWatchListTicker = function (openOrders) {
         // TODO: Handle list of watchlist Ids
-        openOrders.watchListTickerList = watchlistCache.getWatchListTicker(openOrders.watchlist_id_list);
+        if (this.props.watchListCache) {
+          openOrders.watchListTickerList = this.props.watchListCache.getWatchListTicker(openOrders.watchlist_id_list);
+        }
       }
 
-      json.forEach(updateWatchListTicker);
+      json.forEach(updateWatchListTicker.bind(this));
 
       console.info("loadOpenOrdersCallback: json: %o", json);
       this.setState({
@@ -196,10 +197,12 @@ export default class Orders extends React.Component {
       // Update the watchlist ticker to portfolio
       let updateWatchListTicker = function (openOrders) {
         // TODO: Handle list of watchlist Ids
-        openOrders.watchListTickerList = watchlistCache.getWatchListTicker(openOrders.watchlist_id_list);
+        if (this.props.watchListCache) {
+          openOrders.watchListTickerList = this.props.watchListCache.getWatchListTicker(openOrders.watchlist_id_list);
+        }
       }
 
-      json.forEach(updateWatchListTicker);
+      json.forEach(updateWatchListTicker.bind(this));
 
       console.info("loadExecutedOrdersCallback: json: %o", json);
       this.setState({
@@ -233,10 +236,12 @@ export default class Orders extends React.Component {
       // Update the watchlist ticker to portfolio
       let updateWatchListTicker = function (openOrders) {
         // TODO: Handle list of watchlist Ids
-        openOrders.watchListTickerList = watchlistCache.getWatchListTicker(openOrders.watchlist_id_list);
+        if (this.props.watchListCache) {
+          openOrders.watchListTickerList = this.props.watchListCache.getWatchListTicker(openOrders.watchlist_id_list);
+        }
       }
 
-      json.forEach(updateWatchListTicker);
+      json.forEach(updateWatchListTicker.bind(this));
 
       console.info("loadCancelledOrdersCallback: json: %o", json);
       this.setState({
@@ -345,15 +350,10 @@ export default class Orders extends React.Component {
     getBackend().deleteOpenOrder(order_to_delete, deleteOrderCallback.bind(this));
   }
 
-  componentDidMount() {
-    console.info('componentDidMount..');
+  componentDidUpdate(prevProps) {
+    console.info('componentDidUpdate..');
 
-    if (!watchlistCache.isCached()) {
-      // Load the watchlist
-      watchlistCache.loadWatchList();
-    }
-
-    if (!this.state.isOrdersLoaded) {
+    if (this.props.watchListCache && !this.state.isOrdersLoaded) {
       this.loadOpenOrders();
     }
   }

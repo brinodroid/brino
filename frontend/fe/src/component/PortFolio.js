@@ -10,7 +10,6 @@ import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 
 import { getBackend } from '../utils/Backend';
-import watchlistCache from '../utils/WatchListCache';
 import Table from '../utils/Table';
 
 export default class PortFolio extends React.Component {
@@ -106,10 +105,13 @@ export default class PortFolio extends React.Component {
 
       // Update the watchlist ticker to portfolio
       let updateWatchListTicker = function (portfolio) {
-        portfolio.watchListTicker = watchlistCache.getWatchListTicker(portfolio.watchlist_id);
+        if (this.props.watchListCache) {
+          portfolio.watchListTicker = this.props.watchListCache.getWatchListTicker(portfolio.watchlist_id);
+
+        }
       }
 
-      json.forEach(updateWatchListTicker);
+      json.forEach(updateWatchListTicker.bind(this));
 
       console.info("loadPortFolioCallback: json: %o", json);
       this.setState({
@@ -203,15 +205,10 @@ export default class PortFolio extends React.Component {
     this.onCloseDetailedViewModal();
   }
 
-  componentDidMount() {
-    console.info('componentDidMount..');
+  componentDidUpdate(prevProps) {
+    console.info('componentDidUpdate..');
 
-    if (!watchlistCache.isCached()) {
-      // Load the watchlist
-      watchlistCache.loadWatchList();
-    }
-
-    if (!this.state.isPortFolioLoaded) {
+    if (this.props.watchListCache && !this.state.isPortFolioLoaded) {
       this.loadPortFolio();
     }
   }

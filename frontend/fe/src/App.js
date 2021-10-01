@@ -12,6 +12,7 @@ import Strategy from "./component/Strategy";
 import PortFolio from "./component/PortFolio";
 import Orders from "./component/Orders";
 import BGTask from "./component/BGTask";
+import watchlistCache from './utils/WatchListCache';
 import { getBackend } from './utils/Backend'
 import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
 
@@ -20,13 +21,35 @@ export default class App extends React.Component {
     super(props);
 
     this.setLoggedInUser = this.setLoggedInUser.bind(this);
+    this.updateWatchListCacheCallback = this.updateWatchListCacheCallback.bind(this);
+
     this.setAuthenticationStatus = this.setAuthenticationStatus.bind(this);
     this.onLogoutLinkClick = this.onLogoutLinkClick.bind(this);
 
     this.state = {
       loggedInUser: '',
-      isAuthenticated: getBackend().isAuthenticated()
+      isAuthenticated: getBackend().isAuthenticated(),
+      watchListCache: null
     };
+  }
+
+  updateWatchListCacheCallback(httpStatus, json) {
+    console.info('updateWatchListCacheCallback: httpStatus:%o', httpStatus)
+
+    if (httpStatus === 200) {
+      this.setState({
+        watchListCache: watchlistCache,
+      });
+    }
+  }
+
+  componentDidMount() {
+    console.info('componentDidMount..');
+
+    if (this.state.isAuthenticated) {
+      // Load the watchlist cache
+      watchlistCache.loadWatchList(this.updateWatchListCacheCallback);
+    }
   }
 
   setAuthenticationStatus(isAuthenticated) {
@@ -85,13 +108,13 @@ export default class App extends React.Component {
           </Navbar>
 
           <Switch>
-            <Route exact path="/"> <Home auth={ authProps } /> </Route>
-            <Route exact path="/home"> <Home auth={ authProps } /> </Route>
+            <Route exact path="/"> <Home auth={ authProps } watchListCache={this.state.watchListCache}/> </Route>
+            <Route exact path="/home"> <Home auth={ authProps } watchListCache={this.state.watchListCache}/> </Route>
             <Route path="/login"> <Login auth={ authProps } /> </Route>
-            <Route path="/orders"> <Orders auth={ authProps } /> </Route>
-            <Route path="/strategy"> <Strategy auth={ authProps } /> </Route>
-            <Route path="/portfolio"> <PortFolio auth={ authProps } /> </Route>
-            <Route path="/watchlist"> <WatchList auth={ authProps } /> </Route>
+            <Route path="/orders"> <Orders auth={ authProps } watchListCache={this.state.watchListCache} /> </Route>
+            <Route path="/strategy"> <Strategy auth={ authProps } watchListCache={this.state.watchListCache}/> </Route>
+            <Route path="/portfolio"> <PortFolio auth={ authProps } watchListCache={this.state.watchListCache}/> </Route>
+            <Route path="/watchlist"> <WatchList auth={ authProps } watchListCache={this.state.watchListCache}/> </Route>
             <Route path="/bgtask"> <BGTask auth={ authProps } /> </Route>
             <Route path="/setting"> <Setting auth={ authProps } /> </Route>
             <Route> <NotFound auth={ authProps } /> </Route>

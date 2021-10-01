@@ -10,7 +10,6 @@ import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 
 import { getBackend } from '../utils/Backend';
-import watchlistCache from '../utils/WatchListCache';
 import Table from '../utils/Table';
 
 export default class Scan extends React.Component {
@@ -149,15 +148,17 @@ export default class Scan extends React.Component {
 
       let updateTimeFormat = function (scanEntry) {
         scanEntry.updateTimestampLocal = new Date(scanEntry.update_timestamp).toLocaleString();
-        console.info("updateTimeFormat: json: %o", scanEntry.updateTimestampLocal);
+        //console.info("updateTimeFormat: json: %o", scanEntry.updateTimestampLocal);
       }
       json.forEach(updateTimeFormat);
 
       let updateWatchListTicker = function (scanEntry) {
-        scanEntry.watchListTicker = watchlistCache.getWatchListTicker(scanEntry.watchlist_id);
+        if (this.props.watchListCache) {
+          scanEntry.watchListTicker = this.props.watchListCache.getWatchListTicker(scanEntry.watchlist_id);
+        }
       }
 
-      json.forEach(updateWatchListTicker);
+      json.forEach(updateWatchListTicker.bind(this));
 
       console.info("loadScanCallback: json: %o", json);
       this.setState({
@@ -330,15 +331,10 @@ export default class Scan extends React.Component {
     this.onCloseDetailedViewModal();
   }
 
-  componentDidMount() {
-    console.info('componentDidMount..');
+  componentDidUpdate(prevProps) {
+    console.info('componentDidUpdate..');
 
-    if (!watchlistCache.isCached()) {
-      // Load the watchlist
-      watchlistCache.loadWatchList();
-    }
-
-    if (!this.state.isScanLoaded) {
+    if (this.props.watchListCache && !this.state.isScanLoaded) {
       // Load the scan
       this.loadScan();
 
