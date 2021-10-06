@@ -177,7 +177,7 @@ def strategy_run():
 
 def _update_strategy(strategy, watchlist_id, deactivate, latest_price):
     if strategy.active_track:
-        strategy.active_track = deactivate
+        strategy.active_track = not deactivate
 
     strategy.watchlist_id = watchlist_id
 
