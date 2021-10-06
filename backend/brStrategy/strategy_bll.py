@@ -1,5 +1,4 @@
 import logging
-from datetime import datetime, timedelta
 from brStrategy.models import Strategy
 import brCore.watchlist_bll as watchlist_bll
 from brStrategy.strategy_types import StrategyType
@@ -10,7 +9,7 @@ import brOrder.order_bll as order_bll
 import brSetting.settings_bll as settings_bll
 from brOrder.order_types import OrderAction
 from common.client.Factory import get_client
-from common.types.asset_types import AssetTypes, PortFolioSource, TransactionType
+from common.types.asset_types import AssetTypes, TransactionType
 import common.utils as utils
 
 
@@ -96,6 +95,7 @@ def create_strategy(strategy_user_request):
         strategy = Strategy(strategy_type=strategy_type,
                             profit_target=profit_target,
                             stop_loss=stop_loss,
+                            watchlist_id=portfolio.watchlist_id,
                             portfolio_id=portfolio_id,
                             active_track=serializer.validated_data['active_track'])
     else:
@@ -170,16 +170,30 @@ def strategy_run():
             logger.error('strategy_run: Invalid trasaction type? {}'.format(
                 portfolio.transaction_type))
 
-        if deactivate:
-            _deactivate_strategy(active_strategy)
+        _update_strategy(active_strategy, watchlist.id, deactivate, latest_price)
 
     return
 
 
-def _deactivate_strategy(strategy):
-    strategy.active_track = False
-    logger.info('_deactivate_strategy: strategy {}'.format(strategy))
+def _update_strategy(strategy, watchlist_id, deactivate, latest_price):
+    if strategy.active_track:
+        strategy.active_track = deactivate
 
+    strategy.watchlist_id = watchlist_id
+
+    # Update the highest price
+    if strategy.highest_price is None:
+        strategy.highest_price = latest_price
+    elif strategy.highest_price < latest_price:
+        strategy.highest_price = latest_price
+
+    # Update the lowest_price price
+    if strategy.lowest_price is None:
+        strategy.lowest_price = latest_price
+    elif strategy.lowest_price > latest_price:
+        strategy.lowest_price = latest_price
+
+    logger.info('_update_strategy: strategy {}'.format(strategy))
     strategy.save()
     return
 
@@ -209,29 +223,48 @@ def _buy_strategy(strategy, portfolio, watchlist, latest_price):
     # For buy strategy, we should buy back if
     # 1. current price is lower than stop_loss
     # 2. current price is higher than profit_target
-    if latest_price < strategy.stop_loss or latest_price > strategy.profit_target:
+    if latest_price < strategy.stop_loss:
         # Sell to close at market
-        logger.info('_buy_strategy: selling close strategy {}, portfolio {}, latest_price {}'.format(
+        logger.info('_buy_strategy: selling as below stoploss strategy {}, portfolio {}, latest_price {}'.format(
             strategy, portfolio, latest_price))
 
-        watchlists_for_ticker = watchlist_bll.get_all_watchlists_for_ticker(
-            watchlist.ticker)
+        _submit_sell_order(watchlist, portfolio)
+        return True
 
-        # 1. Check all portfolios
-        portfolios_list = portfolio_bll.get_all_portfolios_for_ticker(
-            watchlists_for_ticker)
+    if latest_price > strategy.profit_target:
 
-        # 2. Check if we have any open sell orders on the ticker
-        open_orders_list = order_bll.get_open_orders(watchlists_for_ticker)
+        if latest_price > strategy.highest_price:
+            # The price is increasing. Hold on to capture the max profit
+            logger.info('_buy_strategy: not selling yet as price is on upswing strategy {}, portfolio {}, latest_price {}'.format(
+                strategy, portfolio, latest_price))
 
-        # 3. _prepare_for_sell_order
-        if _prepare_for_sell_order(portfolio, watchlists_for_ticker, portfolios_list, open_orders_list):
-            order_bll.submit_market_order_to_client(
-                watchlist, TransactionType.SELL.value, portfolio.units, OrderAction.CLOSE.value)
+            return False
+
+        logger.info('_buy_strategy: selling as above profit target strategy {}, portfolio {}, latest_price {}'.format(
+            strategy, portfolio, latest_price))
+
+        _submit_sell_order(watchlist, portfolio)
         return True
 
     return False
 
+def _submit_sell_order(watchlist, portfolio):
+    watchlists_for_ticker = watchlist_bll.get_all_watchlists_for_ticker(
+        watchlist.ticker)
+
+    # 1. Check all portfolios
+    portfolios_list = portfolio_bll.get_all_portfolios_for_ticker(
+        watchlists_for_ticker)
+
+    # 2. Check if we have any open sell orders on the ticker
+    open_orders_list = order_bll.get_open_orders(watchlists_for_ticker)
+
+    # 3. _prepare_for_sell_order
+    if _prepare_for_sell_order(portfolio, watchlists_for_ticker, portfolios_list, open_orders_list):
+        order_bll.submit_market_order_to_client(
+            watchlist, TransactionType.SELL.value, portfolio.units, OrderAction.CLOSE.value)
+
+    return True
 
 def _prepare_for_sell_order(portfolio_to_sell, watchlists_for_ticker, portfolio_list, open_orders_list):
     logger.info('_prepare_for_sell_order: portfolio_to_sell {}, portfolio_list {}, open_orders_list {}'.format(
