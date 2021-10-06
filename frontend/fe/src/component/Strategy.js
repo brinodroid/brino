@@ -137,6 +137,14 @@ export default class Strategy extends React.Component {
         return;
       }
 
+      let updateWatchListTicker = function (strategy) {
+        if (this.props.watchListCache) {
+          strategy.watchListTicker = this.props.watchListCache.getWatchListTicker(strategy.watchlist_id);
+        }
+      }
+
+      json.forEach(updateWatchListTicker.bind(this));
+
       console.info("loadStrategiesCallback: json: %o", json);
       this.setState({
         isStrategyLoaded: true,
@@ -273,17 +281,16 @@ export default class Strategy extends React.Component {
     this.onCloseDetailedViewModal();
   }
 
-  componentDidMount() {
-    console.info('componentDidMount..');
+  componentDidUpdate(prevProps) {
+    console.info('componentDidUpdate..');
 
-    if (!this.state.isStrategyLoaded) {
-      console.info('componentDidMount: Need to load the watchlist');
-
+    if (this.props.watchListCache && !this.state.isStrategyLoaded) {
+      // Load the scan
       this.loadStrategies();
-    } else {
-      console.info('componentDidMount: Loaded from cache');
+      console.info('componentDidUpdate: loading strategies async');
     }
   }
+
 
   onFormValuesChange(event) {
     let updatedFormValues = { ...this.state.formValues, [event.target.id]: event.target.value };
@@ -325,11 +332,11 @@ export default class Strategy extends React.Component {
             if (item === dropdown_selection.selected ) {
               // Show as the default value
               return (
-                <option value={index} selected={"selected"}>{item}</option>
+                <option key={index} value={index} selected={"selected"}>{item}</option>
               )
             }
 
-            return (<option value={index}>{item}</option>);
+            return (<option key={index} value={index}>{item}</option>);
           })}
         </Form.Control>
 
@@ -457,15 +464,18 @@ export default class Strategy extends React.Component {
       { Header: 'ID', accessor: 'id' },
       { Header: 'Strategy Type', accessor: 'strategy_type' },
       { Header: 'Portfolio Id', accessor: 'portfolio_id' },
+      { Header: 'Watchlist Id', accessor: 'watchlist_id' },
+      { Header: 'WL ticker', accessor: 'watchListTicker' },
       {
         Header: 'Active track', accessor: 'active_track',
         Cell: ({ row }) => (
           <> {this.getActiveTrackString(row.original)} </>
         )
       },
-
       { Header: 'Stop loss', accessor: 'stop_loss' },
       { Header: 'Profit target', accessor: 'profit_target' },
+      { Header: 'Highest price', accessor: 'highest_price' },
+      { Header: 'Lowest price', accessor: 'lowest_price' },
       { Header: 'Create Time', accessor: 'creation_timestamp' },
     ];
 

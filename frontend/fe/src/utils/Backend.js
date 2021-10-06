@@ -162,6 +162,10 @@ class Backend {
     this.getWithToken('brCore/portfolio', callback);
   }
 
+  getPortFolioById(id, callback) {
+    this.getWithToken('brCore/portfolio/'+id, callback);
+  }
+
   createPortFolio(portfolio, callback) {
     // The below fields are not needed during creation
     delete portfolio.update_timestamp;
