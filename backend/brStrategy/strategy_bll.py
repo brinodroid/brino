@@ -180,6 +180,7 @@ def _update_strategy(strategy, watchlist_id, deactivate, latest_price):
         strategy.active_track = not deactivate
 
     strategy.watchlist_id = watchlist_id
+    strategy.last_price = latest_price
 
     # Update the highest price
     if strategy.highest_price is None:
@@ -233,7 +234,7 @@ def _buy_strategy(strategy, portfolio, watchlist, latest_price):
 
     if latest_price > strategy.profit_target:
 
-        if latest_price > strategy.highest_price:
+        if latest_price > strategy.last_price:
             # The price is increasing. Hold on to capture the max profit
             logger.info('_buy_strategy: not selling yet as price is on upswing strategy {}, portfolio {}, latest_price {}'.format(
                 strategy, portfolio, latest_price))

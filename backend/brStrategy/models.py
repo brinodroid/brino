@@ -18,6 +18,7 @@ class Strategy(models.Model):
     stop_loss = models.FloatField(blank=True, null=True)
     profit_target = models.FloatField(blank=True, null=True)
 
+    last_price = models.FloatField(default=sys.float_info.min, null=True)
     highest_price = models.FloatField(default=sys.float_info.min, null=True)
     lowest_price = models.FloatField(default=sys.float_info.max, null=True)
 
@@ -32,6 +33,6 @@ class Strategy(models.Model):
 
     def __str__(self):
         return "strategy_type:%s, portfolio_id:%s, watchlist_id:%s, stop_loss:%s, profit_target:%s,"\
-            " highest_price:%s, lowest_price:%s, active_track:%s" \
+            " last_price:%s, highest_price:%s, lowest_price:%s, active_track:%s" \
             % (self.strategy_type, self.portfolio_id, self.watchlist_id, self.stop_loss, self.profit_target,
-                self.highest_price, self.lowest_price, self.active_track)
+                self.last_price, self.highest_price, self.lowest_price, self.active_track)
