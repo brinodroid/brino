@@ -36,11 +36,20 @@ export default class App extends React.Component {
   updateWatchListCacheCallback(httpStatus, json) {
     console.info('updateWatchListCacheCallback: httpStatus:%o', httpStatus)
 
+    if (httpStatus === 401) {
+      console.info('updateWatchListCacheCallback: authentication failure :%o', json)
+
+      this.setAuthenticationStatus(false);
+      return;
+    }
+
+
     if (httpStatus === 200) {
       this.setState({
         watchListCache: watchlistCache,
       });
     }
+
   }
 
   componentDidMount() {

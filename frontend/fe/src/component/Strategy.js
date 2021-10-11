@@ -474,6 +474,7 @@ export default class Strategy extends React.Component {
       },
       { Header: 'Stop loss', accessor: 'stop_loss' },
       { Header: 'Profit target', accessor: 'profit_target' },
+      { Header: 'Last price', accessor: 'last_price' },
       { Header: 'Highest price', accessor: 'highest_price' },
       { Header: 'Lowest price', accessor: 'lowest_price' },
       { Header: 'Create Time', accessor: 'creation_timestamp' },
