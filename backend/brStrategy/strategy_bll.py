@@ -234,10 +234,12 @@ def _buy_strategy(strategy, portfolio, watchlist, latest_price):
 
     if latest_price > strategy.profit_target:
 
-        if latest_price > strategy.last_price:
+        latest_price_with_tolerance = latest_price*1.0005
+        # Allowing a 0.05% tolerance
+        if latest_price_with_tolerance >= strategy.last_price:
             # The price is increasing. Hold on to capture the max profit
-            logger.info('_buy_strategy: not selling yet as price is on upswing strategy {}, portfolio {}, latest_price {}'.format(
-                strategy, portfolio, latest_price))
+            logger.info('_buy_strategy: not selling yet as price is on upswing strategy {}, portfolio {}, latest_price {}, with tolerance {}'.format(
+                strategy, portfolio, latest_price, latest_price_with_tolerance))
 
             return False
 

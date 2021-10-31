@@ -9,16 +9,19 @@ from django.utils import timezone
 
 logger = logging.getLogger('django')
 
+
 def create_stock_history(watchlist):
     if watchlist.asset_type != AssetTypes.STOCK.value:
-        logger.error('create_stock_history: Wrong assettype. Ignoring watchlist {}'.format(watchlist))
+        logger.error(
+            'create_stock_history: Wrong assettype. Ignoring watchlist {}'.format(watchlist))
         return None
 
     date = timezone.now().date()
 
     try:
-        stock_data_list = StockData.objects.filter(date=date, watchlist_id=watchlist.id)
-        if len(stock_data_list)>0:
+        stock_data_list = StockData.objects.filter(
+            date=date, watchlist_id=watchlist.id)
+        if len(stock_data_list) > 0:
             # stock_data exists for the same date
             return stock_data_list[0]
 
@@ -28,15 +31,19 @@ def create_stock_history(watchlist):
         logger.info('create_stock_history: stock_data not found for watchlist_id {}'.format(
             watchlist.id))
 
-
     # Try adding the data
     client = get_client()
     stock_raw_data_list = client.get_stock_data(watchlist.ticker,
-                        interval='day',
-                        span='week')
+                                                interval='day',
+                                                span='week')
 
     today_string = utils.today_begin_utctime_string()
     for stock_raw_data in stock_raw_data_list:
+        if stock_raw_data is None:
+            logger.error('create_stock_history: got none data {} for watchlist.id {}'.format(
+                stock_raw_data_list, watchlist.id))
+            continue
+
         if today_string == stock_raw_data['begins_at']:
             logger.info('create_stock_history: saving {} for watchlist.id {}'.format(
                 stock_raw_data, watchlist.id))
@@ -68,104 +75,138 @@ def stock_history_update():
 def create_option_history(watchlist):
     if watchlist.asset_type == AssetTypes.CALL_OPTION.value:
         return create_call_option_history(watchlist)
-    
+
     if watchlist.asset_type == AssetTypes.PUT_OPTION.value:
         return create_put_option_history(watchlist)
 
-    logger.error('create_option_history: Wrong assettype. Ignoring watchlist {}'.format(watchlist))
+    logger.error(
+        'create_option_history: Wrong assettype. Ignoring watchlist {}'.format(watchlist))
     return None
-
 
 
 def create_call_option_history(watchlist):
     date = timezone.now().date()
 
     try:
-        call_option_data = CallOptionData.objects.filter(date=date, watchlist_id=watchlist.id)
+        call_option_data = CallOptionData.objects.filter(
+            date=date, watchlist_id=watchlist.id)
         # call_option_data exists for the same date
         return call_option_data
     except CallOptionData.DoesNotExist:
-        #Put option history does not exist. Add a new entry for th date
+        # Put option history does not exist. Add a new entry for th date
         logger.info('create_call_option_history: call_option_data not found for watchlist_id {}'.format(
             watchlist.id))
 
     client = get_client()
 
     option_raw_data = client.get_option_price(watchlist.ticker,
-                        str(watchlist.option_expiry),
-                        str(watchlist.option_strike),
-                        'call')
+                                              str(watchlist.option_expiry),
+                                              str(watchlist.option_strike),
+                                              'call')
     option_data = option_raw_data[0][0]
 
     return _update_call_option_table(watchlist.id, option_data)
 
+
 def _update_call_option_table(watchlist_id, option_data):
     call_option_data = CallOptionData(watchlist_id=watchlist_id,
-        mark_price=utils.safe_float(option_data['mark_price']),
-        ask_price=utils.safe_float(option_data['ask_price']),
-        bid_price=utils.safe_float(option_data['bid_price']),
-        high_price=utils.safe_float(option_data['high_price']),
-        low_price=utils.safe_float(option_data['low_price']),
-        last_trade_price=utils.safe_float(option_data['last_trade_price']),
+                                      mark_price=utils.safe_float(
+                                          option_data['mark_price']),
+                                      ask_price=utils.safe_float(
+                                          option_data['ask_price']),
+                                      bid_price=utils.safe_float(
+                                          option_data['bid_price']),
+                                      high_price=utils.safe_float(
+                                          option_data['high_price']),
+                                      low_price=utils.safe_float(
+                                          option_data['low_price']),
+                                      last_trade_price=utils.safe_float(
+                                          option_data['last_trade_price']),
 
-        open_interest=utils.safe_int(option_data['open_interest']),
-        volume=utils.safe_int(option_data['volume']),
-        ask_size=utils.safe_int(option_data['ask_size']),
-        bid_size=utils.safe_int(option_data['bid_size']),
+                                      open_interest=utils.safe_int(
+                                          option_data['open_interest']),
+                                      volume=utils.safe_int(
+                                          option_data['volume']),
+                                      ask_size=utils.safe_int(
+                                          option_data['ask_size']),
+                                      bid_size=utils.safe_int(
+                                          option_data['bid_size']),
 
-        delta=utils.safe_float(option_data['delta']),
-        gamma=utils.safe_float(option_data['gamma']),
-        implied_volatility=utils.safe_float(option_data['implied_volatility']),
-        rho=utils.safe_float(option_data['rho']),
-        theta=utils.safe_float(option_data['theta']),
-        vega=utils.safe_float(option_data['vega'])
-                    )
+                                      delta=utils.safe_float(
+                                          option_data['delta']),
+                                      gamma=utils.safe_float(
+                                          option_data['gamma']),
+                                      implied_volatility=utils.safe_float(
+                                          option_data['implied_volatility']),
+                                      rho=utils.safe_float(option_data['rho']),
+                                      theta=utils.safe_float(
+                                          option_data['theta']),
+                                      vega=utils.safe_float(
+                                          option_data['vega'])
+                                      )
     call_option_data.save()
     return call_option_data
+
 
 def create_put_option_history(watchlist):
     date = timezone.now().date()
 
     try:
-        put_option_data = PutOptionData.objects.filter(date=date, watchlist_id=watchlist.id)
+        put_option_data = PutOptionData.objects.filter(
+            date=date, watchlist_id=watchlist.id)
         # Put option history for the same date already exists
         return put_option_data
     except PutOptionData.DoesNotExist:
-        #Put option history does not exist. Add a new entry for th date
+        # Put option history does not exist. Add a new entry for th date
         logger.info('create_put_option_history: put_option_data not found for watchlist_id {}'.format(
             watchlist.id))
 
     client = get_client()
 
     option_raw_data = client.get_option_price(watchlist.ticker,
-                        str(watchlist.option_expiry),
-                        str(watchlist.option_strike),
-                        'put')
+                                              str(watchlist.option_expiry),
+                                              str(watchlist.option_strike),
+                                              'put')
     option_data = option_raw_data[0][0]
 
     return _update_put_option_table(watchlist.id, option_data)
 
+
 def _update_put_option_table(watchlist_id, option_data):
     put_option_data = PutOptionData(watchlist_id=watchlist_id,
-        mark_price=utils.safe_float(option_data['mark_price']),
-        ask_price=utils.safe_float(option_data['ask_price']),
-        bid_price=utils.safe_float(option_data['bid_price']),
-        high_price=utils.safe_float(option_data['high_price']),
-        low_price=utils.safe_float(option_data['low_price']),
-        last_trade_price=utils.safe_float(option_data['last_trade_price']),
+                                    mark_price=utils.safe_float(
+                                        option_data['mark_price']),
+                                    ask_price=utils.safe_float(
+                                        option_data['ask_price']),
+                                    bid_price=utils.safe_float(
+                                        option_data['bid_price']),
+                                    high_price=utils.safe_float(
+                                        option_data['high_price']),
+                                    low_price=utils.safe_float(
+                                        option_data['low_price']),
+                                    last_trade_price=utils.safe_float(
+                                        option_data['last_trade_price']),
 
-        open_interest=utils.safe_int(option_data['open_interest']),
-        volume=utils.safe_int(option_data['volume']),
-        ask_size=utils.safe_int(option_data['ask_size']),
-        bid_size=utils.safe_int(option_data['bid_size']),
+                                    open_interest=utils.safe_int(
+                                        option_data['open_interest']),
+                                    volume=utils.safe_int(
+                                        option_data['volume']),
+                                    ask_size=utils.safe_int(
+                                        option_data['ask_size']),
+                                    bid_size=utils.safe_int(
+                                        option_data['bid_size']),
 
-        delta=utils.safe_float(option_data['delta']),
-        gamma=utils.safe_float(option_data['gamma']),
-        implied_volatility=utils.safe_float(option_data['implied_volatility']),
-        rho=utils.safe_float(option_data['rho']),
-        theta=utils.safe_float(option_data['theta']),
-        vega=utils.safe_float(option_data['vega'])
-        )
+                                    delta=utils.safe_float(
+                                        option_data['delta']),
+                                    gamma=utils.safe_float(
+                                        option_data['gamma']),
+                                    implied_volatility=utils.safe_float(
+                                        option_data['implied_volatility']),
+                                    rho=utils.safe_float(option_data['rho']),
+                                    theta=utils.safe_float(
+                                        option_data['theta']),
+                                    vega=utils.safe_float(option_data['vega'])
+                                    )
     put_option_data.save()
 
     return put_option_data
@@ -173,12 +214,17 @@ def _update_put_option_table(watchlist_id, option_data):
 
 def _update_stockdata_table(watchlist_id, stock_data_in):
     stock_data = StockData(watchlist_id=watchlist_id,
-        high_price=utils.safe_float(stock_data_in['high_price']),
-        low_price=utils.safe_float(stock_data_in['low_price']),
-        open_price=utils.safe_float(stock_data_in['open_price']),
-        close_price=utils.safe_float(stock_data_in['close_price']),
-        volume=utils.safe_float(stock_data_in['volume']),
-        date=utils.convert_datetime_string_to_django_time(stock_data_in['begins_at'])
-        )
+                           high_price=utils.safe_float(
+                               stock_data_in['high_price']),
+                           low_price=utils.safe_float(
+                               stock_data_in['low_price']),
+                           open_price=utils.safe_float(
+                               stock_data_in['open_price']),
+                           close_price=utils.safe_float(
+                               stock_data_in['close_price']),
+                           volume=utils.safe_float(stock_data_in['volume']),
+                           date=utils.convert_datetime_string_to_django_time(
+                               stock_data_in['begins_at'])
+                           )
     stock_data.save()
     return stock_data

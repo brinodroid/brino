@@ -51,7 +51,7 @@ export default class Scan extends React.Component {
       showDetailedViewModal: false,
       addToScan: false,
       deleteFromScan: false,
-      enableAutoRefresh: true,
+      enableAutoRefresh: false,
       formValues: {
         id: "", update_timestamp: "", profile: "", watchlist_id: "", watchListTicker: "",
         support: "", resistance: "", profit_target: "", stopLoss: "", brate_target: "", brifz_target: "",
@@ -337,9 +337,6 @@ export default class Scan extends React.Component {
     if (this.props.watchListCache && !this.state.isScanLoaded) {
       // Load the scan
       this.loadScan();
-
-      // Start with auto refresh being on
-      this.startAutoRefresh();
     }
   }
 
