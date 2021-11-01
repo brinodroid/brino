@@ -197,7 +197,14 @@ export default class Scan extends React.Component {
         filteredScan.push(scanEntry);
       }
     }
+
+
     this.state.scan.forEach(filterScanGreaterThanPotentialThreshold);
+
+    filteredScan.sort(function(a,b) {
+      return b.potential - a.potential
+    });
+
     this.setState({
       filteredScan: filteredScan
     });
