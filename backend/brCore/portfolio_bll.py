@@ -68,6 +68,18 @@ def delete_invalid(portfolio_list):
 
     return new_portfolio_list
 
+def delete_portfolio(portfolio_id):
+    try:
+        portfolio = PortFolio.objects.get(pk=portfolio_id)
+        portfolio.delete()
+        return portfolio
+    except PortFolio.DoesNotExist:
+        logger.error(
+            "Didnt find {} in portfolio. Skipping delete".format(portfolio_id))
+
+    return None
+
+
 
 def compute_total_units(portfolio_list):
     total_units = 0

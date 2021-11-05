@@ -18,6 +18,8 @@ from .serializers.bgtask import BGTaskSerializer
 from .serializers.portfolio import PortFolioSerializer, PortFolioUpdateSerializer
 from .serializers.scan import ScanEntrySerializer
 from django.utils import timezone
+import brCore.scanentry_bll as scanentry_bll
+
 
 
 logger = logging.getLogger('django')
@@ -231,28 +233,6 @@ def scan_list(request):
     return Response({'detail': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
-def __delete_unused_portfolio(scan):
-    scan_list = ScanEntry.objects.filter(
-        portfolio_id=scan.portfolio_id)
-
-    if len(scan_list) > 0:
-        # Cannot delete because its used from other scans
-        logger.error("Not deleting portfolio {} as its used from {} scans. Eg using scan: {}".format(
-            scan.portfolio_id, len(scan_list), scan_list[0]))
-        return None
-
-    # No scan is referencing the portfolio. Delete the port folio
-    try:
-        portfolio = PortFolio.objects.get(pk=scan.portfolio_id)
-        portfolio.delete()
-        return portfolio
-    except PortFolio.DoesNotExist:
-        logger.error(
-            "Didnt find {} in portfolio. Skipping delete".format(scan.portfolio_id))
-
-    return None
-
-
 def __delete_unused_watchlist(scan, portfolio):
     scan_list = ScanEntry.objects.filter(
         watchlist_id=scan.watchlist_id)
@@ -318,7 +298,7 @@ def scan_detail(request, pk):
             scan.delete()
 
             # 2. Need to delete portfolio asociated with the scan
-            portfolio = __delete_unused_portfolio(scan)
+            portfolio = scanentry_bll.delete_unused_portfolio(scan.portfolio_id)
 
             # 3. Need to delete the watchlist associated with the scan if scan/portfolio is not using the watchlist
             if portfolio != None:

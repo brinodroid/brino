@@ -6,6 +6,8 @@ import brCore.portfolio_bll as portfolio_bll
 from brCore.models import WatchList, BGTask, PortFolio, ScanEntry, PortFolioUpdate
 from brOrder.models import OpenOrder, ExecutedOrder, CancelledOrder
 from brSetting.models import Configuration
+import brCore.scanentry_bll as scanentry_bll
+
 from django.utils import timezone
 
 
@@ -159,6 +161,10 @@ class PFUpdater:
             if str(portfolio.brine_id) not in brine_id_lut:
                 # This position is not found in the brine_id_lut.
                 # Update scan object as MISSING
+
+                #Delete the portfolio if there is no scan entry
+                scanentry_bll.delete_unused_portfolio(portfolio.id)
+
                 try:
                     scan_entry = ScanEntry.objects.get(
                         portfolio_id=portfolio.id)
@@ -169,6 +175,7 @@ class PFUpdater:
                     # Log error and continue
                     logger.error('__update_options: scan entry MISSING with portfolio_id {}'.format(
                         portfolio.id))
+
         return
 
     def __update_options(self, client, configuration):
@@ -233,6 +240,12 @@ class PFUpdater:
 
             if total_units == updated_units:
                 # No new additions to the portfolio. Just return the portfolio
+                if len(portfolio_list) == 0:
+                    # New stock, not yet in portfolio
+                    logger.info('__update_stock_in_portfolio: watchlist_id {} not in portfolio'.format(
+                        watchlist.id))
+                    return None
+
                 return portfolio_list[0]
             elif total_units > updated_units:
                 # This means we have just sold some units. Update the unit count
