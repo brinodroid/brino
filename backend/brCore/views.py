@@ -227,8 +227,10 @@ def scan_list(request):
         logger.info('scan_task: starting {}'.format(timezone.now()))
 
         Scanner.getInstance().scan()
-        logger.info('scan_task: done {}'.format(timezone.now()))
-        return Response({'detail': 'scanned'}, status=status.HTTP_200_OK)
+
+        scan_done_msg = 'scan_task: done {}'.format(timezone.now())
+        logger.info(scan_done_msg)
+        return Response({'detail': scan_done_msg}, status=status.HTTP_200_OK)
 
     return Response({'detail': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
