@@ -44,6 +44,8 @@ export default class WatchList extends React.Component {
       deleteFromWatchList: false,
       formValues: { id: "", assetType: "", ticker: "", optionStrike: "", optionExpiry: "", comment: "" }
     }
+
+    this.loadWatchList();
   }
 
   onCloseDetailedViewModal() {
@@ -194,18 +196,6 @@ export default class WatchList extends React.Component {
 
     getBackend().deleteFromWatchList(watchListEntry, deleteFromWatchListCallback.bind(this));
     this.onCloseDetailedViewModal();
-  }
-
-  componentDidMount() {
-    console.info('componentDidMount..');
-
-    if (!this.state.isWatchListLoaded) {
-      console.info('componentDidMount: Need to load the watchlist');
-
-      this.loadWatchList();
-    } else {
-      console.info('componentDidMount: Loaded from cache');
-    }
   }
 
   onFormValuesChange(event) {

@@ -14,7 +14,7 @@ import Orders from "./component/Orders";
 import BGTask from "./component/BGTask";
 import watchlistCache from './utils/WatchListCache';
 import { getBackend } from './utils/Backend'
-import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
+import { HashRouter as Router, Switch, Route } from "react-router-dom";
 
 export default class App extends React.Component {
   constructor(props) {
@@ -88,37 +88,36 @@ export default class App extends React.Component {
       <Router>
         <div className="App">
           <Navbar bg="dark" variant="dark">
-            <Navbar.Brand href="/home">
+            <Navbar.Brand href="/#home">
               Brino
             </Navbar.Brand>
             <Navbar.Text>
-              <Nav.Link href="/orders">Orders</Nav.Link>
+              <Nav.Link href="/#orders">Orders</Nav.Link>
             </Navbar.Text>
             <Navbar.Text>
-              <Nav.Link href="/strategy">Strategy</Nav.Link>
+              <Nav.Link href="/#strategy">Strategy</Nav.Link>
             </Navbar.Text>
             <Navbar.Text>
-              <Nav.Link href="/portfolio">Portfolio</Nav.Link>
+              <Nav.Link href="/#portfolio">Portfolio</Nav.Link>
             </Navbar.Text>
             <Navbar.Text>
-              <Nav.Link href="/watchlist">Watch List</Nav.Link>
+              <Nav.Link href="/#watchlist">Watch List</Nav.Link>
             </Navbar.Text>
             <Navbar.Text>
               <Nav.Link href="/bgtask">BGTask</Nav.Link>
             </Navbar.Text>
             <Navbar.Collapse className="justify-content-end">
               <Navbar.Text>
-                <Nav.Link href="/setting">Setting</Nav.Link>
+                <Nav.Link href="/#setting">Setting</Nav.Link>
               </Navbar.Text>
               <Navbar.Text>
-                <Nav.Link href="/login" onClick={this.onLogoutLinkClick}>Logout</Nav.Link>
+                <Nav.Link href="/#login" onClick={this.onLogoutLinkClick}>Logout</Nav.Link>
               </Navbar.Text>
             </Navbar.Collapse>
           </Navbar>
 
           <Switch>
-            <Route exact path="/"> <Home auth={ authProps } watchListCache={this.state.watchListCache}/> </Route>
-            <Route exact path="/home"> <Home auth={ authProps } watchListCache={this.state.watchListCache}/> </Route>
+            <Route path="/home"> <Home auth={ authProps } watchListCache={this.state.watchListCache}/> </Route>
             <Route path="/login"> <Login auth={ authProps } /> </Route>
             <Route path="/orders"> <Orders auth={ authProps } watchListCache={this.state.watchListCache} /> </Route>
             <Route path="/strategy"> <Strategy auth={ authProps } watchListCache={this.state.watchListCache}/> </Route>
@@ -126,6 +125,7 @@ export default class App extends React.Component {
             <Route path="/watchlist"> <WatchList auth={ authProps } watchListCache={this.state.watchListCache}/> </Route>
             <Route path="/bgtask"> <BGTask auth={ authProps } /> </Route>
             <Route path="/setting"> <Setting auth={ authProps } /> </Route>
+            <Route exact path="/"> <Home auth={ authProps } watchListCache={this.state.watchListCache}/> </Route>
             <Route> <NotFound auth={ authProps } /> </Route>
           </Switch>
         </div>

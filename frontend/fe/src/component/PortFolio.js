@@ -43,6 +43,9 @@ export default class PortFolio extends React.Component {
       deleteFromPortFolio: false,
       formValues: { id: "", update_timestamp: "", watchlist_id: "", source: "", transaction_type: "", entry_datetime: "", entry_price: "", units: "", exit_price: "", exit_datetime: "" }
     }
+
+    console.info('calling loadPortFolio from ctor')
+    this.loadPortFolio();
   }
 
   onCloseDetailedViewModal() {
@@ -203,14 +206,6 @@ export default class PortFolio extends React.Component {
 
     getBackend().deletePortFolio(PortFolioEntry, deleteFromPortFolioCallback.bind(this));
     this.onCloseDetailedViewModal();
-  }
-
-  componentDidUpdate(prevProps) {
-    console.info('componentDidUpdate..');
-
-    if (this.props.watchListCache && !this.state.isPortFolioLoaded) {
-      this.loadPortFolio();
-    }
   }
 
   onFormValuesChange(event) {

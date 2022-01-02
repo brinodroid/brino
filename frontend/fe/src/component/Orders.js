@@ -58,6 +58,8 @@ export default class Orders extends React.Component {
       deleteOrder: false,
       form_values: this.createDefaultFormValues()
     }
+
+    this.loadOpenOrders();
   }
 
 
@@ -348,14 +350,6 @@ export default class Orders extends React.Component {
     }
 
     getBackend().deleteOpenOrder(order_to_delete, deleteOrderCallback.bind(this));
-  }
-
-  componentDidUpdate(prevProps) {
-    console.info('componentDidUpdate..');
-
-    if (this.props.watchListCache && !this.state.isOrdersLoaded) {
-      this.loadOpenOrders();
-    }
   }
 
   onFormValuesChange(event) {

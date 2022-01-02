@@ -47,6 +47,8 @@ export default class Strategy extends React.Component {
       deleteStrategy: false,
       formValues: this.createDefaultFormValues()
     }
+
+    this.loadStrategies();
   }
 
   createDropDownSelections(options_array) {
@@ -279,16 +281,6 @@ export default class Strategy extends React.Component {
 
     getBackend().deleteStrategy(strategy, deleteStrategyCallback.bind(this));
     this.onCloseDetailedViewModal();
-  }
-
-  componentDidUpdate(prevProps) {
-    console.info('componentDidUpdate..');
-
-    if (this.props.watchListCache && !this.state.isStrategyLoaded) {
-      // Load the scan
-      this.loadStrategies();
-      console.info('componentDidUpdate: loading strategies async');
-    }
   }
 
 

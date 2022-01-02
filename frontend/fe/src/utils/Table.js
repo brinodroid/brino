@@ -19,7 +19,7 @@ function DefaultColumnFilter({
     <InputGroup className="mb-3">
       <FormControl
         placeholder={`Search ${count} records...`}
-        aria-label="Amount (toasdf the nearest dollar)"
+        aria-label="Amount (to the nearest dollar)"
         value={filterValue || ''}
         onChange={e => {
           setFilter(e.target.value || undefined) // Set undefined to remove the filter entirely

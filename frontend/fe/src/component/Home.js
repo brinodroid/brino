@@ -14,6 +14,8 @@ import Table from '../utils/Table';
 
 export default class Scan extends React.Component {
   constructor(props) {
+    console.info("Home::Scan: ctor");
+
     super(props);
 
     this.onEditButtonClick = this.onEditButtonClick.bind(this);
@@ -40,6 +42,7 @@ export default class Scan extends React.Component {
     this.startAutoRefresh = this.startAutoRefresh.bind(this);
     this.stopAutoRefresh = this.stopAutoRefresh.bind(this);
 
+    this.onCloseDetailedViewModal = this.onCloseDetailedViewModal.bind(this);
 
     this.state = {
       isScanLoaded: false,
@@ -58,6 +61,9 @@ export default class Scan extends React.Component {
         rationale: "", current_price: "", volatility: "", short_float: "", status: "", details: ""
       }
     }
+
+    // Load the scan
+    this.loadScan();
   }
 
   // Class variable to hold the setInterval Id, used to refresh the page every 5 seconds
@@ -338,14 +344,6 @@ export default class Scan extends React.Component {
     this.onCloseDetailedViewModal();
   }
 
-  componentDidUpdate(prevProps) {
-    console.info('componentDidUpdate..');
-
-    if (this.props.watchListCache && !this.state.isScanLoaded) {
-      // Load the scan
-      this.loadScan();
-    }
-  }
 
   componentWillUnmount() {
     console.info("componentWillUnmount: json:%o", this.intervalID);
