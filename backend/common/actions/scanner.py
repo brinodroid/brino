@@ -467,10 +467,10 @@ class Scanner:
 
             return earnings_date.date()
         except Exception as e:
+            # For invalid dates(eg. '-') in brifz data, this exception will be hit
+            # On exception, expected to return None
             logger.error(
                 '__get_brifz_earnings_date: Exception: {}'.format(repr(e)))
-            self.__addAlertDetails(
-                scan_entry, self.__SCAN_ERROR_MSG, '__get_brifz_earnings_date: Exception: {}'.format(repr(e)))
         return None
 
     def __get_brifz_volatility(self, scan_entry, watchlist, scan_data):
