@@ -383,6 +383,8 @@ class Scanner:
                 logger.error(
                     'Latest price for {} is unavailable'.format(watchlist.ticker))
 
+            scan_entry.earnings_date = self.__get_brifz_earnings_date(
+                scan_entry, watchlist, scan_data)
             scan_entry.volatility = self.__get_brifz_volatility(
                 scan_entry, watchlist, scan_data)
             scan_entry.short_float = self.__get_brifz_shortfloat(
@@ -415,6 +417,61 @@ class Scanner:
 
         # Reset the option data to not use stale info
         scan_data[self.__SCAN_DATA_LOCAL_OPTION_DATA_KEY] = None
+
+    def __get_brifz_earnings_date(self, scan_entry, watchlist, scan_data):
+        try:
+            if scan_data[self.__SCAN_DATA_BRIFZ_STAT_DICT_KEY] is None:
+                return None
+
+            # Else get the data
+            fz_earnings_date_str = scan_data[self.__SCAN_DATA_BRIFZ_STAT_DICT_KEY][watchlist.ticker]['Earnings']
+
+            if fz_earnings_date_str is None:
+                logger.error(
+                    '__get_brifz_earnings_date: Missing earnings date for: {}'.format(watchlist.ticker))
+                return None
+
+            today = date.today()
+
+            fz_partition_earnings_date_str = fz_earnings_date_str.rpartition(' ')
+            # fz_partition_earnings_date_str is like ('Nov 17', ' ', 'BMO') for 'Nov 17 BMO'
+
+            # Parse the date
+            fz_earnings_date = datetime.strptime(fz_partition_earnings_date_str[0], '%b %d')
+
+            #Check if the fz_earnings_date falls in the next 3 months
+            next_3_months = [today.month, (today.month+1)%12, (today.month+2)%12]
+
+            if fz_earnings_date.month not in next_3_months:
+                # The earnings date is not in the next 3 months
+                logger.error(
+                    '__get_brifz_earnings_date: Stale earnings date for: {}'.format(watchlist.ticker))
+                return None
+
+            # The earnings date falls in the next 3 months
+            if today.month <= fz_earnings_date.month:
+                # No year change
+                year = today.year
+            else:
+                #Increase the year as the month has gone back to Jan
+                year = today.year+1
+
+            if fz_partition_earnings_date_str[-1] == 'BMO':
+                # BMO is 'Before Market Open'. Hence, consider earnings as the previous date
+                day = fz_earnings_date - timedelta(days=1)
+            else:
+                day = fz_earnings_date
+
+
+            earnings_date = datetime(year, fz_earnings_date.month, day.day)
+
+            return earnings_date.date()
+        except Exception as e:
+            logger.error(
+                '__get_brifz_earnings_date: Exception: {}'.format(repr(e)))
+            self.__addAlertDetails(
+                scan_entry, self.__SCAN_ERROR_MSG, '__get_brifz_earnings_date: Exception: {}'.format(repr(e)))
+        return None
 
     def __get_brifz_volatility(self, scan_entry, watchlist, scan_data):
         try:
@@ -539,6 +596,7 @@ class Scanner:
         scan_latest_entry.order_id = scan_entry.order_id
         scan_latest_entry.put_iv_next_month = scan_entry.put_iv_next_month
         scan_latest_entry.call_iv_next_month = scan_entry.call_iv_next_month
+        scan_latest_entry.earnings_date = scan_entry.earnings_date
 
         self.__set_default_support_resistance(scan_latest_entry)
 
@@ -616,7 +674,7 @@ class Scanner:
             change_percent = round(
                 ((latest_price - scan_entry.resistance)*100/scan_entry.resistance), 2)
             self.__addAlertDetails(
-                scan_entry, self.__SCAN_INFO_MSG, '{}% above resistance, . Sell?'.format(change_percent))
+                scan_entry, self.__SCAN_INFO_MSG, '{} above resistance, . Sell?'.format(change_percent))
 
         if scan_entry.support is None or scan_entry.support == 0:
             self.__addAlertDetails(
@@ -625,7 +683,24 @@ class Scanner:
             change_percent = round(
                 ((latest_price - scan_entry.support)*100/scan_entry.support), 2)
             self.__addAlertDetails(
-                scan_entry, self.__SCAN_INFO_MSG, '{}% below support. Buy?'.format(change_percent))
+                scan_entry, self.__SCAN_INFO_MSG, '{} below support. Buy?'.format(change_percent))
+
+    def __check_earnings_date_alert(self, scan_entry, watchlist, scan_data):
+        earnings_date = scan_entry.earnings_date
+
+        if earnings_date is None:
+            # Earnings date not available, NOP
+            return
+
+        #Earnings date is available
+        today = date.today()
+
+        # Watch for earnings in next 30 days
+        earnings_watch_date = today + timedelta(days=30)
+
+        if earnings_date < earnings_watch_date:
+            self.__addAlertDetails(
+                scan_entry, self.__SCAN_INFO_MSG, 'Upcoming earnings on {}/{}'.format(earnings_date.month, earnings_date.day))
 
     def __check_extended_hours_price_movement_alert(self, scan_entry, watchlist, scan_data):
         if scan_data[self.__SCAN_DATA_LATEST_TICKER_PRICE_DICT_KEY] is None:
@@ -645,7 +720,7 @@ class Scanner:
         if abs(extended_hours_price_change) >= 1:
             # Change in price more than 1% during after hours
             self.__addAlertDetails(scan_entry, self.__SCAN_WARN_MSG,
-                                   '{}% change in price during extended hours. regular price={}'
+                                   '{} change in price during extended hours. regular price={}'
                                    .format(extended_hours_price_change, market_hours_price))
 
     def __check_option_time_to_expiry_alert(self, scan_entry, watchlist, scan_data):
@@ -709,6 +784,7 @@ class Scanner:
                 __check_support_resistance_alert,
                 __check_extended_hours_price_movement_alert,
                 __check_missed_covered_call_sell_alert,
+                __check_earnings_date_alert,
             ],
         ScanProfile.SELL_CALL.value:
             [

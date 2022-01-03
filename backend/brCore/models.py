@@ -108,6 +108,8 @@ class ScanEntry(models.Model):
     resistance = models.FloatField(null=True, blank=True)
     brate_target = models.FloatField(null=True, blank=True)
     brifz_target = models.FloatField(null=True, blank=True)
+    earnings_date = models.DateField(default=timezone.now, null=True, blank=True)
+
     rationale = models.TextField(default="", blank=True)
     reward_2_risk = models.FloatField(null=True, blank=True)
     potential = models.FloatField(null=True, blank=True)
@@ -164,11 +166,11 @@ class ScanEntry(models.Model):
         return "watchlist_id:%s, portfolio_id:%s, profile:%s, current_price:%s, support:%s, resistance:%s," \
             " profit_target:%s, stop_loss:%s, brate_target:%s, brifz_target:%s, target_history:%s, rationale:%s,"\
             " reward_2_risk:%s,  potential:%s, active_track:%s, order_id:%s, short_float:%s, status:%s, details:%s,"\
-            " call_iv_next_month:%s, put_iv_next_month:%s, volatility:%s, update_timestamp:%s" \
+            " call_iv_next_month:%s, put_iv_next_month:%s, volatility:%s, update_timestamp:%s, earnings_date:%s" \
                % (self.watchlist_id, self.portfolio_id, self.profile, self.current_price, self.support, self.resistance,
                   self.profit_target, self.stop_loss, self.brate_target, self.brifz_target, self.target_history, self.rationale,
                   self.reward_2_risk, self.potential, self.active_track, self.order_id, self.short_float, self.status, self.details,
-                  self.call_iv_next_month, self.put_iv_next_month, self.volatility, self.update_timestamp)
+                  self.call_iv_next_month, self.put_iv_next_month, self.volatility, self.update_timestamp, self.earnings_date)
 
 
 class PortFolioUpdate(models.Model):

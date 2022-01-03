@@ -589,6 +589,7 @@ export default class Scan extends React.Component {
           <> {this.getIVDiffHighlight(row.original)} </>
         )
       },
+      { Header: 'Earnings', accessor: 'earnings_date' },
       { Header: 'Volatility', accessor: 'volatility' },
       {
         Header: 'Short float', accessor: 'short_float',
