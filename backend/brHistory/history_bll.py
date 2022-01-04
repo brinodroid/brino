@@ -6,8 +6,17 @@ from brHistory.models import CallOptionData, PutOptionData, StockData
 import common.utils as utils
 from common.client.Factory import get_client
 from django.utils import timezone
+from brHistory.crawler import Crawler
 
 logger = logging.getLogger('django')
+
+def save_history():
+    # TODO: Need logic to ignore weekdays??
+
+    Crawler.getInstance().save_option_history()
+
+    # Save stock history
+    stock_history_update()
 
 
 def create_stock_history(watchlist):
@@ -221,7 +230,6 @@ def _update_stockdata_table(watchlist_id, stock_data_in, today_string):
                            num_employees=stock_data_in['num_employees'],
                            shares_outstanding=stock_data_in['shares_outstanding'],
                            float=stock_data_in['float'],
-
                            date=utils.convert_datetime_string_to_django_time(today_string)
                            )
     stock_data.save()

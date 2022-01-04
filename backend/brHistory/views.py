@@ -3,7 +3,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 import logging
-
+from django.utils import timezone
 from .models import CallOptionData, PutOptionData, StockData
 from .serializer import CallOptionDataSerializer, PutOptionDataSerializer, StockDataSerializer
 import brHistory.history_bll as history_bll
@@ -58,5 +58,20 @@ def history_update(request, watchlist_id):
 
         # Else its an option
         # TODO: Add option update code as needed
+
+    return Response({'detail': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+@api_view(['POST'])
+def history_update_all(request):
+    logger.debug("request data: {}".format(request.data))
+    if request.method == 'POST':
+
+        # Scan all history
+        history_bll.save_history()
+
+        save_done_msg = 'save_history: done {}'.format(timezone.now())
+        logger.info(save_done_msg)
+        return Response({'detail': save_done_msg}, status=status.HTTP_200_OK)
+
 
     return Response({'detail': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)

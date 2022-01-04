@@ -25,7 +25,9 @@ def _daily_weekday_10pm_task():
         Scanner.getInstance().get_lock().acquire()
 
         order_bll.poll_order_status()
-        Crawler.getInstance().save_history()
+
+        # Capture history
+        history_bll.save_history()
 
         #Take a backup of the db
         ret = os.system('cp db.sqlite3 /tmp/db.sqlite3; rclone copy /tmp/db.sqlite3 gdrive:brino_backup/; rm /tmp/db.sqlite3;')
