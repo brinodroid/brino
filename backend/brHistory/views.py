@@ -6,6 +6,8 @@ import logging
 
 from .models import CallOptionData, PutOptionData, StockData
 from .serializer import CallOptionDataSerializer, PutOptionDataSerializer, StockDataSerializer
+import brHistory.history_bll as history_bll
+import brCore.watchlist_bll as watchlist_bll
 
 logger = logging.getLogger('django')
 
@@ -36,7 +38,25 @@ def stockhistory_list(request, watchlist_id):
     logger.debug("request data: {}, pk: {}".format(request.data, watchlist_id))
     if request.method == 'GET':
         # Get the list of watchlists
-        putoption_history = StockData.objects.filter(watchlist_id=watchlist_id)
-        serializer = StockDataSerializer(putoption_history, many=True)
+        stockdata_history = StockData.objects.filter(watchlist_id=watchlist_id)
+        serializer = StockDataSerializer(stockdata_history, many=True)
         return Response(serializer.data)
+    return Response({'detail': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+@api_view(['POST'])
+def history_update(request, watchlist_id):
+    logger.debug("request data: {}, pk: {}".format(request.data, watchlist_id))
+    if request.method == 'POST':
+        # Get the list of watchlists
+        watchlist = watchlist_bll.get_watchlist(int(watchlist_id))
+        if not watchlist_bll.is_option(watchlist):
+            # Its a stock
+            history_bll.create_stock_history(watchlist)
+            stockdata_history = StockData.objects.filter(watchlist_id=watchlist_id)
+            serializer = StockDataSerializer(stockdata_history, many=True)
+            return Response(serializer.data)
+
+        # Else its an option
+        # TODO: Add option update code as needed
+
     return Response({'detail': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)

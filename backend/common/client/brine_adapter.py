@@ -129,9 +129,60 @@ class BrineAdapter:
 
         return ticker_price_dict
 
+    def __convert_to_stock_data(self, stock_fundamentals_data_list, closing_price_list):
+
+        if stock_fundamentals_data_list == None or len(stock_fundamentals_data_list) == 0:
+            # Didnt get all values
+            logger.error('__convert_to_stock_data: invalid stock_fundamentals_data_list: {}, closing_price: {}'.format(stock_fundamentals_data_list, closing_price_list))
+            raise ValueError("Failed to get stock_fundamentals_data_list")
+
+        if closing_price_list == None or len(closing_price_list) == 0:
+            # Didnt get all values
+            logger.error('__convert_to_stock_data: stock_fundamentals_data_list: {}, invalid closing_price: {}'.format(stock_fundamentals_data_list, closing_price_list))
+            raise ValueError("Failed to get closing_price_list")
+
+        stock_fundamentals_data = stock_fundamentals_data_list[0]
+        closing_price = closing_price_list[0]
+
+        res_stock_data = {}
+        res_stock_data['client'] = PortFolioSource.BRINE.value
+        res_stock_data['market_date'] = stock_fundamentals_data['market_date']
+
+        res_stock_data['high_price'] = self.__safe_float(stock_fundamentals_data['high'])
+        res_stock_data['low_price'] = self.__safe_float(stock_fundamentals_data['low'])
+        res_stock_data['open_price'] = self.__safe_float(stock_fundamentals_data['open'])
+        res_stock_data['close_price'] = self.__safe_float(closing_price)
+        res_stock_data['volume'] = self.__safe_float(stock_fundamentals_data['volume'])
+        res_stock_data['average_volume_2_weeks'] = self.__safe_float(stock_fundamentals_data['average_volume_2_weeks'])
+        res_stock_data['average_volume'] = self.__safe_float(stock_fundamentals_data['average_volume'])
+        res_stock_data['dividend_yield'] = self.__safe_float(stock_fundamentals_data['dividend_yield'])
+        res_stock_data['market_cap'] = self.__safe_float(stock_fundamentals_data['market_cap'])
+        res_stock_data['pb_ratio'] = self.__safe_float(stock_fundamentals_data['pb_ratio'])
+        res_stock_data['pe_ratio'] = self.__safe_float(stock_fundamentals_data['pe_ratio'])
+
+        # Low frequency changes
+        res_stock_data['low_52_weeks'] = self.__safe_float(stock_fundamentals_data['low_52_weeks'])
+        res_stock_data['high_52_weeks'] = self.__safe_float(stock_fundamentals_data['high_52_weeks'])
+        res_stock_data['sector'] = stock_fundamentals_data['sector']
+        res_stock_data['industry'] = stock_fundamentals_data['industry']
+        res_stock_data['num_employees'] = self.__safe_float(stock_fundamentals_data['num_employees'])
+        res_stock_data['shares_outstanding'] = self.__safe_float(stock_fundamentals_data['shares_outstanding'])
+        res_stock_data['float'] = self.__safe_float(stock_fundamentals_data['float'])
+
+        return res_stock_data
+
 
     def get_stock_data(self, ticker, interval, span):
         return brine.get_stock_historicals(ticker, interval, span)
+
+    def get_fundamentals(self, ticker):
+        stock_fundamentals_data = brine.get_fundamentals(ticker)
+        # The closing price is missing
+        closing_price = brine.get_latest_price(
+                    ticker, includeExtendedHours=False)
+
+        return self.__convert_to_stock_data(stock_fundamentals_data, closing_price)
+
 
     def get_all_options_on_expiry_date(self, ticker, expiry, type):
         option_list = brine.find_tradable_options(ticker, expiry, optionType=type)

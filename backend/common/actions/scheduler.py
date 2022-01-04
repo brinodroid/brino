@@ -2,13 +2,14 @@ import threading
 import time
 import traceback
 import logging
+import os
 from apscheduler.schedulers.background import BackgroundScheduler
 from django_apscheduler.jobstores import DjangoJobStore, register_events
 from common.actions.scanner import Scanner
 from brHistory.crawler import Crawler
 from common.actions.pf_update import PFUpdater
 import brStrategy.strategy_bll as strategy_bll
-import os
+import brHistory.history_bll as history_bll
 
 from django.utils import timezone
 
@@ -48,6 +49,7 @@ def _minute_task():
 
     try:
         Scanner.getInstance().get_lock().acquire()
+
         strategy_bll.strategy_run()
     except:
         logger.error('_minute_task: caught exception'.format(traceback.format_exc()))

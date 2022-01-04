@@ -98,14 +98,34 @@ class StockData(models.Model):
     low_price = models.FloatField()
     open_price = models.FloatField()
     close_price = models.FloatField()
-
     volume = models.FloatField()
+
+    average_volume_2_weeks = models.FloatField(null=True)
+    average_volume = models.FloatField(null=True)
+    dividend_yield = models.FloatField(null=True)
+    market_cap = models.FloatField(null=True)
+    pb_ratio = models.FloatField(null=True)
+    pe_ratio = models.FloatField(null=True)
+
+    # These are low frequency changes. Keeping it in history for consistency
+    low_52_weeks = models.FloatField(null=True)
+    high_52_weeks = models.FloatField(null=True)
+    num_employees = models.FloatField(null=True)
+    shares_outstanding = models.FloatField(null=True)
+    float = models.FloatField(null=True)
+
 
     def save(self, *args, **kwargs):
         return super(StockData, self).save(*args, **kwargs)
 
     def __str__(self):
         return "date:%s, watchlist_id:%s," \
-               " high_price:%s, low_price: %s, open_price:%s, close_price:%s, volume: %s" \
+               " high_price:%s, low_price: %s, open_price:%s, close_price:%s, volume: %s,"\
+               " average_volume_2_weeks:%s, average_volume:%s, dividend_yield:%s, market_cap:%s," \
+               " pb_ratio:%s, pe_ratio:%s, low_52_weeks:%s, high_52_weeks:%s," \
+               " num_employees:%s, shares_outstanding:%s, float:%s" \
                % (self.date, self.watchlist_id,
-                  self.high_price, self.low_price, self.open_price, self.open_price, self.volume)
+                    self.high_price, self.low_price, self.open_price, self.open_price, self.volume,
+                    self.average_volume_2_weeks, self.average_volume, self.dividend_yield, self.market_cap,
+                    self.pb_ratio, self.pe_ratio, self.low_52_weeks, self.high_52_weeks,
+                    self.num_employees, self.shares_outstanding, self.float)

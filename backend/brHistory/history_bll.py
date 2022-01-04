@@ -17,7 +17,6 @@ def create_stock_history(watchlist):
         return None
 
     date = timezone.now().date()
-
     try:
         stock_data_list = StockData.objects.filter(
             date=date, watchlist_id=watchlist.id)
@@ -33,26 +32,19 @@ def create_stock_history(watchlist):
 
     # Try adding the data
     client = get_client()
-    stock_raw_data_list = client.get_stock_data(watchlist.ticker,
-                                                interval='day',
-                                                span='week')
+
+    # Only gets you todays info
+    stock_raw_data_list = client.get_fundamentals(watchlist.ticker)
+    if stock_raw_data_list is None:
+        logger.error('create_stock_history: got none data {} for watchlist.id {}'.format(
+        stock_raw_data_list, watchlist.id))
+        return None
 
     today_string = utils.today_begin_utctime_string()
-    for stock_raw_data in stock_raw_data_list:
-        if stock_raw_data is None:
-            logger.error('create_stock_history: got none data {} for watchlist.id {}'.format(
-                stock_raw_data_list, watchlist.id))
-            continue
 
-        if today_string == stock_raw_data['begins_at']:
-            logger.info('create_stock_history: saving {} for watchlist.id {}'.format(
-                stock_raw_data, watchlist.id))
+    # Update also the low frequency data into watch list
 
-            return _update_stockdata_table(watchlist.id, stock_raw_data)
-
-    logger.error('create_stock_history: stock_raw_data not found for watchlist_id {}'.format(
-        watchlist.id))
-    return None
+    return _update_stockdata_table(watchlist.id, stock_raw_data_list, today_string)
 
 
 def stock_history_update():
@@ -64,7 +56,6 @@ def stock_history_update():
         logger.info('stock_history_update: No watchlist found')
         return
 
-    date = timezone.now().date()
     for watchlist in watchlist_list:
         logger.info('stock_history_update: watchlist {}'.format(watchlist))
         create_stock_history(watchlist)
@@ -212,19 +203,26 @@ def _update_put_option_table(watchlist_id, option_data):
     return put_option_data
 
 
-def _update_stockdata_table(watchlist_id, stock_data_in):
+def _update_stockdata_table(watchlist_id, stock_data_in, today_string):
     stock_data = StockData(watchlist_id=watchlist_id,
-                           high_price=utils.safe_float(
-                               stock_data_in['high_price']),
-                           low_price=utils.safe_float(
-                               stock_data_in['low_price']),
-                           open_price=utils.safe_float(
-                               stock_data_in['open_price']),
-                           close_price=utils.safe_float(
-                               stock_data_in['close_price']),
-                           volume=utils.safe_float(stock_data_in['volume']),
-                           date=utils.convert_datetime_string_to_django_time(
-                               stock_data_in['begins_at'])
+                           high_price=stock_data_in['high_price'],
+                           low_price=stock_data_in['low_price'],
+                           open_price=stock_data_in['open_price'],
+                           close_price=stock_data_in['close_price'],
+                           volume=stock_data_in['volume'],
+                           average_volume=stock_data_in['average_volume'],
+                           average_volume_2_weeks=stock_data_in['average_volume_2_weeks'],
+                           dividend_yield=stock_data_in['dividend_yield'],
+                           market_cap=stock_data_in['market_cap'],
+                           pb_ratio=stock_data_in['pb_ratio'],
+                           pe_ratio=stock_data_in['pe_ratio'],
+                           low_52_weeks=stock_data_in['low_52_weeks'],
+                           high_52_weeks=stock_data_in['high_52_weeks'],
+                           num_employees=stock_data_in['num_employees'],
+                           shares_outstanding=stock_data_in['shares_outstanding'],
+                           float=stock_data_in['float'],
+
+                           date=utils.convert_datetime_string_to_django_time(today_string)
                            )
     stock_data.save()
     return stock_data

@@ -24,5 +24,8 @@ class StockDataSerializer(serializers.ModelSerializer):
     class Meta:
         model = StockData
         fields = ('id', 'date', 'watchlist_id',
-                  'high_price', 'low_price', 'open_price', 'close_price',
-                  'volume')
+                  'high_price', 'low_price', 'open_price', 'close_price', 'volume',
+                  'average_volume_2_weeks', 'average_volume', 'dividend_yield', 'market_cap',
+                  'pb_ratio', 'pe_ratio', 'low_52_weeks', 'high_52_weeks',
+                  'num_employees', 'shares_outstanding', 'float'
+                  )
