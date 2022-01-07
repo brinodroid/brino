@@ -25,5 +25,6 @@ urlpatterns = [
     path('brCore/', include('brCore.urls')),
     path('brHistory/', include('brHistory.urls')),
     path('brOrder/', include('brOrder.urls')),
+    path('brGaze/', include('brGaze.urls')),
     path('brStrategy/', include('brStrategy.urls'))
 ]

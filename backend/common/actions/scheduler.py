@@ -6,10 +6,10 @@ import os
 from apscheduler.schedulers.background import BackgroundScheduler
 from django_apscheduler.jobstores import DjangoJobStore, register_events
 from common.actions.scanner import Scanner
-from brHistory.crawler import Crawler
 from common.actions.pf_update import PFUpdater
 import brStrategy.strategy_bll as strategy_bll
 import brHistory.history_bll as history_bll
+import brGaze.gaze_bll as gaze_bll
 
 from django.utils import timezone
 
@@ -25,6 +25,9 @@ def _daily_weekday_10pm_task():
         Scanner.getInstance().get_lock().acquire()
 
         order_bll.poll_order_status()
+
+        # Need to capture the closest option history
+        gaze_bll.create_closest_options_for_all_stocks()
 
         # Capture history
         history_bll.save_history()

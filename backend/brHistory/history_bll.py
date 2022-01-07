@@ -7,6 +7,7 @@ import common.utils as utils
 from common.client.Factory import get_client
 from django.utils import timezone
 from brHistory.crawler import Crawler
+import brCore.watchlist_bll as watchlist_bll
 
 logger = logging.getLogger('django')
 
@@ -57,13 +58,7 @@ def create_stock_history(watchlist):
 
 
 def stock_history_update():
-    try:
-        watchlist_list = WatchList.objects.filter(
-            asset_type=AssetTypes.STOCK.value)
-    except WatchList.DoesNotExist:
-        # Nothing to scan
-        logger.info('stock_history_update: No watchlist found')
-        return
+    watchlist_list = watchlist_bll.get_stock_watchlist()
 
     for watchlist in watchlist_list:
         logger.info('stock_history_update: watchlist {}'.format(watchlist))

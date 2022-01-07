@@ -108,7 +108,7 @@ class ScanEntry(models.Model):
     resistance = models.FloatField(null=True, blank=True)
     brate_target = models.FloatField(null=True, blank=True)
     brifz_target = models.FloatField(null=True, blank=True)
-    earnings_date = models.DateField(default=timezone.now, null=True, blank=True)
+    earnings_date = models.DateField(default=None, null=True, blank=True)
 
     rationale = models.TextField(default="", blank=True)
     reward_2_risk = models.FloatField(null=True, blank=True)

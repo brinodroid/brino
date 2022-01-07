@@ -504,7 +504,7 @@ class Scanner:
     def __get_brifz_target(self, scan_entry, watchlist, scan_data):
         try:
             if scan_data[self.__SCAN_DATA_BRIFZ_STAT_DICT_KEY] is None:
-                return "No data"
+                return 0
 
             # Else get the data
             return self.__safe_float(scan_data[self.__SCAN_DATA_BRIFZ_STAT_DICT_KEY][watchlist.ticker]['Target Price'])

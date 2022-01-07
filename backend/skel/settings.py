@@ -14,6 +14,8 @@ from pathlib import Path
 import datetime
 import os
 
+DATA_UPLOAD_MAX_NUMBER_FIELDS=102400
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -50,6 +52,7 @@ INSTALLED_APPS = [
     'brHistory.apps.BrhistoryConfig',
     'brOrder.apps.BrorderConfig',
     'brStrategy.apps.BrstrategyConfig',
+    'brGaze.apps.BrgazeConfig',
 ]
 
 MIDDLEWARE = [
