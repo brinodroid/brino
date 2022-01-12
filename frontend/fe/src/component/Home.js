@@ -66,6 +66,44 @@ export default class Scan extends React.Component {
     this.loadScan();
   }
 
+  static getDerivedStateFromProps(props, state) {
+    console.info('getDerivedStateFromProps..');
+    if (props.watchListCache && state.isScanLoaded) {
+      // We got watchlist cache and the scan is loaded.
+      // Update the ticker in the scan
+      Scan.updateTicker(state.scan, props);
+    }
+
+    return state;
+  }
+
+  static updateTicker(scanlist, props) {
+    if (props.watchListCache === null) {
+      console.error("updateTicker: watchListCache is null. Ignoring");
+      return;
+    }
+
+    let updateWatchListTicker = function (scanEntry) {
+        scanEntry.watchListTicker = props.watchListCache.getWatchListTicker(scanEntry.watchlist_id);
+    }
+
+    scanlist.forEach(updateWatchListTicker.bind(this));
+
+    console.info("updateTicker: scanlist updated");
+  }
+
+  componentDidUpdate(prevProps) {
+    console.info('componentDidUpdate..');
+
+    if (this.props.watchListCache && !this.state.isScanLoaded) {
+      console.info('componentDidUpdate in condition..');
+
+      // We got watchlist cache and the scan is loaded.
+      // Update the ticker in the scan
+      // this.updateTicker(this.state.scan);
+    }
+  }
+
   // Class variable to hold the setInterval Id, used to refresh the page every 5 seconds
   intervalID;
 
@@ -135,6 +173,7 @@ export default class Scan extends React.Component {
     }
   }
 
+
   loadScan() {
     console.info('loadScan: Loading Scan...')
     let loadScanCallback = function (httpStatus, json) {
@@ -152,19 +191,15 @@ export default class Scan extends React.Component {
         return;
       }
 
+
       let updateTimeFormat = function (scanEntry) {
         scanEntry.updateTimestampLocal = new Date(scanEntry.update_timestamp).toLocaleString();
         //console.info("updateTimeFormat: json: %o", scanEntry.updateTimestampLocal);
       }
       json.forEach(updateTimeFormat);
 
-      let updateWatchListTicker = function (scanEntry) {
-        if (this.props.watchListCache) {
-          scanEntry.watchListTicker = this.props.watchListCache.getWatchListTicker(scanEntry.watchlist_id);
-        }
-      }
 
-      json.forEach(updateWatchListTicker.bind(this));
+      Scan.updateTicker(json, this.props);
 
       console.info("loadScanCallback: json: %o", json);
       this.setState({
@@ -207,7 +242,7 @@ export default class Scan extends React.Component {
 
     this.state.scan.forEach(filterScanGreaterThanPotentialThreshold);
 
-    filteredScan.sort(function(a,b) {
+    filteredScan.sort(function (a, b) {
       return b.potential - a.potential
     });
 
@@ -218,37 +253,37 @@ export default class Scan extends React.Component {
   }
 
   removeAllMissing() {
-      console.info('removeAllMissing: remove all missing...');
+    console.info('removeAllMissing: remove all missing...');
 
-      let updateErrorMessage = (errorMsg) => {
-        // Setting error message with arrow function as this.setState cannot be
-        // accessed from deleteMissingScanCallback
-        this.setState({
-          errorMsg: errorMsg
-        });
-      }
+    let updateErrorMessage = (errorMsg) => {
+      // Setting error message with arrow function as this.setState cannot be
+      // accessed from deleteMissingScanCallback
+      this.setState({
+        errorMsg: errorMsg
+      });
+    }
 
-      let iterFunction = function (scanEntry, index, scanArray) {
-        if (scanEntry.status === "MISSING" ) {
-          let deleteMissingScanCallback = function (httpStatus, json) {
-            console.info("deleteMissingScanCallback: remove scanEntry:%o, httpStatus:%o, index:%o", scanEntry, httpStatus, index);
+    let iterFunction = function (scanEntry, index, scanArray) {
+      if (scanEntry.status === "MISSING") {
+        let deleteMissingScanCallback = function (httpStatus, json) {
+          console.info("deleteMissingScanCallback: remove scanEntry:%o, httpStatus:%o, index:%o", scanEntry, httpStatus, index);
 
-            if (httpStatus === 401) {
-              this.props.auth.setAuthenticationStatus(false);
-              console.error("deleteMissingScanCallback: authentication expired?");
-              return;
-            }
-
-            if (httpStatus !== 200) {
-              console.error("deleteMissingScanCallback: failure: http:%o", httpStatus);
-              updateErrorMessage("Failed to delete to Scan");
-              return;
-            }
+          if (httpStatus === 401) {
+            this.props.auth.setAuthenticationStatus(false);
+            console.error("deleteMissingScanCallback: authentication expired?");
+            return;
           }
 
-          getBackend().deleteScan(scanEntry, deleteMissingScanCallback.bind(this));
+          if (httpStatus !== 200) {
+            console.error("deleteMissingScanCallback: failure: http:%o", httpStatus);
+            updateErrorMessage("Failed to delete to Scan");
+            return;
+          }
         }
+
+        getBackend().deleteScan(scanEntry, deleteMissingScanCallback.bind(this));
       }
+    }
 
     if (this.state.scan !== null) {
       this.state.scan.forEach(iterFunction)
@@ -381,9 +416,9 @@ export default class Scan extends React.Component {
       return (
         <Form onSubmit={this.handleSubmit} >
 
-          { this.showModalFormGroup(readOnly, "watchListTicker", "Ticker", this.state.formValues.watchListTicker)}
-          { this.showModalFormGroup(readOnly, "resistance", "Resistance", this.state.formValues.resistance)}
-          { this.showModalFormGroup(readOnly, "support", "Support", this.state.formValues.support)}
+          {this.showModalFormGroup(readOnly, "watchListTicker", "Ticker", this.state.formValues.watchListTicker)}
+          {this.showModalFormGroup(readOnly, "resistance", "Resistance", this.state.formValues.resistance)}
+          {this.showModalFormGroup(readOnly, "support", "Support", this.state.formValues.support)}
 
         </Form>
       );
@@ -392,29 +427,29 @@ export default class Scan extends React.Component {
       return (
         <Form onSubmit={this.handleSubmit} >
 
-          { this.showModalFormGroup(true, "update_timestamp", "Update Timestamp", this.state.formValues.updateTimestampLocal)}
-          { this.showModalFormGroup(true, "id", "ID", this.state.formValues.id)}
-          { this.showModalFormGroup(readOnly, "profile", "Profile", this.state.formValues.profile)}
-          { this.showModalFormGroup(readOnly, "watchlist_id", "WatchList Id", this.state.formValues.watchlist_id)}
-          { this.showModalFormGroup(readOnly, "watchListTicker", "Ticker", this.state.formValues.watchListTicker)}
-          { this.showModalFormGroup(readOnly, "portfolio_id", "Portfolio Id", this.state.formValues.portfolio_id)}
-          { this.showModalFormGroup(readOnly, "resistance", "Resistance", this.state.formValues.resistance)}
-          { this.showModalFormGroup(readOnly, "support", "Support", this.state.formValues.support)}
-          { this.showModalFormGroup(readOnly, "stop_loss", "Stop Loss", this.state.formValues.stop_loss)}
-          { this.showModalFormGroup(readOnly, "profit_target", "Profit Target", this.state.formValues.profit_target)}
-          { this.showModalFormGroup(readOnly, "brate_target", "Brate Target", this.state.formValues.brate_target)}
-          { this.showModalFormGroup(readOnly, "brifz_target", "Brifz Target", this.state.formValues.brifz_target)}
-          { this.showModalFormGroup(true, "target_history", "Target History", this.state.formValues.target_history)}
-          { this.showModalFormGroup(readOnly, "active_track", "Active Track", this.state.formValues.active_track)}
-          { this.showModalFormGroup(readOnly, "order_id", "Brine Order Id", this.state.formValues.order_id)}
-          { this.showModalFormGroup(readOnly, "rationale", "Rationale", this.state.formValues.rationale)}
-          { this.showModalFormGroup(true, "current_price", "Current Price", this.state.formValues.current_price)}
-          { this.showModalFormGroup(true, "call_iv_next_month", "Call IV", this.state.formValues.call_iv_next_month)}
-          { this.showModalFormGroup(true, "put_iv_next_month", "Put IV", this.state.formValues.put_iv_next_month)}
-          { this.showModalFormGroup(true, "volatility", "Volatility", this.state.formValues.volatility)}
-          { this.showModalFormGroup(true, "short_float", "Short float", this.state.formValues.short_float)}
-          { this.showModalFormGroup(true, "status", "Status", this.state.formValues.status)}
-          { this.showModalFormGroup(true, "details", "Details", this.state.formValues.details)}
+          {this.showModalFormGroup(true, "update_timestamp", "Update Timestamp", this.state.formValues.updateTimestampLocal)}
+          {this.showModalFormGroup(true, "id", "ID", this.state.formValues.id)}
+          {this.showModalFormGroup(readOnly, "profile", "Profile", this.state.formValues.profile)}
+          {this.showModalFormGroup(readOnly, "watchlist_id", "WatchList Id", this.state.formValues.watchlist_id)}
+          {this.showModalFormGroup(readOnly, "watchListTicker", "Ticker", this.state.formValues.watchListTicker)}
+          {this.showModalFormGroup(readOnly, "portfolio_id", "Portfolio Id", this.state.formValues.portfolio_id)}
+          {this.showModalFormGroup(readOnly, "resistance", "Resistance", this.state.formValues.resistance)}
+          {this.showModalFormGroup(readOnly, "support", "Support", this.state.formValues.support)}
+          {this.showModalFormGroup(readOnly, "stop_loss", "Stop Loss", this.state.formValues.stop_loss)}
+          {this.showModalFormGroup(readOnly, "profit_target", "Profit Target", this.state.formValues.profit_target)}
+          {this.showModalFormGroup(readOnly, "brate_target", "Brate Target", this.state.formValues.brate_target)}
+          {this.showModalFormGroup(readOnly, "brifz_target", "Brifz Target", this.state.formValues.brifz_target)}
+          {this.showModalFormGroup(true, "target_history", "Target History", this.state.formValues.target_history)}
+          {this.showModalFormGroup(readOnly, "active_track", "Active Track", this.state.formValues.active_track)}
+          {this.showModalFormGroup(readOnly, "order_id", "Brine Order Id", this.state.formValues.order_id)}
+          {this.showModalFormGroup(readOnly, "rationale", "Rationale", this.state.formValues.rationale)}
+          {this.showModalFormGroup(true, "current_price", "Current Price", this.state.formValues.current_price)}
+          {this.showModalFormGroup(true, "call_iv_next_month", "Call IV", this.state.formValues.call_iv_next_month)}
+          {this.showModalFormGroup(true, "put_iv_next_month", "Put IV", this.state.formValues.put_iv_next_month)}
+          {this.showModalFormGroup(true, "volatility", "Volatility", this.state.formValues.volatility)}
+          {this.showModalFormGroup(true, "short_float", "Short float", this.state.formValues.short_float)}
+          {this.showModalFormGroup(true, "status", "Status", this.state.formValues.status)}
+          {this.showModalFormGroup(true, "details", "Details", this.state.formValues.details)}
 
         </Form>
       );
@@ -645,17 +680,17 @@ export default class Scan extends React.Component {
             <Button onClick={this.removeAllMissing}> Remove Missing </Button>
           </ButtonGroup>
           <ButtonGroup className="mr-2" aria-label="Second group">
-            <Button onClick={this.toggleGreenPotential}> {this.state.filteredScan? "Show all": "Passing Potential"} </Button>
+            <Button onClick={this.toggleGreenPotential}> {this.state.filteredScan ? "Show all" : "Passing Potential"} </Button>
           </ButtonGroup>
           <ButtonGroup className="mr-2" aria-label="Second group">
             <Button onClick={this.onAutoRefreshButtonPress}> {this.state.enableAutoRefresh ? "Disable Auto Refresh" : "Enable Auto Refresh"} </Button>
           </ButtonGroup>
         </ButtonToolbar>
-        { this.showErrorMsg()}
+        {this.showErrorMsg()}
 
-        <Table columns={columns} data={this.state.filteredScan? this.state.filteredScan:this.state.scan} getTrProps={onRowClick} />
+        <Table columns={columns} data={this.state.filteredScan ? this.state.filteredScan : this.state.scan} getTrProps={onRowClick} />
 
-        { this.showModal()}
+        {this.showModal()}
 
       </div>
     );
