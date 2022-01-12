@@ -19,7 +19,7 @@ logger = logging.getLogger('django')
 
 class Scanner:
     __instance = None
-    #5min sleep
+    # 5min sleep
     __sleep_duration = 60
 
     __SCAN_ERROR_MSG = 'ERROR'
@@ -120,9 +120,8 @@ class Scanner:
 
         return
 
-
     def __get_closest_strike_above_price(self, option_list, price):
-        min=sys.float_info.max
+        min = sys.float_info.max
         closest_option = None
         for option in option_list:
             if option is None:
@@ -150,7 +149,8 @@ class Scanner:
 
             # Strike price is more than the latest_price
             if min > (strike_price - price):
-                issue_date = datetime.strptime(option['issue_date'], utils.option_expiry_date_strpfmt_string).date()
+                issue_date = datetime.strptime(
+                    option['issue_date'], utils.option_expiry_date_strpfmt_string).date()
                 if issue_date < date.today():
                     min = strike_price - price
                     closest_option = option
@@ -162,7 +162,7 @@ class Scanner:
         return closest_option
 
     def __get_closest_strike_below_price(self, option_list, price):
-        min=sys.float_info.max
+        min = sys.float_info.max
         closest_option = None
         for option in option_list:
             if option is None:
@@ -190,7 +190,8 @@ class Scanner:
 
             # Strike price is more than the latest_price
             if min > (price - strike_price):
-                issue_date = datetime.strptime(option['issue_date'], utils.option_expiry_date_strpfmt_string).date()
+                issue_date = datetime.strptime(
+                    option['issue_date'], utils.option_expiry_date_strpfmt_string).date()
                 if issue_date < date.today():
                     min = price - strike_price
                     closest_option = option
@@ -209,14 +210,16 @@ class Scanner:
         next_monthly_expiry = utils.third_friday_of_next_month()
 
         # Get call option strike price at 5 levels beyond latest price
-        options_list = client.get_all_options_on_expiry_date(watchlist.ticker, next_monthly_expiry, 'call')
+        options_list = client.get_all_options_on_expiry_date(
+            watchlist.ticker, next_monthly_expiry, 'call')
         if options_list == None or len(options_list) == 0:
             logger.error(
                 '__compute_monthly_call_iv: get_all_options_on_expiry_date() for watchlist {} didnt get any data'
                 .format(watchlist))
             return None
 
-        closest_option = self.__get_closest_strike_above_price(options_list, latest_price)
+        closest_option = self.__get_closest_strike_above_price(
+            options_list, latest_price)
         if closest_option == None:
             logger.error(
                 '__compute_monthly_call_iv: __get_closest_strike_above_price() for watchlist {} didnt get any data'
@@ -224,8 +227,9 @@ class Scanner:
             return None
 
         option_raw_data = client.get_option_price(watchlist.ticker,
-                                next_monthly_expiry.strftime(utils.option_expiry_date_strpfmt_string),
-                                closest_option['strike_price'], 'call')
+                                                  next_monthly_expiry.strftime(
+                                                      utils.option_expiry_date_strpfmt_string),
+                                                  closest_option['strike_price'], 'call')
 
         # Sometimes option data seems empty
         if len(option_raw_data) == 0 or len(option_raw_data[0]) == 0:
@@ -247,14 +251,16 @@ class Scanner:
         next_monthly_expiry = utils.third_friday_of_next_month()
 
         # Get call option strike price at 5 levels beyond latest price
-        options_list = client.get_all_options_on_expiry_date(watchlist.ticker, next_monthly_expiry, 'put')
+        options_list = client.get_all_options_on_expiry_date(
+            watchlist.ticker, next_monthly_expiry, 'put')
         if options_list == None or len(options_list) == 0:
             logger.error(
                 '__compute_monthly_put_iv: get_all_options_on_expiry_date() for watchlist {} didnt get any data'
                 .format(watchlist))
             return None
 
-        closest_option = self.__get_closest_strike_below_price(options_list, latest_price)
+        closest_option = self.__get_closest_strike_below_price(
+            options_list, latest_price)
         if closest_option == None:
             logger.error(
                 '__compute_monthly_put_iv: get_all_options_on_expiry_date() for watchlist {} didnt get any data'
@@ -262,8 +268,9 @@ class Scanner:
             return None
 
         option_raw_data = client.get_option_price(watchlist.ticker,
-                                next_monthly_expiry.strftime(utils.option_expiry_date_strpfmt_string),
-                                closest_option['strike_price'], 'put')
+                                                  next_monthly_expiry.strftime(
+                                                      utils.option_expiry_date_strpfmt_string),
+                                                  closest_option['strike_price'], 'put')
 
         # Sometimes option data seems empty
         if len(option_raw_data) == 0 or len(option_raw_data[0]) == 0:
@@ -277,11 +284,9 @@ class Scanner:
         # Get the iv and updadte it
         return round(utils.safe_float(option_data['implied_volatility'])*100, 2)
 
-
-
     def __compute_reward_2_risk(self, scan_entry):
         if scan_entry.support is None:
-            #Some options may not have support price
+            # Some options may not have support price
             return None
 
         # current_price contains the latest price for option or stock
@@ -298,10 +303,10 @@ class Scanner:
         target = scan_entry.brifz_target
         if target is None:
             if scan_entry.brate_target is None:
-                #Cannot compute the potential
+                # Cannot compute the potential
                 return None
 
-            #We have brate target, use it
+            # We have brate target, use it
             target = scan_entry.brate_target
 
         if scan_entry.current_price == 0:
@@ -312,7 +317,8 @@ class Scanner:
         return round(potential, 2)
 
     def __process_scan_entry_values(self, scan_entry, scan_data, client):
-        logger.error('__process_scan_entry_values: scan_entry {}'.format(scan_entry))
+        logger.error(
+            '__process_scan_entry_values: scan_entry {}'.format(scan_entry))
 
         try:
             watchlist = WatchList.objects.get(pk=scan_entry.watchlist_id)
@@ -389,15 +395,15 @@ class Scanner:
                 scan_entry, watchlist, scan_data)
             scan_entry.short_float = self.__get_brifz_shortfloat(
                 scan_entry, watchlist, scan_data)
-            #if scan_entry.brifz_target is None:
+            # if scan_entry.brifz_target is None:
             # Update brifz_target always as it will be noted in the history
             scan_entry.brifz_target = self.__get_brifz_target(
-                    scan_entry, watchlist, scan_data)
+                scan_entry, watchlist, scan_data)
 
-            scan_entry.call_iv_next_month = self.__compute_monthly_call_iv(scan_entry, watchlist, client)
-            scan_entry.put_iv_next_month = self.__compute_monthly_put_iv(scan_entry, watchlist, client)
-
-
+            scan_entry.call_iv_next_month = self.__compute_monthly_call_iv(
+                scan_entry, watchlist, client)
+            scan_entry.put_iv_next_month = self.__compute_monthly_put_iv(
+                scan_entry, watchlist, client)
 
         scan_entry.reward_2_risk = self.__compute_reward_2_risk(scan_entry)
         scan_entry.potential = self.__compute_potential(scan_entry)
@@ -433,14 +439,17 @@ class Scanner:
 
             today = date.today()
 
-            fz_partition_earnings_date_str = fz_earnings_date_str.rpartition(' ')
+            fz_partition_earnings_date_str = fz_earnings_date_str.rpartition(
+                ' ')
             # fz_partition_earnings_date_str is like ('Nov 17', ' ', 'BMO') for 'Nov 17 BMO'
 
             # Parse the date
-            fz_earnings_date = datetime.strptime(fz_partition_earnings_date_str[0], '%b %d')
+            fz_earnings_date = datetime.strptime(
+                fz_partition_earnings_date_str[0], '%b %d')
 
-            #Check if the fz_earnings_date falls in the next 3 months
-            next_3_months = [today.month, (today.month+1)%12, (today.month+2)%12]
+            # Check if the fz_earnings_date falls in the next 3 months
+            next_3_months = [today.month,
+                             (today.month+1) % 12, (today.month+2) % 12]
 
             if fz_earnings_date.month not in next_3_months:
                 # The earnings date is not in the next 3 months
@@ -453,7 +462,7 @@ class Scanner:
                 # No year change
                 year = today.year
             else:
-                #Increase the year as the month has gone back to Jan
+                # Increase the year as the month has gone back to Jan
                 year = today.year+1
 
             if fz_partition_earnings_date_str[-1] == 'BMO':
@@ -461,7 +470,6 @@ class Scanner:
                 day = fz_earnings_date - timedelta(days=1)
             else:
                 day = fz_earnings_date
-
 
             earnings_date = datetime(year, fz_earnings_date.month, day.day)
 
@@ -558,7 +566,7 @@ class Scanner:
     def __addAlertDetails(self, scan_entry, level, new_detail):
         scan_entry.details += '--> {}: {}'.format(level, new_detail)
         if level != self.__SCAN_INFO_MSG:
-            #Change the status to ATTN only if the message is either warnings or error
+            # Change the status to ATTN only if the message is either warnings or error
             scan_entry.status = ScanStatus.ATTN.value
 
         logger.info('__addAlertDetails: added scan_entry=%s', scan_entry)
@@ -600,8 +608,12 @@ class Scanner:
 
         self.__set_default_support_resistance(scan_latest_entry)
 
-        if (scan_latest_entry.brifz_target is None) or (scan_latest_entry.brifz_target != scan_entry.brifz_target):
-            # Update brifz_target if not present. This is done to generate the UPGRADE/DOWNGRADE alerts
+        if (scan_latest_entry.brifz_target is None):
+            # Unassigned brifz_target. Take whatever is there
+            scan_latest_entry.brifz_target = scan_entry.brifz_target
+        elif scan_entry.brifz_target != 0 and (scan_latest_entry.brifz_target != scan_entry.brifz_target):
+            # Take it only if the new value is non 0, otherwise, retain the old value. Needed because sometimes, get 0 values from brifz
+            # This is done to generate the UPGRADE/DOWNGRADE alerts
             scan_latest_entry.brifz_target = scan_entry.brifz_target
 
         scan_latest_entry.save()
@@ -618,7 +630,7 @@ class Scanner:
         total_sold_calls = 0
         total_bought_calls = 0
         total_stock_units = 0
-        total_open_sell_orders=0
+        total_open_sell_orders = 0
 
         for ticker_watchlist in ticker_watchlist_list:
             portfolio_list = PortFolio.objects.all().filter(
@@ -633,13 +645,16 @@ class Scanner:
                         total_sold_calls += portfolio.units
 
         # Get the list of watchlists with the ticker
-        ticker_watchlist_id_list=[watchlist.id for watchlist in ticker_watchlist_list]
+        ticker_watchlist_id_list = [
+            watchlist.id for watchlist in ticker_watchlist_list]
 
         open_orders_list = OpenOrder.objects.all()
         # Searching manually as the watchlist is kept as a comma seperated list of strings
         for open_order in open_orders_list:
-            watchlist_id_list_in_order = open_order.watchlist_id_list.split(',')
-            transaction_type_list_in_order = open_order.transaction_type_list.split(',')
+            watchlist_id_list_in_order = open_order.watchlist_id_list.split(
+                ',')
+            transaction_type_list_in_order = open_order.transaction_type_list.split(
+                ',')
             for (watchlist_id, transaction_type) in zip(watchlist_id_list_in_order, transaction_type_list_in_order):
                 if int(watchlist_id) in ticker_watchlist_id_list:
                     # The list contains the same ticker
@@ -661,7 +676,6 @@ class Scanner:
                     scan_entry, self.__SCAN_INFO_MSG,
                     'Have open covered call orders. stocks={}, calls bought={}, calls sold={}, open_orders={}'
                     .format(total_stock_units, total_bought_calls, total_sold_calls, total_open_sell_orders))
-
 
     def __check_support_resistance_alert(self, scan_entry, watchlist, scan_data):
         # current_price contains the latest price for option or stock
@@ -692,7 +706,7 @@ class Scanner:
             # Earnings date not available, NOP
             return
 
-        #Earnings date is available
+        # Earnings date is available
         today = date.today()
 
         # Watch for earnings in next 30 days
@@ -705,17 +719,18 @@ class Scanner:
     def __check_extended_hours_price_movement_alert(self, scan_entry, watchlist, scan_data):
         if scan_data[self.__SCAN_DATA_LATEST_TICKER_PRICE_DICT_KEY] is None:
             logger.error('__check_extended_hours_price_movement_alert: latest price date missing. Skipping {}'
-                .format(watchlist))
+                         .format(watchlist))
             return
         if scan_data[self.__SCAN_DATA_MARKET_HOURS_TICKER_PRICE_DICT_KEY] is None:
             logger.error('__check_extended_hours_price_movement_alert: latest market hours price data missing. Skipping {}'
-                .format(watchlist))
+                         .format(watchlist))
             return
 
         latest_price = scan_data[self.__SCAN_DATA_LATEST_TICKER_PRICE_DICT_KEY][watchlist.ticker]
         market_hours_price = scan_data[self.__SCAN_DATA_MARKET_HOURS_TICKER_PRICE_DICT_KEY][watchlist.ticker]
 
-        extended_hours_price_change = round((latest_price - market_hours_price)*100/market_hours_price, 2)
+        extended_hours_price_change = round(
+            (latest_price - market_hours_price)*100/market_hours_price, 2)
 
         if abs(extended_hours_price_change) >= 1:
             # Change in price more than 1% during after hours
