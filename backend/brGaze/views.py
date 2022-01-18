@@ -34,3 +34,28 @@ def update_closest_monthly_options_for_all_stocks(request):
 
 
     return Response({'detail': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+
+@api_view(['POST'])
+def train_lstm(request, watchlist_id):
+    if request.method == 'POST':
+        gaze_bll.train_lstm(watchlist_id)
+
+        update_done_msg = 'train_lstm: done {}'.format(timezone.now())
+        logger.info(update_done_msg)
+        return Response({'detail': update_done_msg}, status=status.HTTP_200_OK)
+
+
+    return Response({'detail': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+@api_view(['GET'])
+def infer_lstm(request, watchlist_id):
+    if request.method == 'GET':
+        infered_values = gaze_bll.infer_lstm(watchlist_id)
+
+        update_done_msg = 'infer_lstm: done {}'.format(timezone.now())
+        logger.info(infered_values)
+        return Response({infered_values}, status=status.HTTP_200_OK)
+
+
+    return Response({'detail': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)

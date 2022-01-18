@@ -147,6 +147,23 @@ def get_watchlist(watchlist_id):
     watchlist = WatchList.objects.get(pk=int(watchlist_id))
     return watchlist
 
+def get_watchlist_closest_strike_below_price(asset_type, ticker, option_expiry, price):
+    watchlist_list = WatchList.objects.filter(asset_type=asset_type) \
+                                .filter(ticker=ticker) \
+                                .filter(option_expiry=option_expiry) \
+                                .filter(option_strike__lte = price) \
+                                .order_by('option_strike')
+    return watchlist_list[0]
+
+def get_watchlist_closest_strike_above_price(asset_type, ticker, option_expiry, price):
+    watchlist_list = WatchList.objects.filter(asset_type=asset_type) \
+                                .filter(ticker=ticker) \
+                                .filter(option_expiry=option_expiry) \
+                                .filter(option_strike__gte = price) \
+                                .order_by('option_strike')
+    return watchlist_list[0]
+
+
 def get_stock_watchlist():
     try:
         watchlist_list = WatchList.objects.filter(

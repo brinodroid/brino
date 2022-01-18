@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from common.types.asset_types import AssetTypes
 from brCore.models import WatchList
 from brHistory.models import CallOptionData, PutOptionData, StockData
@@ -78,6 +78,63 @@ def create_option_history(watchlist):
         'create_option_history: Wrong assettype. Ignoring watchlist {}'.format(watchlist))
     return None
 
+def get_history(watchlist, past_days):
+    logger.info('get_history: watchlist {} past_days {}'.format(watchlist, past_days))
+    
+    end_date = timezone.now().date()
+    start_date = end_date - timedelta(days=past_days)
+
+    if watchlist.asset_type == AssetTypes.STOCK.value:
+        history_list = StockData.objects.filter(watchlist_id=watchlist.id) \
+                                        .filter(date__range=[start_date, end_date])\
+                                        .order_by('date')
+        return history_list
+
+    if watchlist.asset_type == AssetTypes.CALL_OPTION.value:
+        history_list = CallOptionData.objects.filter(watchlist_id=watchlist.id) \
+                                        .filter(date__range=[start_date, end_date])\
+                                        .order_by('date')
+        return history_list
+
+    if watchlist.asset_type == AssetTypes.PUT_OPTION.value:
+        history_list = PutOptionData.objects.filter(watchlist_id=watchlist.id) \
+                                        .filter(date__range=[start_date, end_date])\
+                                        .order_by('date')
+        return history_list
+
+    return None
+
+def get_history_on_date(watchlist, on_date):
+    logger.info('get_history_on_date: watchlist {} on_date {}'.format(watchlist, on_date))
+    
+    if watchlist.asset_type == AssetTypes.STOCK.value:
+        history_list = StockData.objects.filter(watchlist_id=watchlist.id) \
+                                        .filter(date=on_date)
+        if history_list.exists():
+            # We got history for the date
+            return history_list[0]
+        # No data
+        return None
+    
+    if watchlist.asset_type == AssetTypes.CALL_OPTION.value:
+        history_list = CallOptionData.objects.filter(watchlist_id=watchlist.id) \
+                                        .filter(date=on_date)
+        if history_list.exists():
+            # We got history for the date
+            return history_list[0]
+        # No data
+        return None
+
+    if watchlist.asset_type == AssetTypes.PUT_OPTION.value:
+        history_list = PutOptionData.objects.filter(watchlist_id=watchlist.id) \
+                                        .filter(date=on_date)
+        if history_list.exists():
+            # We got history for the date
+            return history_list[0]
+        # No data
+        return None
+
+    return None
 
 def create_call_option_history(watchlist):
     date = timezone.now().date()
