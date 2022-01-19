@@ -6,9 +6,15 @@ import brCore.watchlist_bll as watchlist_bll
 import brHistory.history_bll as history_bll
 import common.utils as utils
 from django.utils import timezone
+from sklearn.preprocessing import MinMaxScaler
+import joblib
+import os
+import torch
 
 
 logger = logging.getLogger('django')
+
+OS_PATH_NN_DATA = 'brGaze/nn/data/'
 
 
 def create_closest_options(watchlist_id):
@@ -82,7 +88,53 @@ def infer_lstm(watchlist_id):
     return ret_test
 
 
+def _get_default_min_max_scaler_path(watchlist):
+    dir_name = OS_PATH_NN_DATA + watchlist.ticker
+    if not os.path.exists(dir_name):
+        os.mkdir(dir_name)
+
+    scaler_file_name = dir_name + '/default_min_max_scaler.gz'
+    return scaler_file_name
+
+
 def _prepare_training_data_sequence(watchlist, past_days):
+    training_data_list_of_maps = _prepare_training_data(watchlist, past_days)
+
+    training_data_list = []
+    for training_data_map in training_data_list_of_maps:
+        training_data_map.pop('date')
+        training_data = list(training_data_map.values())
+        training_data_list.append(training_data)
+
+    scaler_file_name = _get_default_min_max_scaler_path(watchlist)
+    if os.path.exists(scaler_file_name):
+        scaler = joblib.load(scaler_file_name)
+    else:
+        scaler = MinMaxScaler()
+
+    training_data_normalized = scaler.fit_transform(training_data_list)
+    joblib.dump(scaler, scaler_file_name)
+
+    training_data_normalized_tensors = torch.FloatTensor(
+        training_data_normalized).view(-1)
+
+    training_data_sequence = _create_sequences(
+        training_data_normalized_tensors, past_days)
+
+    return training_data_sequence
+
+
+def _create_sequences(input_data, window):
+    inout_seq = []
+    L = len(input_data)
+    for i in range(L-window):
+        train_seq = input_data[i:i+window]
+        train_label = input_data[i+window:i+window+1]
+        inout_seq.append((train_seq, train_label))
+    return inout_seq
+
+
+def _prepare_training_data(watchlist, past_days):
     training_data = []
     start_date = timezone.now().date() - timedelta(days=past_days)
     stock_history = None
@@ -97,20 +149,21 @@ def _prepare_training_data_sequence(watchlist, past_days):
                 stock_history = prev_stock_history
 
                 logger.info('_prepare_training_data: REUSING previous data for date {} for watchlist {}'
-                    .format(hist_date, watchlist))
+                            .format(hist_date, watchlist))
             else:
                 # The entry is missing
 
                 # Try going a day back
                 hist_date = hist_date - timedelta(days=1)
 
-                stock_history = history_bll.get_history_on_date(watchlist, hist_date)
+                stock_history = history_bll.get_history_on_date(
+                    watchlist, hist_date)
                 if stock_history == None:
                     logger.error('_prepare_training_data: missing data date {} for watchlist {}. IGNORING'
-                        .format(hist_date, watchlist))
-                continue
+                                 .format(hist_date, watchlist))
+                    continue
 
-        # We have stock history            
+        # We have stock history
         history = _create_training_data(watchlist, stock_history, hist_date)
         training_data.append(history)
 
@@ -124,9 +177,11 @@ def _create_training_data(watchlist, stock_history, hist_date):
     history['date'] = stock_history.date
     history['day_of_month'] = hist_date.day
     history['week_day'] = hist_date.weekday()
-    history['days_to_monthly_option_expiry'] = utils.get_days_to_monthly_option_expiry(hist_date)
-    history['days_to_quarterly_option_expiry'] = utils.get_days_to_quarterly_option_expiry(hist_date)
-    
+    history['days_to_monthly_option_expiry'] = utils.get_days_to_monthly_option_expiry(
+        hist_date)
+    history['days_to_quarterly_option_expiry'] = utils.get_days_to_quarterly_option_expiry(
+        hist_date)
+
     # Stock parameters
     history['high_price'] = stock_history.high_price
     history['low_price'] = stock_history.low_price
@@ -147,19 +202,24 @@ def _create_training_data(watchlist, stock_history, hist_date):
     history['shares_outstanding'] = stock_history.shares_outstanding
     history['float'] = stock_history.float
 
-    monthly_expiry = utils.third_friday_of_next_month_with_date(stock_history.date)
+    monthly_expiry = utils.third_friday_of_next_month_with_date(
+        stock_history.date)
 
-    _add_closest_put_option_history(history, monthly_expiry, watchlist, stock_history)
+    _add_closest_put_option_history(
+        history, monthly_expiry, watchlist, stock_history)
 
-    _add_closest_call_option_history(history, monthly_expiry, watchlist, stock_history)
+    _add_closest_call_option_history(
+        history, monthly_expiry, watchlist, stock_history)
 
     return history
+
 
 def _add_closest_put_option_history(history, monthly_expiry, watchlist, stock_history):
     closest_put_option_watchlist = watchlist_bll.get_watchlist_closest_strike_below_price(
         AssetTypes.PUT_OPTION.value, watchlist.ticker, monthly_expiry, stock_history.close_price)
 
-    put_option_history = history_bll.get_history_on_date(closest_put_option_watchlist, stock_history.date)
+    put_option_history = history_bll.get_history_on_date(
+        closest_put_option_watchlist, stock_history.date)
 
     history['put_mark_price'] = put_option_history.mark_price
     history['put_ask_price'] = put_option_history.ask_price
@@ -177,7 +237,7 @@ def _add_closest_put_option_history(history, monthly_expiry, watchlist, stock_hi
     history['put_rho'] = put_option_history.rho
     history['put_theta'] = put_option_history.theta
     history['put_vega'] = put_option_history.vega
-    
+
     return history
 
 
@@ -185,7 +245,8 @@ def _add_closest_call_option_history(history, monthly_expiry, watchlist, stock_h
     closest_call_option_watchlist = watchlist_bll.get_watchlist_closest_strike_above_price(
         AssetTypes.CALL_OPTION.value, watchlist.ticker, monthly_expiry, stock_history.close_price)
 
-    call_option_history = history_bll.get_history_on_date(closest_call_option_watchlist, stock_history.date)
+    call_option_history = history_bll.get_history_on_date(
+        closest_call_option_watchlist, stock_history.date)
 
     history['call_mark_price'] = call_option_history.mark_price
     history['call_ask_price'] = call_option_history.ask_price
@@ -203,5 +264,5 @@ def _add_closest_call_option_history(history, monthly_expiry, watchlist, stock_h
     history['call_rho'] = call_option_history.rho
     history['call_theta'] = call_option_history.theta
     history['call_vega'] = call_option_history.vega
-    
+
     return history
