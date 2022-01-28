@@ -78,12 +78,9 @@ def create_option_history(watchlist):
         'create_option_history: Wrong assettype. Ignoring watchlist {}'.format(watchlist))
     return None
 
-def get_history(watchlist, past_days):
-    logger.info('get_history: watchlist {} past_days {}'.format(watchlist, past_days))
+def get_history(watchlist, start_date, end_date):
+    logger.info('get_history: watchlist {} start_date {} end_date {}'.format(watchlist, start_date, end_date))
     
-    end_date = timezone.now().date()
-    start_date = end_date - timedelta(days=past_days)
-
     if watchlist.asset_type == AssetTypes.STOCK.value:
         history_list = StockData.objects.filter(watchlist_id=watchlist.id) \
                                         .filter(date__range=[start_date, end_date])\

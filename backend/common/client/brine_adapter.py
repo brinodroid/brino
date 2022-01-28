@@ -37,7 +37,8 @@ class BrineAdapter:
 
 
     def __init__(self):
-        brine.login()
+       brine.login()
+       #pass
 
     def _convert_option_data(self, option):
         res_option = {}

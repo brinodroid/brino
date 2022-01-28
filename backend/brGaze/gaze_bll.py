@@ -1,6 +1,7 @@
 import logging
 from datetime import date, datetime, timedelta
 from brCore.models import WatchList
+from brGaze.nn.lstm import LSTM
 from common.types.asset_types import AssetTypes
 import brCore.watchlist_bll as watchlist_bll
 import brHistory.history_bll as history_bll
@@ -10,6 +11,10 @@ from sklearn.preprocessing import MinMaxScaler
 import joblib
 import os
 import torch
+from torch.autograd import Variable
+from .nn.lstm import LSTM
+from brGaze.models import NNModelStatus
+import copy
 
 
 logger = logging.getLogger('django')
@@ -67,11 +72,59 @@ def __create_closest_options(watchlist):
     return
 
 
+def __get_nnmodel_status(watchlist_id):
+    nnmodel_status = NNModelStatus.objects.filter(
+        watchlist_id=int(watchlist_id))
+    if nnmodel_status.exists():
+        # We got history for the date
+        return nnmodel_status[0]
+
+    # No data
+    return None
+
+
 def train_lstm(watchlist_id):
+    sequence_length = 7  # Weekly sequence
     logger.info('train_lstm: watchlist_id {}'.format(watchlist_id))
     watchlist = watchlist_bll.get_watchlist(watchlist_id)
 
-    input_sequence = _prepare_training_data_sequence(watchlist, 7)
+    nnmodel_status = __get_nnmodel_status(watchlist_id)
+
+    if nnmodel_status is None:
+        # Our date is from Jan 2022
+        data_start_date = date(2022, 1, 1)
+    else:
+        data_start_date = nnmodel_status.trained_till_date - \
+            timedelta(days=sequence_length)
+
+    training_data_list_of_maps = _prepare_training_data(
+        watchlist, data_start_date, timezone.now().date())
+
+    input_sequence = _prepare_training_data_sequence(
+        watchlist, training_data_list_of_maps, 7)
+
+    model = LSTM()
+    loss_function = torch.nn.MSELoss()
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+
+    epochs = 150
+
+    for i in range(epochs):
+        for seq, labels in input_sequence:
+            optimizer.zero_grad()
+            model.hidden_cell = (torch.zeros(1, 1, model.hidden_layer_size),
+                                 torch.zeros(1, 1, model.hidden_layer_size))
+
+            y_pred = model(seq)
+
+            single_loss = loss_function(y_pred, labels)
+            single_loss.backward()
+            optimizer.step()
+
+        if i % 25 == 1:
+            print(f'epoch: {i:3} loss: {single_loss.item():10.8f}')
+
+    print(f'epoch: {i:3} loss: {single_loss.item():10.10f}')
 
     return
 
@@ -97,8 +150,7 @@ def _get_default_min_max_scaler_path(watchlist):
     return scaler_file_name
 
 
-def _prepare_training_data_sequence(watchlist, past_days):
-    training_data_list_of_maps = _prepare_training_data(watchlist, past_days)
+def _prepare_training_data_sequence(watchlist, training_data_list_of_maps, past_days):
 
     training_data_list = []
     for training_data_map in training_data_list_of_maps:
@@ -115,9 +167,13 @@ def _prepare_training_data_sequence(watchlist, past_days):
     training_data_normalized = scaler.fit_transform(training_data_list)
     joblib.dump(scaler, scaler_file_name)
 
+    X_train_tensors = Variable(torch.Tensor(training_data_normalized))
+    shape = X_train_tensors.shape
+
     training_data_normalized_tensors = torch.FloatTensor(
         training_data_normalized).view(-1)
 
+    x = training_data_normalized_tensors.shape
     training_data_sequence = _create_sequences(
         training_data_normalized_tensors, past_days)
 
@@ -134,46 +190,133 @@ def _create_sequences(input_data, window):
     return inout_seq
 
 
-def _prepare_training_data(watchlist, past_days):
+def _prepare_training_data(watchlist, start_date, end_date):
     training_data = []
-    start_date = timezone.now().date() - timedelta(days=past_days)
-    stock_history = None
 
-    for i in range(0, past_days):
-        hist_date = start_date + timedelta(days=i)
-        prev_stock_history = stock_history
-        stock_history = history_bll.get_history_on_date(watchlist, hist_date)
-        if stock_history == None:
-            # We seem to have missed data in history
-            if prev_stock_history:
-                stock_history = prev_stock_history
+    stock_history_sorted_list = history_bll.get_history(
+        watchlist, start_date, end_date)
+    stock_hist_expected_date = start_date
 
+    call_option_history = None
+    put_option_history = None
+    prev_put_option_history = None
+    prev_call_option_history = None
+
+    for stock_history in stock_history_sorted_list:
+        stock_hist_expected_date = stock_hist_expected_date + timedelta(days=1)
+
+        if stock_history.date < stock_hist_expected_date:
+            # We seem to have data from dates before expected dates. Duplicate data??
+            logger.error('_prepare_training_data: SKIPPING mismatched for watchlist {}, expecting {}, got {}'
+                         .format(watchlist, stock_hist_expected_date, stock_history.date))
+            continue
+
+        while stock_history.date > stock_hist_expected_date:
+            # We seem to have missed data in history. Take previous data if it exists
+            missed_date = stock_hist_expected_date
+            stock_hist_expected_date = stock_hist_expected_date + \
+                timedelta(days=1)
+
+            if len(training_data):
                 logger.info('_prepare_training_data: REUSING previous data for date {} for watchlist {}'
-                            .format(hist_date, watchlist))
+                            .format(missed_date, watchlist))
+
+                # Get previous data
+                prev_training_data = copy.deepcopy(training_data[-1])
+
+                # Update date parameters
+                _update_date_params(prev_training_data, missed_date)
+
+                # Add the missing data
+                training_data.append(prev_training_data)
             else:
-                # The entry is missing
+                logger.error('_prepare_training_data: SKIPPING No prev_training_data for date {} for watchlist {}'
+                             .format(missed_date, watchlist))
 
-                # Try going a day back
-                hist_date = hist_date - timedelta(days=1)
+        # We have the right date
+        monthly_expiry = utils.third_friday_of_next_month_with_date(
+            stock_history.date)
 
-                stock_history = history_bll.get_history_on_date(
-                    watchlist, hist_date)
-                if stock_history == None:
-                    logger.error('_prepare_training_data: missing data date {} for watchlist {}. IGNORING'
-                                 .format(hist_date, watchlist))
-                    continue
+        prev_put_option_history = put_option_history
+        # Get the closest put option history
+        put_option_history = __get_put_option_history(
+            watchlist, stock_history, monthly_expiry)
+        if put_option_history is None:
+            put_option_history = prev_put_option_history
 
-        # We have stock history
-        history = _create_training_data(watchlist, stock_history, hist_date)
-        training_data.append(history)
+        if put_option_history is None:
+            # We do not have even previous valid data to continue
+            logger.error('_prepare_training_data: SKIPPING No put_option_history for date {} for watchlist {}'
+                         .format(stock_hist_expected_date, watchlist))
+
+        prev_call_option_history = call_option_history
+        # Get the closest call option history
+        call_option_history = __get_call_option_history(
+            watchlist, stock_history, monthly_expiry)
+        if call_option_history is None:
+            call_option_history = prev_call_option_history
+
+        if call_option_history is None:
+            # We do not have even previous valid data to continue
+            logger.error('_prepare_training_data: SKIPPING No call_option_history for date {} for watchlist {}'
+                         .format(stock_hist_expected_date, watchlist))
+
+        if put_option_history and call_option_history:
+            # We have valid data, use it
+            history = _create_training_data(
+                watchlist, stock_history, call_option_history, put_option_history, stock_hist_expected_date)
+            training_data.append(history)
 
     return training_data
 
 
-def _create_training_data(watchlist, stock_history, hist_date):
+def __get_put_option_history(watchlist, stock_history, monthly_expiry):
+    closest_put_option_watchlists_sorted_desc = watchlist_bll.get_watchlists_closest_strike_below_price(
+        AssetTypes.PUT_OPTION.value, watchlist.ticker, monthly_expiry, stock_history.close_price)
+    if not closest_put_option_watchlists_sorted_desc.exists():
+        logger.error('__get_put_option_history: No closest option found for date {} for watchlist {}'
+                     .format(monthly_expiry, watchlist))
+        return None
+
+    # we have a valid watch list
+    for put_option_watchlist in closest_put_option_watchlists_sorted_desc:
+        # Loop through to find the history
+        put_option_history = history_bll.get_history_on_date(
+            put_option_watchlist, stock_history.date)
+        if put_option_history is not None:
+            return put_option_history
+
+    # No history available
+    return None
+
+def __get_call_option_history(watchlist, stock_history, monthly_expiry):
+    closest_call_option_watchlists = watchlist_bll.get_watchlists_closest_strike_above_price(
+        AssetTypes.CALL_OPTION.value, watchlist.ticker, monthly_expiry, stock_history.close_price)
+
+    if not closest_call_option_watchlists.exists():
+        logger.error('__get_call_option_history: No closest option found for date {} for watchlist {}'
+                     .format(monthly_expiry, watchlist))
+        return None
+
+    # we have a valid watch list
+    for call_option_watchlist in closest_call_option_watchlists:
+        # Loop through to find the history
+        call_option_history = history_bll.get_history_on_date(
+            call_option_watchlist, stock_history.date)
+
+        if call_option_history is not None:
+            return call_option_history
+
+    # No history available
+    return None
+
+
+def _create_training_data(watchlist, stock_history, call_option_history, put_option_history, hist_date):
     history = {}
 
     # Date parameters
+    _update_date_params(history, hist_date)
+
     history['date'] = stock_history.date
     history['day_of_month'] = hist_date.day
     history['week_day'] = hist_date.weekday()
@@ -202,25 +345,27 @@ def _create_training_data(watchlist, stock_history, hist_date):
     history['shares_outstanding'] = stock_history.shares_outstanding
     history['float'] = stock_history.float
 
-    monthly_expiry = utils.third_friday_of_next_month_with_date(
-        stock_history.date)
+    _update_put_option_params(
+        history, put_option_history)
 
-    _add_closest_put_option_history(
-        history, monthly_expiry, watchlist, stock_history)
-
-    _add_closest_call_option_history(
-        history, monthly_expiry, watchlist, stock_history)
+    _update_call_option_params(
+        history, call_option_history)
 
     return history
 
 
-def _add_closest_put_option_history(history, monthly_expiry, watchlist, stock_history):
-    closest_put_option_watchlist = watchlist_bll.get_watchlist_closest_strike_below_price(
-        AssetTypes.PUT_OPTION.value, watchlist.ticker, monthly_expiry, stock_history.close_price)
+def _update_date_params(history, hist_date):
+    # Date parameters
+    history['date'] = hist_date
+    history['day_of_month'] = hist_date.day
+    history['week_day'] = hist_date.weekday()
+    history['days_to_monthly_option_expiry'] = utils.get_days_to_monthly_option_expiry(
+        hist_date)
+    history['days_to_quarterly_option_expiry'] = utils.get_days_to_quarterly_option_expiry(
+        hist_date)
 
-    put_option_history = history_bll.get_history_on_date(
-        closest_put_option_watchlist, stock_history.date)
 
+def _update_put_option_params(history, put_option_history):
     history['put_mark_price'] = put_option_history.mark_price
     history['put_ask_price'] = put_option_history.ask_price
     history['put_bid_price'] = put_option_history.bid_price
@@ -241,13 +386,7 @@ def _add_closest_put_option_history(history, monthly_expiry, watchlist, stock_hi
     return history
 
 
-def _add_closest_call_option_history(history, monthly_expiry, watchlist, stock_history):
-    closest_call_option_watchlist = watchlist_bll.get_watchlist_closest_strike_above_price(
-        AssetTypes.CALL_OPTION.value, watchlist.ticker, monthly_expiry, stock_history.close_price)
-
-    call_option_history = history_bll.get_history_on_date(
-        closest_call_option_watchlist, stock_history.date)
-
+def _update_call_option_params(history, call_option_history):
     history['call_mark_price'] = call_option_history.mark_price
     history['call_ask_price'] = call_option_history.ask_price
     history['call_bid_price'] = call_option_history.bid_price
