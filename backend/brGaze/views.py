@@ -39,9 +39,10 @@ def update_closest_monthly_options_for_all_stocks(request):
 @api_view(['POST'])
 def train_lstm(request, watchlist_id):
     if request.method == 'POST':
+        start_time = timezone.now()
         gaze_bll.train_lstm(watchlist_id)
 
-        update_done_msg = 'train_lstm: done {}'.format(timezone.now())
+        update_done_msg = 'train_lstm: started {}, took {}'.format(start_time, timezone.now()-start_time)
         logger.info(update_done_msg)
         return Response({'detail': update_done_msg}, status=status.HTTP_200_OK)
 

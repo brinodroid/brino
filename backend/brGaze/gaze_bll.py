@@ -1,6 +1,7 @@
 import logging
 from datetime import date, datetime, timedelta
 from brCore.models import WatchList
+from brGaze.models import NNModelStatus
 from brGaze.nn.lstm import LSTM
 from common.types.asset_types import AssetTypes
 import brCore.watchlist_bll as watchlist_bll
@@ -12,8 +13,6 @@ import joblib
 import os
 import torch
 from torch.autograd import Variable
-from .nn.lstm import LSTM
-from brGaze.models import NNModelStatus
 import copy
 
 
@@ -103,6 +102,10 @@ def train_lstm(watchlist_id):
     input_sequence = _prepare_training_data_sequence(
         watchlist, training_data_list_of_maps, 7)
 
+    # Input size:
+    # Batch size
+    # timesteps
+
     model = LSTM()
     loss_function = torch.nn.MSELoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
@@ -124,7 +127,14 @@ def train_lstm(watchlist_id):
         if i % 25 == 1:
             print(f'epoch: {i:3} loss: {single_loss.item():10.8f}')
 
-    print(f'epoch: {i:3} loss: {single_loss.item():10.10f}')
+    scaler_file_name = _get_default_min_max_scaler_path(watchlist)
+    if os.path.exists(scaler_file_name):
+        scaler = joblib.load(scaler_file_name)
+
+    data_predict = y_pred.data.numpy() #numpy conversion
+
+    data_predict_final = scaler.inverse_transform(data_predict)
+    print(f'epoch: {i:3} loss: {single_loss.item():10.10f} data_predict: {data_predict:10.10f} data_predict_final: {data_predict_final:10.10f}')
 
     return
 
@@ -169,6 +179,9 @@ def _prepare_training_data_sequence(watchlist, training_data_list_of_maps, past_
 
     X_train_tensors = Variable(torch.Tensor(training_data_normalized))
     shape = X_train_tensors.shape
+
+    X_train_tensors_final = torch.reshape(X_train_tensors,   (X_train_tensors.shape[0], 1, X_train_tensors.shape[1]))
+    shape1 = X_train_tensors_final.shape
 
     training_data_normalized_tensors = torch.FloatTensor(
         training_data_normalized).view(-1)

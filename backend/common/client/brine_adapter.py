@@ -143,16 +143,21 @@ class BrineAdapter:
             raise ValueError("Failed to get closing_price_list")
 
         stock_fundamentals_data = stock_fundamentals_data_list[0]
+        if stock_fundamentals_data is None:
+            logger.error('__convert_to_stock_data: invalid stock_fundamentals_data: {}, closing_price: {}'.format(stock_fundamentals_data_list, closing_price_list))
+            raise ValueError("Failed to get stock_fundamentals_data")
+
+        
         closing_price = closing_price_list[0]
 
         res_stock_data = {}
         res_stock_data['client'] = PortFolioSource.BRINE.value
         res_stock_data['market_date'] = stock_fundamentals_data['market_date']
+        res_stock_data['close_price'] = self.__safe_float(closing_price)
 
         res_stock_data['high_price'] = self.__safe_float(stock_fundamentals_data['high'])
         res_stock_data['low_price'] = self.__safe_float(stock_fundamentals_data['low'])
         res_stock_data['open_price'] = self.__safe_float(stock_fundamentals_data['open'])
-        res_stock_data['close_price'] = self.__safe_float(closing_price)
         res_stock_data['volume'] = self.__safe_float(stock_fundamentals_data['volume'])
         res_stock_data['average_volume_2_weeks'] = self.__safe_float(stock_fundamentals_data['average_volume_2_weeks'])
         res_stock_data['average_volume'] = self.__safe_float(stock_fundamentals_data['average_volume'])
